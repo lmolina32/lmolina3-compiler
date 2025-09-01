@@ -1,4 +1,4 @@
-Starter Code for BMinor Project
+BMinor Compiler Project - Leonardo Molina
 -------------------------------
 
 This directory contains the starter code for the BMinor compiler.
