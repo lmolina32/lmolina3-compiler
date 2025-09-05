@@ -34,19 +34,26 @@ int string_decode( const char *es, char *s ){
 
     // Check for first char to be open quotes 
     if (*encoded != '"') {
-        fprintf(stderr, "String does not start with opening quote\n");
-        return false;
+        // check for edge case with string starting with \" 
+        if (encoded[0] != '\\' || encoded[1] != '"'){
+            fprintf(stderr, "String does not start with opening quote\n");
+            return false;
+        }
     }
     encoded++;
 
     while(true){
-        int my_char = *encoded++;
-
-        if (count >= MAX_STR_LEN){
+        if (count > MAX_STR_LEN){
+            printf("%d\n", count);
             fprintf(stderr, "Maximum string length exceeded\n");
             return false;
         }
-        if (my_char == '"') break;
+
+        const char *quote_char = encoded++;
+        //edge case for 
+        if (*quote_char == '"' && quote_char[1] == '\0') break;
+        int my_char = *quote_char;
+
 
         if (my_char == '\0') {
             fprintf(stderr, "String does not end with closing quotation\n");
@@ -107,6 +114,14 @@ int string_decode( const char *es, char *s ){
                     break;
                 case '\"':
                     *decoded++ = 34;
+                    if(back_char[1] == '\0'){
+                        count++;
+                        if (count > MAX_STR_LEN){
+                            fprintf(stderr, "Maximum length of string should be 255\n");
+                            return false;
+                        }
+                        goto end;
+                    }
                     break;
                 case '0':
                     if (back_char[1] == '\0') {
@@ -128,7 +143,7 @@ int string_decode( const char *es, char *s ){
                     }
                     break;
                 default:
-                    *decoded++ = my_char;
+                    *decoded++ = *back_char;
                     break;
             }
             count++;
@@ -141,6 +156,7 @@ int string_decode( const char *es, char *s ){
          return false;
     }
 
+    end: 
     *decoded = '\0';
     return true;
 }

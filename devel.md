@@ -4,6 +4,7 @@
 ## Encoder 
 ### Interpretation 
 - For encode the values outside the ascii range (e.g not between 32 and 127) will be encoded with the value itself. This means that if the incoming string "\0xff" the decoder will replace the string with the ascii value and the encoder will not encode it back into '0xff' rather it would leave it. This is the interpretation of not turning ascii values outside of the range of 32-127 into hex.
+- the following separated by commas are valid strings \"\", "\", "string""string" 
 
 ### development encoder 
 * What AI tools (if any) did you use, and what sort of prompts did you provide?
