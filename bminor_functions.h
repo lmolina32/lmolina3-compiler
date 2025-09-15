@@ -1,0 +1,22 @@
+/* bminor_functions.h */
+
+#ifndef BMINOR_FUNCTIONS_H
+#define BMINOR_FUNCTIONS_H
+
+#include <stdio.h>
+
+/* Globals */
+extern FILE   *yyin;
+extern int    yylex();
+extern char   *yytext; 
+
+/* Functions */
+
+int     encode(char *file_name);
+int     scan(char *file_name);
+
+/* Miscellaneous */
+
+#define streq(a, b)         (strcmp(a, b) == 0)
+
+#endif 
