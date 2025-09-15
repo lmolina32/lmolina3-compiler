@@ -1,5 +1,6 @@
 # Name: Leonardo Molina
 # NetID: lmolina3
+# Development Log 
 
 ## Encoder 
 ### Interpretation 
@@ -18,3 +19,5 @@
 * What parts were difficult to get right and required more effort?
     - **Edge Cases** - What was hard to get right was the decoder by far. The decoder which initially seemed like an easy task quickly became challenging. Not because of the code itself (besides the hex conversion, initially) but due to edge cases. It became more apparent how strict the encoder needed to be once I started building the decoder. 
     - **testing** - Overlooked part for most of my classes since typically the test cases are built for me. However, building the test cases myself forced me to think hard on the language specifics but also on how an end-user would break my decoder/encoder. It was by far the hardest task of the assignment and still needs tons to develop before my test cases have 100% coverage on my code. 
+
+## Scanner 
