@@ -1,0 +1,4 @@
+*.o
+*.out
+# example flex files 
+examples
