@@ -1,0 +1,3 @@
+/*  should this be supprted -> s: string = """; */
+s: string = "";
+c: char = ''';

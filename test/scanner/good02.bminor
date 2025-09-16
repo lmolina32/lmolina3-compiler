@@ -1,0 +1,14 @@
+// test comparison operators 
+if ( x <= 5 ) {
+    return true;
+} else if (x >= 5) {
+    return false;
+} else if (x != 5) { 
+    return 10e-744
+} else if (x == 5) {
+    return 131314343441234
+} else if ( x > 5 || x < 6){
+    x++;
+} else if ( x > 10 && x < 15){
+    x--;
+}

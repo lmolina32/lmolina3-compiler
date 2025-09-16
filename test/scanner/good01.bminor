@@ -1,0 +1,12 @@
+// this is a valid commet 
+
+print "valid";
+/*this is also a valid comment*/
+
+print "valid 2";
+
+ 
+print "valid 3";
+
+/*******/
+/****** /* /* /* /* */
