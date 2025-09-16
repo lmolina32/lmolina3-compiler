@@ -1,3 +1,4 @@
 /*  should this be supprted -> s: string = """; */
 s: string = "";
+n: string = "'";
 c: char = ''';

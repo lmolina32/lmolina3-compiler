@@ -1,4 +1,4 @@
-c: string = "\a\b\e\f\n\r\t\v\\\'\" //\0xff"
+c: string = "\a\b\e\f\n\r\t\v\\\'\"\0xff"
 
 // a: string = \"\"
 

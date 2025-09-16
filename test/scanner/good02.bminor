@@ -11,4 +11,6 @@ if ( x <= 5 ) {
     x++;
 } else if ( x > 10 && x < 15){
     x--;
+} else if (!val){
+    x=x*x+x/b/a^2;
 }
