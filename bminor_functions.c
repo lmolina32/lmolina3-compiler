@@ -53,18 +53,34 @@ int encode(char *file_name){
  * @return  True if able to scan and tokenize, otherwise false 
  **/
 int scan(char *file_name){
+    char decoded_string[BUFSIZ];
+
     yyin = fopen(file_name, "r");
 
     if (!yyin) {
         fprintf(stderr, "%s %s\n", strerror(errno), file_name);
         return false;
     }
+
     while (1) {
         token_t t = yylex();
-        if (t == TOKEN_EOF) break;
-        printf("token: %d  text: %s\n", t, yytext);
-    }
 
+        if (t == TOKEN_EOF) break;
+
+        if (t == TOKEN_STRING_LITERAL) {
+            if (!string_decode(yytext, decoded_string)){
+                fclose(yyin);
+                return false;
+            }
+        }
+        printf("token: %-30s  text: %s\n", token_names[t],
+                t == TOKEN_STRING_LITERAL ? decoded_string : yytext);
+
+        if (t == TOKEN_ERROR) {
+            fclose(yyin);
+            return false;
+        }
+    }
     
     fclose(yyin);
     return true;

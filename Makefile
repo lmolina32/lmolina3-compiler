@@ -12,7 +12,7 @@ TARGETS= bminor
 all: $(TARGETS)
 
 
-bminor: bminor.o encoder.o bminor_functions.o scanner.o
+bminor: bminor.o encoder.o bminor_functions.o scanner.o tokens.o
 	$(LD) $(LDFLAGS) -o $@ $^
 
 bminor.o: bminor.c 
@@ -22,6 +22,9 @@ bminor_functions.o: bminor_functions.c bminor_functions.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 encoder.o: encoder.c encoder.h 
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+tokens.o: tokens.c tokens.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 scanner.c: scanner.flex
@@ -42,5 +45,5 @@ clean:
 	@echo "Removing Objects and Test Outputs"
 
 	@rm -f $(TARGETS) *.o 
-	@rm -f ./test/encode/*.out
+	@rm -f ./test/encode/*.out ./test/scanner/*.out
 	@rm -f scanner.c
