@@ -62,26 +62,37 @@ int scan(char *file_name){
         return false;
     }
 
+    int exit_code = true;
     while (1) {
         token_t t = yylex();
 
         if (t == TOKEN_EOF) break;
 
-        if (t == TOKEN_STRING_LITERAL) {
+        if (t == TOKEN_STRING_LITERAL || t == TOKEN_CHAR_LITERAL) {
+            if ( t == TOKEN_CHAR_LITERAL){
+                int len = strlen(yytext);
+                *(yytext) = '"';
+                *(yytext + len) = '\0';
+                *(yytext + len - 1) = '"';
+            }
+
             if (!string_decode(yytext, decoded_string)){
-                fclose(yyin);
-                return false;
+                exit_code = false; 
+                t = TOKEN_ERROR;
             }
         }
-        printf("token: %-30s  text: %s\n", token_names[t],
-                t == TOKEN_STRING_LITERAL ? decoded_string : yytext);
+        
+        if (t == TOKEN_STRING_LITERAL || t == TOKEN_CHAR_LITERAL){
+            printf("token: %-30s  text: %s\n", token_names[t], decoded_string);
+        } else {
+            printf("token: %-30s  text: %s\n", token_names[t], yytext);
+        }
 
         if (t == TOKEN_ERROR) {
-            fclose(yyin);
-            return false;
+            exit_code = false;
         }
     }
     
     fclose(yyin);
-    return true;
+    return exit_code;
 }

@@ -5,25 +5,25 @@
 /* Definitions */
 
 WHITE_SPACE     [ \t\r\n]
-C_STYLE         \/\*([^\*]|\*+[^\*\/])*\*+\/ 
+C_STYLE         \/\*([^\*]|\*+[^\*\/])*\*+\/
 C_PLUS_STYLE    \/\/.*
 COMMENTS        ({C_STYLE}|{C_PLUS_STYLE}) 
 NOT_COMMENTS    \/\*.*
-IDENTIFIER      [a-zA-Z_][a-zA-Z_0-9]*
+IDENTIFIER      [a-zA-Z_][a-zA-Z_0-9]{0,254}
 
 INTEGER         [0-9]+
 HEXIDECIMAL     [0-9a-fA-F]+H 
 BINARY          [01]+B
-INTEGER_VALUE   ({INTEGER}|{HEXIDECIMAL}|{BINARY})
 
-DOUBLE_VALUE    ([0-9]+\.?[0-9]*[eE][+-]?[0-9]+|[0-9]+\.[0-9]+|\.[0-9]+|[0-9]+\.)
+SCIENTIFIC      ([0-9]+\.?[0-9]*[eE][+-]?[0-9]+(\.[0-9]+)*)
+DOUBLE_VALUE    ([0-9]+\.[0-9]+)
 
 BOOL            (true|false)
 
-CHAR_BACKSLASH  (\\0x[0-9a-fA-F]{2}|\\[\x20-\x7E])
-CHAR_VALUE      \'([\x00-\xFF]|{CHAR_BACKSLASH})\'
+CHAR_BACKSLASH  (\\0x[0-9a-fA-F]{2}|\\[\x20-\x7e])
+CHAR_VALUE      \'([\x00-\xff]|{CHAR_BACKSLASH})\'
 
-STRING_VALUE    \"[^\"\n]*\" 
+STRING_VALUE    \"([^\"\\\n]|\\.)*\" 
 
 /* Rules */
 %%
@@ -31,11 +31,6 @@ STRING_VALUE    \"[^\"\n]*\"
 {WHITE_SPACE}+  { } 
 {COMMENTS}      { }
 {NOT_COMMENTS}  { return TOKEN_ERROR; }
-
-{STRING_VALUE}  { return TOKEN_STRING_LITERAL; }
-{INTEGER_VALUE} { return TOKEN_INTEGER_LITERAL; }
-{DOUBLE_VALUE}  { return TOKEN_DOUBLE_LITERAL; }
-{CHAR_VALUE}    { return TOKEN_CHAR_LITERAL; }
 
 array           { return TOKEN_ARRAY; }
 auto            { return TOKEN_AUTO; }
@@ -85,6 +80,14 @@ while           { return TOKEN_WHILE; }
 ";"             { return TOKEN_SEMICOLON; }
 ":"             { return TOKEN_COLON; }
 ","             { return TOKEN_COMMA; }
+
+{STRING_VALUE}  { return TOKEN_STRING_LITERAL; }
+{BINARY}        { return TOKEN_BINARY_LITERAL; }
+{HEXIDECIMAL}   { return TOKEN_HEXIDECIMAL_LITERAL; }
+{INTEGER}       { return TOKEN_INTEGER_LITERAL; }
+{SCIENTIFIC}    { return TOKEN_DOUBLE_SCIENTIFIC_LITERAL; }
+{DOUBLE_VALUE}  { return TOKEN_DOUBLE_LITERAL; }
+{CHAR_VALUE}    { return TOKEN_CHAR_LITERAL; }
 
 {IDENTIFIER}    { return TOKEN_IDENTIFIER; }
 

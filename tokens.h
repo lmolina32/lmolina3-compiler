@@ -5,7 +5,7 @@
 
 /* Constants */
 
-#define TOKEN_NUM 54 
+#define TOKEN_NUM 57 
 
 typedef enum {
     TOKEN_EOF=0,
@@ -15,7 +15,10 @@ typedef enum {
     // literals 
     TOKEN_STRING_LITERAL,
     TOKEN_INTEGER_LITERAL,
+    TOKEN_HEXIDECIMAL_LITERAL,
+    TOKEN_BINARY_LITERAL,
     TOKEN_DOUBLE_LITERAL,
+    TOKEN_DOUBLE_SCIENTIFIC_LITERAL,
     TOKEN_CHAR_LITERAL,
 
     //keywords
