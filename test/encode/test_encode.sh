@@ -1,6 +1,8 @@
 #!/bin/sh
 
-for testfile in test/encode/good*.bminor
+# run encode tests
+
+for testfile in ./test/encode/good*.bminor
 do
 	if ./bminor --encode $testfile &> $testfile.out
 	then
@@ -10,7 +12,7 @@ do
 	fi
 done
 
-for testfile in test/encode/bad*.bminor
+for testfile in ./test/encode/bad*.bminor
 do
 	if ./bminor --encode $testfile &> $testfile.out
 	then

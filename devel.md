@@ -1,5 +1,6 @@
 # Name: Leonardo Molina
 # NetID: lmolina3
+# Development Log 
 
 ## Encoder 
 ### Interpretation 
@@ -18,3 +19,28 @@
 * What parts were difficult to get right and required more effort?
     - **Edge Cases** - What was hard to get right was the decoder by far. The decoder which initially seemed like an easy task quickly became challenging. Not because of the code itself (besides the hex conversion, initially) but due to edge cases. It became more apparent how strict the encoder needed to be once I started building the decoder. 
     - **testing** - Overlooked part for most of my classes since typically the test cases are built for me. However, building the test cases myself forced me to think hard on the language specifics but also on how an end-user would break my decoder/encoder. It was by far the hardest task of the assignment and still needs tons to develop before my test cases have 100% coverage on my code. 
+
+
+## Scanner 
+### Interpretation 
+* char is one character version of a str. This means that \c, where c is any printable character would be itself. Additionally, we can valid hex values that can be transcribed from hex to ascii for example '\0x78' is valid. For chars what is not valid is several characters, empty char (e.g ''), or '''. 
+* strings when scanned must be in ", cannot have new line characters, and " in between (e.g "abc"abc" is not valid). The string is passed into the decoded_string function in `encoder.c` which will determine if it is a valid or invalid string. If it is valid TOKEN_CHAR_LITERAL is returned, if it is not then TOKEN_ERROR is returned. 
+* for the scanner leading 00s are allowed and will be handled later. 
+* for double literals they must have a number on both sides of the decimal point, otherwise it is invalid (e.g 12.232 is valid, .12 or 12. is not valid)
+* There is not current cutoff on how long integers and doubles should be, this will be taken care of down the line 
+* invalid comments are not returned as errors in the scanner (e.g /* not closed comment will be parsed into several different tokens). This was discussed in the Slack. 
+* H, B must be capitalized for the compiler to read hexadecimal and binary values 
+* Doubles have two tokens TOKEN_DOUBLE_LITERAL, TOKEN_DOUBLE_SCIENTIFIC_LITERAL.
+* integers have three tokens TOKEN_INTEGER_LITERAL, TOKEN_BINARY_LITERAL, TOKEN_HEXIDECIMAL_LITERAL
+* the scanner does not produce errors for invalid code at this point. For example, `2132232hbinary` is not valid in most programming languages as an integer. But, for the scanner it would read it as `TOKEN_INTEGER_LITERAL` and `TOKEN_IDENTIFIER`. This is what happens for unclosed comments. 
+* Lastly, comments are nongreedy meaning that `/* /* */ */` would only capture `/* /* */` and the last will be read as `TOKEN_MULTIPLICATION` and `TOKEN_DIVISION`. 
+
+### Structure 
+- `bminor.c` - contains the argument parser and calls functions from bminor_functions 
+- `bminor_functions.c` - contains what occurs when you run `bminor --scan file` or `bminor --encode file`. This is to make the code more maintainable but also separate behavior of functions. 
+
+
+### Development code 
+* for the scanner I didn't use any AI, but did ask Prince for help on what is valid and not valid in the scanner. 
+* What was easy to get right was the main bminor file, setting up the --scan and then just reading the input from yylex() and printing out the tokens was pretty easy. Additionally, I moved around my code to make it more readable and understandable. 
+* The scanner.flex file is the one that gave me to most trouble. We skimmed over the implementation in class so it wasn't fresh in my memory. The flex scanner generator was sort of helpful sort of not. But, once getting started it was easy to figure out how to work everything together. But, the regex for the strings and the comments were the most trickiest part I believe to get right. 

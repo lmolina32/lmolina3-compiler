@@ -1,0 +1,63 @@
+a: array [5] integer;
+a: array [5] integer = {1,2,3,4,5};
+l: integer = # a;
+
+for( i = 0; i < #a; i++){
+    print a[i];
+}
+
+c: carray [5] integer: {1,2,3,4,5};
+for (i = 0; i < 5; i++){
+    print c[i];
+}
+
+b: boolean;
+x: integer = 3;
+y: integer = 5;
+b = x^y;
+
+f: integer = 0;
+if(f == 0){
+    print f;
+}
+
+c: char = 'a':
+if(c=='a'){
+    print c;
+}
+
+s: auto = "hello";
+
+t: auto = x < y;
+
+f: function auto ( x: integer, y: integer )
+{
+        return x + y  //comment 
+}
+
+y = m*x+b;
+
+return (f-32)*5/9;
+
+print "the temperature is: ", temp, " degrees\n";
+
+square: function integer (x: integer ) = {
+    return x^2;
+}
+
+printarray: function void ( a: array [] integer ) = {
+    i: integer;
+    for( i = 0;i<#a;i++){
+        print a[i], "\n";
+    }
+}
+
+
+puts: function void (s: string );
+main: function integer () = {
+    puts("hello world");
+}
+
+main: function integer (argc: integer, argv: carray [] string) = {
+    puts("hello world");
+}

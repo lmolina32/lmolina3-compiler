@@ -1,0 +1,6 @@
+// string should be in one line 
+
+" this is an 
+invalid 
+
+string"

@@ -8,10 +8,6 @@
 #include <errno.h>
 #include <stdbool.h>
 
-/* Constants */
-
-#define MAX_STR_LEN 255
-
 /* Functions */
 
 /** 
