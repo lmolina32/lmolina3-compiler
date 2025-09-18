@@ -2,6 +2,8 @@ c: string = "\a\b\e\f\n\r\t\v\\\'\"\0xff"
 
 // a: string = \"\"
 
+a: string = "abc\"abc"
+
 // b: auto = "hello""hello"
 
 h: auto = "\0xff \0a \0abb \0xab \0xAB \0xab"
