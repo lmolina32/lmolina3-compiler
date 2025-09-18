@@ -48,14 +48,13 @@ int encode(char *file_name){
 }
 
 /**
- * Reads in file with line of code, scans the code and tokenizes it
+ * Reads in file and scans the code and tokenizes it
  * @param   file_name       name of file to open
  * @return  True if able to scan and tokenize, otherwise false 
  **/
 int scan(char *file_name){
-    char decoded_string[BUFSIZ];
-
     yyin = fopen(file_name, "r");
+    token_t t;
 
     if (!yyin) {
         fprintf(stderr, "%s %s\n", strerror(errno), file_name);
@@ -63,34 +62,27 @@ int scan(char *file_name){
     }
 
     int exit_code = true;
-    while (1) {
-        token_t t = yylex();
+    
+    while ((t = yylex()) != TOKEN_EOF) {
 
-        if (t == TOKEN_EOF) break;
-
-        if (t == TOKEN_STRING_LITERAL || t == TOKEN_CHAR_LITERAL) {
-            if ( t == TOKEN_CHAR_LITERAL){
-                int len = strlen(yytext);
-                *(yytext) = '"';
-                *(yytext + len) = '\0';
-                *(yytext + len - 1) = '"';
-            }
-
-            if (!string_decode(yytext, decoded_string)){
-                exit_code = false; 
-                t = TOKEN_ERROR;
-            }
-        }
-        
-        if (t == TOKEN_STRING_LITERAL || t == TOKEN_CHAR_LITERAL){
-            printf("token: %-30s  text: %s\n", token_names[t], decoded_string);
-        } else {
-            printf("token: %-30s  text: %s\n", token_names[t], yytext);
+        switch (t){
+            case TOKEN_STRING_LITERAL:
+            case TOKEN_CHAR_LITERAL:
+            case TOKEN_INTEGER_LITERAL:
+            case TOKEN_DOUBLE_LITERAL:
+            case TOKEN_DOUBLE_SCIENTIFIC_LITERAL:
+            case TOKEN_HEXIDECIMAL_LITERAL:
+            case TOKEN_BINARY_LITERAL:
+                printf("token: %-32s  text: %s\n", token_names[t], yytext);
+                break;
+            case TOKEN_ERROR:
+                printf("scan error: %s is not valid\n", yytext);
+            default:
+                printf("token: %-30s\n" , token_names[t]);
+                break;
         }
 
-        if (t == TOKEN_ERROR) {
-            exit_code = false;
-        }
+        if (t == TOKEN_ERROR) exit_code = false;
     }
     
     fclose(yyin);

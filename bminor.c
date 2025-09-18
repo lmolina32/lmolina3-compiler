@@ -9,7 +9,7 @@
 
 int main(int argc, char *argv[]){
     int argind = 1;
-    if (argc != 3){
+    if (argc < 3){
         fprintf(stderr, "Failed not enough command line arguments\n");
         return EXIT_FAILURE;
     }
