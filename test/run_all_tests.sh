@@ -13,3 +13,8 @@ echo ""
 echo "Scanner Tests"
 echo "------------------"
 ./test/scanner/test_scanner.sh
+
+echo ""
+echo "Parser Tests"
+echo "------------------"
+./test/parser/test_parser.sh
