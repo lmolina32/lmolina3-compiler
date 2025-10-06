@@ -71,4 +71,4 @@ clean:
 
 	@rm -f $(TARGETS) *.o 
 	@rm -f ./test/encode/*.out ./test/scanner/*.out
-	@rm -f scanner.c parser.output tokens.h parser.c
+	@rm -f scanner.c parser.output token.h parser.c
