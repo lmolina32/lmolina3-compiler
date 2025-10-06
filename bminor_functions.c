@@ -2,7 +2,8 @@
 
 #include "bminor_functions.h"
 #include "encoder.h"
-#include "tokens.h"
+#include "tokens_to_string.h"
+#include "token.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -54,7 +55,7 @@ int encode(char *file_name){
  **/
 int scan(char *file_name){
     yyin = fopen(file_name, "r");
-    token_t t;
+    size_t t;
 
     if (!yyin) {
         fprintf(stderr, "%s %s\n", strerror(errno), file_name);
@@ -64,7 +65,6 @@ int scan(char *file_name){
     int exit_code = true;
     
     while ((t = yylex()) != TOKEN_EOF) {
-
         switch (t){
             case TOKEN_STRING_LITERAL:
             case TOKEN_CHAR_LITERAL:
@@ -73,12 +73,14 @@ int scan(char *file_name){
             case TOKEN_DOUBLE_SCIENTIFIC_LITERAL:
             case TOKEN_HEXIDECIMAL_LITERAL:
             case TOKEN_BINARY_LITERAL:
-                printf("token: %-32s  text: %s\n", token_names[t], yytext);
+            case TOKEN_IDENTIFIER:
+                printf("token: %-32s  text: %s\n", token_names[t % 258], yytext);
                 break;
             case TOKEN_ERROR:
                 printf("scan error: %s is not valid\n", yytext);
+                break;
             default:
-                printf("token: %-30s\n" , token_names[t]);
+                printf("token: %-30s\n" , token_names[t % 258]);
                 break;
         }
 
@@ -87,4 +89,19 @@ int scan(char *file_name){
     
     fclose(yyin);
     return exit_code;
+}
+
+/**
+ * Reads in file and scans the code and tokenizes it
+ * @param   file_name       name of file to open
+ * @return  True if able to scan & parse, otherwise false 
+ **/
+int parse(char *file_name){
+    if(yyparse() == 0){
+        printf("Prase Successful\n");
+        return true;
+    } else {
+        fprintf(stderr, "Parse Error\n");
+        return false;
+    }
 }
