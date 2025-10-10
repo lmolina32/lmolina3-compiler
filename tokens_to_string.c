@@ -1,4 +1,4 @@
-/* token.h: contains additional values for tokens */
+/* token_to_strings.h: contains additional values for tokens */
 
 #include "tokens_to_string.h"
 

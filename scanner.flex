@@ -31,6 +31,8 @@ CHAR_VALUE      \'([\x00-\x26\x28-\xff]|{CHAR_BACKSLASH})\'
 
 STRING_VALUE    \"([^\"\\\n]|\\.)*\" 
 
+%option yylineno 
+
 /* Rules */
 %%
 
@@ -132,7 +134,6 @@ while           { return TOKEN_WHILE; }
 {IDENTIFIER}    { return TOKEN_IDENTIFIER; }
 {NOT_IDENT}     { return TOKEN_ERROR; }
 
-<<EOF>>         { return TOKEN_EOF; }
 .               { return TOKEN_ERROR; }
 
 %%
