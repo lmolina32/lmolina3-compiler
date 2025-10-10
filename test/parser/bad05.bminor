@@ -1,0 +1,7 @@
+main: function void() = {
+    if (i) 
+        else i;
+    else i;
+
+
+}

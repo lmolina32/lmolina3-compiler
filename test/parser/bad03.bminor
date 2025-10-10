@@ -1,0 +1,11 @@
+main: function integer() {
+    x: array [10] integer = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    y: array [10] integer = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    i: integer = 0; 
+    for (i; i < #x; i++){
+        y[i] = ((x[i] * x[i] + x[i] / 1)^2 ) % 2;
+        print y[i];
+    }
+    
+
+}

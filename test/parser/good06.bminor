@@ -1,0 +1,12 @@
+round_vals: function integer (x: integer, y: double);
+
+exponential_function: function double (x: double, y: integer, z: float, c: char);
+
+print_out_vals: function void (x: double, y: string);
+
+main: function void() = {
+    round_vals(5, 5);
+    exponential_function(10, 10, 5, 2);
+    print_out_vals(10, 2000);
+}
+

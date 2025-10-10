@@ -1,6 +1,6 @@
-/* token.h: contains additional values for tokens */
+/* token_to_strings.h: contains additional values for tokens */
 
-#include "tokens.h"
+#include "tokens_to_string.h"
 
 /* constants */
 const char *token_names[TOKEN_NUM] = {

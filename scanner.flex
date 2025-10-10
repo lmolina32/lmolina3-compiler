@@ -1,7 +1,9 @@
 %{
 #include "encoder.h"
-#include "tokens.h"
+#include "token.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 %}
 
@@ -16,8 +18,8 @@ IDENTIFIER      [a-zA-Z_][a-zA-Z_0-9]{0,254}
 NOT_IDENT       [a-zA-Z_][a-zA-Z_0-9]{255,}
 
 INTEGER         [0-9]+
-HEXIDECIMAL     [0-9a-fA-F]+H 
-BINARY          [01]+B
+HEXIDECIMAL     0x[0-9a-fA-F]+ 
+BINARY          0b[01]+
 
 SCIENTIFIC      ([0-9]+\.?[0-9]*[eE][+-]?[0-9]+(\.[0-9]+)*)
 DOUBLE_VALUE    ([0-9]+\.[0-9]+)
@@ -28,6 +30,8 @@ CHAR_BACKSLASH  (\\0x[0-9a-fA-F]{2}|\\[\x20-\x7f])
 CHAR_VALUE      \'([\x00-\x26\x28-\xff]|{CHAR_BACKSLASH})\'
 
 STRING_VALUE    \"([^\"\\\n]|\\.)*\" 
+
+%option yylineno 
 
 /* Rules */
 %%

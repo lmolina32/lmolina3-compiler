@@ -1,0 +1,13 @@
+x: array [] auto = 0, 0, 0, 0;
+x: integer;
+
+main: function void() ={
+    if (10 > 20){
+        print " 10 > 20";
+    } else if (2000 > 100){
+        print " 2000 > 100";
+    } else{
+        print "5 * 5 < 0";
+    }
+    return
+}

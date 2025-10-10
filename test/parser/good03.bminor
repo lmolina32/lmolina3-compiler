@@ -1,0 +1,16 @@
+// check types 
+x: integer;
+y: integer = 123;
+sec_y: integer;
+f: double = 45.67;
+expr: double;
+b: boolean = false;
+sec_b: boolean;
+c: char    = 'q';
+sec_c: boolean;
+s: string  = "hello bminor\n";
+sec_s: string;
+a: array [5] integer;
+a: array [5] array [5] array [] auto = {{1, 2}, {2, 2}, {1}};
+a: carray [5] carray [5] carray [] auto = {{1, 2}, {2, 2}, {1}};
+a: carray [] char = {};

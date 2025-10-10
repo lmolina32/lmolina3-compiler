@@ -1,0 +1,31 @@
+// if Statements
+main: function void() ={
+    if (10 > 20){
+        print " 10 > 20";
+    } else if (2000 > 100){
+        print " 2000 > 100";
+    } else{
+        print "5 * 5 < 0";
+    }
+
+    if (10 > 10)
+        if (10 > 10)
+            if (1000 > 1000)
+                if (10000 > 100)
+                    if (1000 > 100)
+                        print "true";
+
+    ident: integer = 5;
+    i: integer = 0;
+    if (true)
+        if ( ident == 5 ){
+            for (i; i < 1000; i++)
+                print i;
+        } else {
+            if (ident >= 5)
+                print "ident greater than or equal 5";
+            if (ident <= 5)
+                print "ident less than or equal 5";
+        }
+
+}

@@ -1,0 +1,14 @@
+add_two_vals: function integer (x: integer, y: integer);
+
+multiply_two_vals: function double (x: double, y: double);
+
+exp_two_vals: function double( x: integer, y:integer, c: boolean);
+
+main: function void() = {
+    i: auto = multiply_two_vals(10, add_two_vals(10, 10));
+
+    print i;
+
+    print multiply_two_vals( 10, add_two_vals(10, exp_two_vals(multiply_two_vals(10, 10) , 10)));
+    return;
+}

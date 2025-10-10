@@ -1,0 +1,3 @@
+add_two_vals(x: void, y: array)
+
+multiply_two_vals: function array [10] void (integer, x: void);

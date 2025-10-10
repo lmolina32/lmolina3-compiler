@@ -7,13 +7,16 @@
 
 /* Globals */
 extern FILE   *yyin;
-extern int    yylex();
+extern int     yylex();
 extern char   *yytext; 
+extern int     yyparse();
+extern int     yyrestart();
 
 /* Functions */
 
 int     encode(char *file_name);
 int     scan(char *file_name);
+int     parse(char *file_name);
 
 /* Miscellaneous */
 
