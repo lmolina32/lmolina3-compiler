@@ -18,7 +18,7 @@ bminor: bminor.o encoder.o bminor_functions.o scanner.o parser.o tokens_to_strin
 bminor.o: bminor.c 
 	$(CC) $(CFLAGS) -c -o $@ $^
 
-bminor_functions.o: bminor_functions.c bminor_functions.h
+bminor_functions.o: bminor_functions.c bminor_functions.h token.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 encoder.o: encoder.c encoder.h 
@@ -43,6 +43,7 @@ test:	test-all
 
 test-all: bminor
 	@chmod +x ./test/run_all_tests.sh
+	@chmod +x ./test/run_book_tests.sh
 	@chmod +x ./test/encode/test_encode.sh
 	@chmod +x ./test/scanner/test_scanner.sh
 	@chmod +x ./test/parser/test_parser.sh
@@ -70,5 +71,6 @@ clean:
 	@echo "Removing Objects and Test Outputs"
 
 	@rm -f $(TARGETS) *.o 
-	@rm -f ./test/encode/*.out ./test/scanner/*.out
+	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out
+	@rm -f ./test/book_test_cases/parser/*.out
 	@rm -f scanner.c parser.output token.h parser.c
