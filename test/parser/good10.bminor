@@ -1,0 +1,13 @@
+main: function void () = {
+    test_arr: array[] array[] array[] auto = {{1}};
+    test_arr: array[] array[] array[] array[] array[] array [] array[] array[] auto = {{{{{{{{1}}}}}}}, {{{{{{{1}}}}}}}};
+
+    for(;;)
+        for (;;)
+            for (;;)
+                for (;;)
+                    if (i)
+                        print i, i, i, i, i, i, i, "hello";
+
+    return                             ;
+}

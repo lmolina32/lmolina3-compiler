@@ -1,0 +1,4 @@
+main: function void () = 
+    arr: array [] integer = {};
+    arr: integer
+}
