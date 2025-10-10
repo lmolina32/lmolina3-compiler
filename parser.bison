@@ -99,17 +99,20 @@ decl:       var_decl
 /* Variable Declarations */
 var_decl:   TOKEN_IDENTIFIER TOKEN_COLON type TOKEN_SEMICOLON;
             | TOKEN_IDENTIFIER TOKEN_COLON type TOKEN_ASSIGNMENT expr TOKEN_SEMICOLON
-            | TOKEN_IDENTIFIER TOKEN_COLON type TOKEN_ASSIGNMENT TOKEN_LBRACE braced_expr TOKEN_RBRACE TOKEN_SEMICOLON
+            | TOKEN_IDENTIFIER TOKEN_COLON type TOKEN_ASSIGNMENT array_init TOKEN_SEMICOLON
             ;
 
-braced_expr:  non_braced_expr
-              | /* epsilon */
-              ;
+array_init:     TOKEN_LBRACE array_init_list TOKEN_RBRACE
+                | TOKEN_LBRACE TOKEN_RBRACE
+                ;
 
-non_braced_expr:        TOKEN_LBRACE non_braced_expr TOKEN_RBRACE TOKEN_COMMA non_braced_expr
-                        | TOKEN_LBRACE non_braced_expr TOKEN_RBRACE
-                        | expr_list
-                        ;
+array_init_list:    array_init_element TOKEN_COMMA array_init_list
+                    | array_init_element
+                    ;
+
+array_init_element: expr
+                    | array_init
+                    ;
 
 /* Function Declarations */
 func_decl:  TOKEN_IDENTIFIER TOKEN_COLON TOKEN_FUNCTION return_type TOKEN_LPAREN param_list TOKEN_RPAREN TOKEN_SEMICOLON
@@ -282,9 +285,15 @@ literals_expr: TOKEN_STRING_LITERAL
                 | TOKEN_LPAREN expr TOKEN_RPAREN
                 ;
 
-expr_list:     expr TOKEN_COMMA expr_list 
-              | expr
-              ;
+
+
+expr_list:     non_empty_expr_list
+               | /* epsilon */
+               ;
+
+non_empty_expr_list:    expr TOKEN_COMMA non_empty_expr_list 
+                        | expr
+                        ;
 
 %%
 /* C postamble code */
