@@ -10,6 +10,7 @@ extern FILE   *yyin;
 extern int     yylex();
 extern char   *yytext; 
 extern int     yyparse();
+extern int     yyrestart();
 
 /* Functions */
 

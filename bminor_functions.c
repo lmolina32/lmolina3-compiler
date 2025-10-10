@@ -64,7 +64,7 @@ int scan(char *file_name){
 
     int exit_code = true;
     
-    while ((t = yylex()) != TOKEN_EOF) {
+    while ((t = yylex()) != 0) {
         switch (t){
             case TOKEN_STRING_LITERAL:
             case TOKEN_CHAR_LITERAL:
@@ -97,6 +97,15 @@ int scan(char *file_name){
  * @return  True if able to scan & parse, otherwise false 
  **/
 int parse(char *file_name){
+    yyin = fopen(file_name, "r");
+
+    if (!yyin) {
+        fprintf(stderr, "%s %s\n", strerror(errno), file_name);
+        return false;
+    }
+
+    yyrestart(yyin);
+
     if(yyparse() == 0){
         printf("Prase Successful\n");
         return true;
