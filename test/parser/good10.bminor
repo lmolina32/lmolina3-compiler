@@ -1,6 +1,6 @@
 main: function void () = {
-    test_arr: array[] array[] array[] auto = {{1}};
-    test_arr: array[] array[] array[] array[] array[] array [] array[] array[] auto = {{{{{{{{1}}}}}}}, {{{{{{{1}}}}}}}};
+    test_arr: array[] array[] array[] auto = {{{}}};
+    test_arr: array[] array[] array[] array[] array[] array [] array[] array[] auto = {{{{{{{{}}}}}}}, {{{{{{{}}}}}}}};
 
     for(;;)
         for (;;)
