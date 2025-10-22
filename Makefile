@@ -1,76 +1,129 @@
-# configurations 
+# Configuration 
 
 CC=			gcc
-CFLAGS=		-Wall -g -std=gnu99
-LEX=		flex
 LD=			gcc
-LDFLAGS=	-L.
+CFLAGS=		-Wall -Wextra -g -std=gnu99 -Og
+LDFLAGS=	-Lbuild 
+
 YACC=		bison 
+LEX=		flex
 
-TARGETS= bminor
+# Variables
 
-# rules 
-all: $(TARGETS)
+HEADERS=		$(wildcard src/main/*.h) \
+				$(wildcard src/encoder/*.h) \
+				$(wildcard src/scanner/*.h) \
+				$(wildcard src/parser/*.h) \
+				$(wildcard src/ast/*.h) \
+				$(wildcard src/library/*.h) \
+				$(wildcard build/*.h) 
 
-bminor: bminor.o encoder.o bminor_functions.o scanner.o parser.o tokens_to_string.o 
-	$(LD) $(LDFLAGS) -o $@ $^
+INCLUDES=		-Isrc/main \
+				-Isrc/encoder \
+				-Isrc/scanner \
+				-Isrc/parser \
+				-Isrc/ast \
+				-Isrc/library \
+				-Ibuild
 
-bminor.o: bminor.c 
-	$(CC) $(CFLAGS) -c -o $@ $^
+SOURCES= 		src/main/bminor.c \
+				src/main/bminor_functions.c \
+				src/encoder/encoder.c \
+				src/scanner/tokens_to_string.c \
 
-bminor_functions.o: bminor_functions.c bminor_functions.h token.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+OBJECTS=		build/bminor.o \
+				build/bminor_functions.o \
+				build/encoder.o \
+				build/tokens_to_string.o \
+				build/scanner.o \
+				build/parser.o
 
-encoder.o: encoder.c encoder.h 
-	$(CC) $(CFLAGS) -c -o $@ $<
+BMINOR=			bin/bminor 
 
-tokens_to_string.o: tokens_to_string.c tokens_to_string.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+# Rules 
 
-scanner.c: scanner.flex token.h 
-	$(LEX) -o $@ $< 
+all: $(BMINOR)
 
-scanner.o: scanner.c token.h 
-	$(CC) -c -o $@ $< -lfl
+# Compile bminor 
+$(BMINOR): $(OBJECTS)
+	@echo "Linking $@"
+	@$(LD) $(LDFLAGS) $(INCLUDES) -o $@ $^
 
-parser.c token.h: parser.bison 
-	$(YACC) -v --defines=token.h --output=parser.c $< 
+build/%.o: src/main/%.c $(HEADERS) build/token.h 
+	@echo "Compiling $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
-parser.o: parser.c token.h 
-	$(CC) -c -o $@ $<
+# Compile encoder 
+build/%.o: src/encoder/%.c $(HEADERS)
+	@echo "Compiling $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+
+# Compile tokens_to_string
+build/%.o: src/scanner/%.c $(HEADERS)
+	@echo "Compiling $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	
+# Generate scanner
+build/scanner.c: src/scanner/scanner.flex build/token.h 
+	@echo "Generating $@"
+	@$(LEX) -o $@ $<
+
+# Generate parser
+build/parser.c build/token.h: src/parser/parser.bison 
+	@echo "Generating $@"
+	@$(YACC) -v --defines=build/token.h --output=build/parser.c $<
+
+# compile scanner 
+build/scanner.o: build/scanner.c build/token.h
+	@echo "Compiling $@"
+	@$(CC) $(INCLUDES) -c -o $@ $< -lfl 
+
+# compile parser 
+build/parser.o: build/parser.c build/token.h
+	@echo "Compiling $@"
+	@$(CC) $(INCLUDES) -c -o $@ $<
+
+# testing 
 
 test:	test-all
 
-test-all: bminor
+test-all: $(BMINOR) 
 	@chmod +x ./test/run_all_tests.sh
 	@chmod +x ./test/run_book_tests.sh
-	@chmod +x ./test/encode/test_encode.sh
-	@chmod +x ./test/scanner/test_scanner.sh
-	@chmod +x ./test/parser/test_parser.sh
+	@chmod +x ./test/scripts/*.sh
 	@./test/run_all_tests.sh
 
-test-encode: bminor
+test-encode: $(BMINOR) 
 	@echo "Testing Encode"
 	@echo "---------------------------------------"
-	@chmod +x ./test/encode/test_encode.sh
-	@./test/encode/test_encode.sh
+	@chmod +x ./test/scripts/test_encode.sh
+	@./test/scripts/test_encode.sh
 
-test-scanner: bminor
+test-scanner: $(BMINOR) 
 	@echo "Testing Scanner"
 	@echo "---------------------------------------"
-	@chmod +x ./test/scanner/test_scanner.sh
-	@./test/scanner/test_scanner.sh
+	@chmod +x ./test/scripts/test_scanner.sh
+	@./test/scripts/test_scanner.sh
 
-test-parser: bminor
+test-parser: $(BMINOR) 
 	@echo "Testing parser"
 	@echo "---------------------------------------"
-	@chmod +x ./test/parser/test_parser.sh
-	@./test/parser/test_parser.sh
+	@chmod +x ./test/scripts/test_parser.sh
+	@./test/scripts/test_parser.sh
+
+# clean 
 
 clean:
-	@echo "Removing Objects and Test Outputs"
+	@echo "Removing Objects"
+	@rm -f $(OBJECTS)
 
-	@rm -f $(TARGETS) *.o 
+	@echo "Removing Generated Files"
+	@rm -f ./build/scanner.c ./build/parser.c ./build/token.h ./build/parser.output 
+
+	@echo "Removing Test Logs"
 	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out
 	@rm -f ./test/book_test_cases/parser/*.out
-	@rm -f scanner.c parser.output token.h parser.c
+
+	@echo "Removing bminor"
+	@rm -f $(BMINOR)
+

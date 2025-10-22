@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# run encode tests
+# run parser tests
 
-for testfile in ./test/encode/good*.bminor
+for testfile in ./test/parser/good*.bminor
 do
-	if ./bminor --encode $testfile &> $testfile.out
+	if ./bin/bminor --parse $testfile &> $testfile.out
 	then
 		echo "$testfile success (as expected)"
 	else
@@ -12,9 +12,9 @@ do
 	fi
 done
 
-for testfile in ./test/encode/bad*.bminor
+for testfile in ./test/parser/bad*.bminor
 do
-	if ./bminor --encode $testfile &> $testfile.out
+	if ./bin/bminor --parse $testfile &> $testfile.out
 	then
 		echo "$testfile success (INCORRECT)"
 	else

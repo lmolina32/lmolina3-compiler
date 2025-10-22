@@ -1,4 +1,6 @@
 *.o
 *.out
+bin/*
+build/*
 # example flex files 
 examples

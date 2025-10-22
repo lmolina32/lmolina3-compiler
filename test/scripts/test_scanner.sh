@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# run parser tests
+# run scanner tests
 
-for testfile in ./test/parser/good*.bminor
+for testfile in ./test/scanner/good*.bminor
 do
-	if ./bminor --parse $testfile &> $testfile.out
+	if ./bin/bminor --scan $testfile &> $testfile.out
 	then
 		echo "$testfile success (as expected)"
 	else
@@ -12,9 +12,9 @@ do
 	fi
 done
 
-for testfile in ./test/parser/bad*.bminor
+for testfile in ./test/scanner/bad*.bminor
 do
-	if ./bminor --parse $testfile &> $testfile.out
+	if ./bin/bminor --scan $testfile &> $testfile.out
 	then
 		echo "$testfile success (INCORRECT)"
 	else
