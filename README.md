@@ -1,51 +1,137 @@
-BMinor Compiler Project - Leonardo Molina
--------------------------------
+# BMinor Compiler
 
-This directory contains the starter code for the BMinor compiler.
-Students in CSE 40243 are *required* to use these header files as the basis for your work.
-Trust us, it will get you started on the right track, and make it
-much easier for the instructors to help you with any difficulties.
+**Author:** Leonardo Molina  
+**Course:** [CSE 40243 - Compilers](https://dthain.github.io/compilers-fa25/)
 
-Of course, to complete the project, you will have to add quite a bit
-to what is here.  You are free to add new files, add items to the
-structures, implement new functions, and so forth.  But stick to
-the basic structure that `decl` represents a declaration,
-`expr` represents an expression, and so forth.
+A compiler for the BMinor programming language, built as part of a multi-phase compiler construction project.
 
-For your sanity and ours, you *must* adhere to the following style:
-- Every function must be prefixed with the name of the structure that it manipulates.
-- Function prototypes go in the `.h` file of the corresponding name.
-- Function implementations go in the `.c` file of the corresponding name.
+## Building
 
-For example, the function `decl_print` prints out a declaration.
-Its prototype is found in `decl.h` and the implementation is found in `decl.c`.
+```bash
+make           # Build the compiler
+make clean     # Remove build artifacts
+```
 
-For the parsing assignment:
+The executable will be created at `bin/bminor`.
 
-The include files `decl.h stmt.h expr.h type.h param_list.h`
-comprise the abstract syntax tree (AST) for CMinor.
-A CMinor program is a list of declarations (`decl`) of either global
-variables or global functions.  A global function declaration
-is a list of statements (`stmt`) such as if-else, while-loops,
-and return statements.  Most statements contain expressions (`expr`)
-which are trees of operators and values.  A type structure (`type`)
-is used to represent abstract types like `integer`, `string`,
-and `array of boolean`.
+## Usage
 
-For the typechecking assignment:
+The compiler supports multiple modes of operation:
 
-The module `hash_table` implements a string-based hash table,
-which will come in handy in the typechecking assignment.
-The hash table will point to objects of type `symbol` so
-as to match variables names (`x`) with their definitions,
-like "parameter 3" or "global integer x".
+```bash
+# Encode string literals
+./bin/bminor --encode <filename.bminor>
 
-For the code generation assignment:
+# Scan a source file (lexical analysis)
+./bin/bminor --scan <filename.bminor>
 
-The module 'library.c' contains the "standard library" for bminor,
-which is needed to implement the print statement and the exponentiation
-operator.  You are welcome to add items to the library if you find
-it helpful.  Set up your Makefile carefully: library.c should be
-linked against a compiled bminor program, not against the compiler itself.
+# Parse a source file (syntax analysis)
+./bin/bminor --parse <filename.bminor>
 
+```
 
+### Exit Codes
+
+- `0` - Success
+- `1` - Compilation error or invalid input
+
+## Testing
+
+Run the test suites to verify compiler functionality:
+
+```bash
+make test-all        # Run all tests (not book test cases)
+make test-scanner    # Test lexical analysis
+make test-parser     # Test syntax analysis
+make test-encode     # Test string encoding
+make test-book       # Run book test cases
+```
+
+Test cases are organized in `test/` by compiler phase, with both valid (`good*.bminor`) and invalid (`bad*.bminor`) test programs.
+
+- Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`
+- Book test cases: `test/book_test_cases/parser`
+
+## Project Structure
+
+```
+bminor/
+├── src/
+│   ├── main/           # Driver code and main entry point
+│   ├── scanner/        # Lexical analysis (Flex)
+│   ├── parser/         # Syntax analysis (Bison)
+│   ├── ast/            # Abstract Syntax Tree definitions
+│   ├── encoder/        # String literal encoding
+│   └── library/        # Symbol table and runtime library
+├── test/               # Test cases organized by phase
+│   └── scripts/        # Individual test scripts for each phase
+├── build/              # Compiled object files (generated)
+├── bin/                # Final executable (generated)
+└── docs/               # Documentation
+```
+
+## Architecture
+
+### Abstract Syntax Tree (AST)
+
+The AST is defined across several header files in `src/ast/`:
+
+- **`decl.h`** - Declarations (global variables and functions)
+- **`stmt.h`** - Statements (if-else, for, return, etc.)
+- **`expr.h`** - Expressions (operators, literals, function calls)
+- **`type.h`** - Type representations (integer, string, boolean, arrays, functions)
+- **`param_list.h`** - Function parameter lists
+
+### Symbol Table
+
+The `hash_table` module (`src/library/`) implements a string-based hash table for symbol management, used to map variable names to their definitions during name resolution and type checking.
+
+### Standard Library
+
+`library.c` contains the BMinor standard library, implementing:
+
+- Print statement support
+- Exponentiation operator
+- Other runtime support functions
+
+This module is linked against compiled BMinor programs, not the compiler itself.
+
+## Coding Style
+
+To maintain consistency and clarity:
+
+- **Function naming**: Prefix each function with the structure it manipulates
+  - Example: `decl_print()`, `expr_evaluate()`, `stmt_typecheck()`
+- **File organization**:
+  - Function prototypes → `.h` files
+  - Function implementations → `.c` files
+  - Example: `decl_print()` prototype in `decl.h`, implementation in `decl.c`
+
+## Language Features
+
+BMinor is a strictly-typed, C-like language with the following features:
+
+- **For more detail go to [docs](https://dthain.github.io/compilers-fa25/bminor)**
+- **For concise overview go [here](/docs/bminor_language.md)**
+
+See `test/` directories for example programs.
+
+## Requirements
+
+- GCC or compatible C compiler - Version: 8.5.0
+- Flex - Version: 2.6.1
+- Bison (GNU Bison) - Version: 3.0.4
+- GNU bash - Version: 4.4.20(1)-release
+- GNU Make - Version: 4.2.1
+
+## Development Notes
+
+See `docs/devel.md` for implementation details and development guidelines.
+
+## License
+
+Academic project for CSE 40243. Do not distribute or copy without permission.
+
+---
+
+_This project follows the structure and guidelines provided by the CSE 40243 course materials._

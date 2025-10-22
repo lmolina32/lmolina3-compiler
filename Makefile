@@ -111,6 +111,13 @@ test-parser: $(BMINOR)
 	@chmod +x ./test/scripts/test_parser.sh
 	@./test/scripts/test_parser.sh
 
+test-book: $(BMINOR)
+	@echo "Testing Book Test cases"
+	@echo "---------------------------------------"
+	@chmod +x ./test/run_book_tests.sh
+	@chmod +x ./test/book_test_cases/scripts/*.sh
+	@./test/run_book_tests.sh
+
 # clean 
 
 clean:
