@@ -39,15 +39,21 @@ OBJECTS=		build/bminor.o \
 				build/parser.o
 
 BMINOR=			bin/bminor 
+OLD_BMINOR=		bminor
 
 # Rules 
 
-all: dirs $(BMINOR)
+all: dirs $(BMINOR) $(OLD_BMINOR)
 
 dirs:
 	@echo "making bin and build directories"
 	@mkdir -p bin
 	@mkdir -p build
+
+# Compile bminor 
+$(OLD_BMINOR): $(OBJECTS)
+	@echo "Linking $@"
+	@$(LD) $(LDFLAGS) $(INCLUDES) -o $@ $^
 
 # Compile bminor 
 $(BMINOR): $(OBJECTS)
@@ -137,5 +143,5 @@ clean:
 	@rm -f ./test/book_test_cases/parser/*.out
 
 	@echo "Removing bminor"
-	@rm -f $(BMINOR)
+	@rm -f $(BMINOR) $(OLD_BMINOR)
 

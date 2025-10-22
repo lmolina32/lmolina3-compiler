@@ -53,8 +53,10 @@
 - The scanner.flex file is the one that gave me to most trouble. We skimmed over the implementation in class so it wasn't fresh in my memory. The flex scanner generator was sort of helpful sort of not. But, once getting started it was easy to figure out how to work everything together. But, the regex for the strings and the comments were the most trickiest part I believe to get right.
 
 ## Parser
-### Interpretation 
-* I took the literal sense of what the spec told us is valid and not valid. For the case of what a function returns I did not allow for the function to return arrays or arrays of functions. Rather I only allowed for them to return the atomic types, auto and or void. Every other type would fail in this case. 
+
+### Interpretation
+
+- I took the literal sense of what the spec told us is valid and not valid. For the case of what a function returns I did not allow for the function to return arrays or arrays of functions. Rather I only allowed for them to return the atomic types, auto and or void. Every other type would fail in this case.
 
 ### structure
 
@@ -65,3 +67,29 @@
 - I didn't use any ai tools to complete the assignment
 - What was easy was to set up the tokens, and the process of linking all the files together in order to be able to run `yyparse()`. It was also pretty easy fixing some of the initial issues I had when I was creating the `token.h` file instead of having it already made.
 - The hardest part by far was writing out the grammar in the bison file. It took an extremely long time to be able to get down to a solution that works on the test cases. I had several reduce/reduce conflicts and shift/reduce conflicts that were difficult do deal with and handle. After some time of working on it I was able to get a running parser that is able to run what the specification of the language specify.
+
+## Printer
+
+### structure
+
+```
+bminor/
+├── src/
+│   ├── main/           # Driver code and main entry point
+│   ├── scanner/        # Lexical analysis (Flex)
+│   ├── parser/         # Syntax analysis (Bison)
+│   ├── ast/            # Abstract Syntax Tree definitions
+│   ├── encoder/        # String literal encoding
+│   └── library/        # Symbol table and runtime library
+├── test/               # Test cases organized by phase
+│   └── scripts/        # Individual test scripts for each phase
+├── build/              # Compiled object files (generated)
+├── bin/                # Final executable (generated)
+└── docs/               # Documentation
+```
+
+executable bminor is made in `bin/bminor` or just in the plain directory. The test scripts call ./bin/bminor but they are the same program (e.g they are compiled the same)
+
+### Development of code
+
+- used AI to rewrite README.md and create /docs/bminor_language.md
