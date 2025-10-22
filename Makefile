@@ -42,7 +42,12 @@ BMINOR=			bin/bminor
 
 # Rules 
 
-all: $(BMINOR)
+all: dirs $(BMINOR)
+
+dirs:
+	@echo "making bin and build directories"
+	@mkdir -p bin
+	@mkdir -p build
 
 # Compile bminor 
 $(BMINOR): $(OBJECTS)
