@@ -4,3 +4,4 @@ bin/*
 build/*
 # example flex files 
 examples
+bminor
