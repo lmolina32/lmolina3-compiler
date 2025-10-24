@@ -1,6 +1,7 @@
 /* bminor.c: compiler for the bminor language */
 
 #include "bminor_functions.h"
+#include "utils.h"
 
 #include <stdlib.h>
 #include <string.h>
