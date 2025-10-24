@@ -16,6 +16,7 @@ HEADERS=		$(wildcard src/main/*.h) \
 				$(wildcard src/parser/*.h) \
 				$(wildcard src/ast/*.h) \
 				$(wildcard src/library/*.h) \
+				$(wildcard src/utils/*.h) \
 				$(wildcard build/*.h) 
 
 INCLUDES=		-Isrc/main \
@@ -24,6 +25,7 @@ INCLUDES=		-Isrc/main \
 				-Isrc/parser \
 				-Isrc/ast \
 				-Isrc/library \
+				-Isrc/utils \
 				-Ibuild
 
 SOURCES= 		src/main/bminor.c \

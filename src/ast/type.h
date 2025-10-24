@@ -1,7 +1,13 @@
+/* type.h: type structure and functions */
+
 #ifndef TYPE_H
 #define TYPE_H
 
 #include "param_list.h"
+
+#include <stdio.h>
+
+/* Structure */
 
 typedef enum {
 	TYPE_VOID,
@@ -13,13 +19,17 @@ typedef enum {
 	TYPE_FUNCTION,
 } type_t;
 
-struct type {
-	type_t kind;
-	struct param_list *params;
-	struct type *subtype;
+typedef struct Type Type;
+
+struct Type {
+	type_t kind;			// type of data type 
+	Param_list *params;		// arg list for data types 
+	Type *subtype;			// subtypes for functions and arrays 
 };
 
-struct type * type_create( type_t kind, struct type *subtype, struct param_list *params );
-void          type_print( struct type *t );
+/* Functions */
+
+Type*		  type_create(type_t kind, Type *subtype, Param_list *params);
+void          type_print(Type *t);
 
 #endif
