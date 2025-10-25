@@ -38,7 +38,13 @@ OBJECTS=		build/bminor.o \
 				build/encoder.o \
 				build/tokens_to_string.o \
 				build/scanner.o \
-				build/parser.o
+				build/parser.o \
+				build/decl.o \
+				build/expr.o \
+				build/param_list.o \
+				build/stmt.o \
+				build/type.o \
+				build/symbol.o 
 
 BMINOR=			bin/bminor 
 OLD_BMINOR=		bminor
@@ -76,6 +82,11 @@ build/%.o: src/scanner/%.c $(HEADERS)
 	@echo "Compiling $@"
 	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 	
+# Compile ast 
+build/%.o: src/ast/%.c $(HEADERS)
+	@echo "Compiling $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+
 # Generate scanner
 build/scanner.c: src/scanner/scanner.flex build/token.h 
 	@echo "Generating $@"
@@ -92,7 +103,7 @@ build/scanner.o: build/scanner.c build/token.h
 	@$(CC) $(INCLUDES) -c -o $@ $< -lfl 
 
 # compile parser 
-build/parser.o: build/parser.c build/token.h
+build/parser.o: build/parser.c build/token.h $(HEADERS)
 	@echo "Compiling $@"
 	@$(CC) $(INCLUDES) -c -o $@ $<
 
