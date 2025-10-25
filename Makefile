@@ -107,10 +107,8 @@ build/parser.o: build/parser.c build/token.h $(HEADERS)
 test:	test-all
 
 test-all: $(BMINOR) 
-	@chmod +x ./test/run_all_tests.sh
-	@chmod +x ./test/run_book_tests.sh
 	@chmod +x ./test/scripts/*.sh
-	@./test/run_all_tests.sh
+	@./test/scripts/run_all_tests.sh
 
 test-encode: $(BMINOR) 
 	@echo "Testing Encode"
@@ -129,13 +127,17 @@ test-parser: $(BMINOR)
 	@echo "---------------------------------------"
 	@chmod +x ./test/scripts/test_parser.sh
 	@./test/scripts/test_parser.sh
+	
+test-printer: $(BMINOR) 
+	@echo "Testing printer"
+	@echo "---------------------------------------"
+	@chmod +x ./test/scripts/test_printer.sh
+	@./test/scripts/test_printer.sh
 
 test-book: $(BMINOR)
-	@echo "Testing Book Test cases"
-	@echo "---------------------------------------"
-	@chmod +x ./test/run_book_tests.sh
+	@chmod +x ./test/scripts/run_book_tests.sh
 	@chmod +x ./test/book_test_cases/scripts/*.sh
-	@./test/run_book_tests.sh
+	@./test/scripts/run_book_tests.sh
 
 # clean 
 
