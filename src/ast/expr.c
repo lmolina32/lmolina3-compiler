@@ -6,6 +6,7 @@
 #include "stmt.h"
 #include "symbol.h"
 #include "type.h"
+#include "encoder.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -125,4 +126,174 @@ Expr* expr_create_string_literal(const char *str){
  * @param   e        The expression to print
  **/
 void expr_print(Expr *e){
+	if (!e) return; 
+	char es[BUFSIZ] = {0};
+
+	switch (e->kind){
+		case EXPR_ADD:					//	addition +
+			expr_print(e->left);
+			putchar('+');
+			expr_print(e->right);
+			break;
+		case EXPR_SUB:					//	subtraction -
+			expr_print(e->left);
+			putchar('-');
+			expr_print(e->right);
+			break;
+		case EXPR_MUL:					//	multiplication *
+			expr_print(e->left);
+			putchar('*');
+			expr_print(e->right);
+			break;
+		case EXPR_DIV:					//  division  /
+			expr_print(e->left);
+			putchar('/');
+			expr_print(e->right);
+			break;
+		case EXPR_ASSIGN:				// 	assignment =  
+			expr_print(e->left);
+			putchar(' ');
+			putchar('=');
+			putchar(' ');
+			expr_print(e->right);
+			break;
+		case EXPR_OR:					//  logical or ||
+			expr_print(e->left);
+			putchar('|');
+			putchar('|');
+			expr_print(e->right);
+			break;
+		case EXPR_AND:					//  logical and  &&
+			expr_print(e->left);
+			putchar('&');
+			putchar('&');
+			expr_print(e->right);
+			break;
+		case EXPR_EQ:					//  comparison equal  ==
+			expr_print(e->left);
+			putchar('=');
+			putchar('=');
+			expr_print(e->right);
+			break;
+		case EXPR_NOT_EQ:				//  comparison not equal  !=
+			expr_print(e->left);
+			putchar('!');
+			putchar('=');
+			expr_print(e->right);
+			break;
+		case EXPR_LT:					//  comparison less than  <
+			expr_print(e->left);
+			putchar('<');
+			expr_print(e->right);
+			break;
+		case EXPR_LTE:					//  comparison less than or equal  <=
+			expr_print(e->left);
+			putchar('<');
+			putchar('=');
+			expr_print(e->right);
+			break;
+		case EXPR_GT:					//  comparison greater than > 
+			expr_print(e->left);
+			putchar('>');
+			expr_print(e->right);
+			break;
+		case EXPR_GTE:					//  comparison greater than or equal >=
+			expr_print(e->left);
+			putchar('>');
+			putchar('=');
+			expr_print(e->right);
+			break;
+		case EXPR_REM:					//  remainder %
+			expr_print(e->left);
+			putchar('%');
+			expr_print(e->right);
+			break;
+		case EXPR_EXPO:					//  exponentiation ^  
+			expr_print(e->left);
+			putchar('^');
+			expr_print(e->right);
+			break;
+		case EXPR_NOT:					//  logical not !
+			putchar('!');
+			expr_print(e->left);
+			break;
+		case EXPR_NEGATION:			    //  negation  -
+			putchar('-');
+			expr_print(e->left);
+			break;
+		case EXPR_ARR_LEN:			    //  array len #
+			putchar('#');
+			expr_print(e->left);
+			break;
+		case EXPR_INCREMENT:			//  increment ++ 
+			expr_print(e->left);
+			putchar('+');
+			putchar('+');
+			break;
+		case EXPR_DECREMENT:			//  decrement -- 
+			expr_print(e->left);
+			putchar('-');
+			putchar('-');
+			break;
+		case EXPR_GROUPS:				//  grouping ()
+			putchar('(');
+			expr_print(e->left);
+			putchar(')');
+			break;
+		case EXPR_FUNC:					//  function call f()
+			expr_print(e->left);
+			putchar('(');
+			expr_print(e->right);
+			putchar(')');
+			break;
+		case EXPR_ARGS:					//  function arguments a, b, c, d 
+			expr_print(e->left);
+			if (e->right && e->right->kind == EXPR_ARGS){
+				putchar(',');
+				expr_print(e->right);
+			}
+			break;
+		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
+			expr_print(e->left);
+			putchar('[');
+			expr_print(e->right);
+			putchar(']');
+			break;
+		case EXPR_BRACES:				//  braces {}
+			putchar('{');
+			expr_print(e->right);
+			putchar('}');	
+			break;
+		case EXPR_INT_LIT:				//  integer literal 21321 
+			printf("%d", e->literal_value);
+			break;
+		case EXPR_HEX_LIT:				//  hexadecimal literal 0x2123
+			printf("%d", e->literal_value);
+			break;
+		case EXPR_BIN_LIT:				//  binary literal 0b1010
+			printf("%d", e->literal_value);
+			break;
+		case EXPR_DOUBLE_LIT:			//  double literal 123131 
+			printf("%lf", e->double_literal_value);
+			break;
+		case EXPR_DOUBLE_SCIENTIFIC_LIT://  double scientific literal 6e10 
+			printf("%lf", e->double_literal_value);
+			break;
+		case EXPR_CHAR_LIT: 			//  char literal 'a'
+			printf("'%c'", e->literal_value);
+			break;
+		case EXPR_STR_LIT:				//  string literal "hello"
+			string_encode(e->string_literal, es);
+			printf("%s", es);
+			break;
+		case EXPR_BOOL_LIT:				//  boolean literal 'true' 'false'
+			printf("%s", e->literal_value ? "true" : "false");
+			break;
+		case EXPR_IDENT:				//  identifier    my_function 
+			printf("%s", e->name);
+			break;
+		case EXPR_ARR_ELE:				//  array element 1: 2, 3
+			break;
+	}
+
 }

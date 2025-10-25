@@ -154,15 +154,15 @@ array_init:     TOKEN_LBRACE array_init_list TOKEN_RBRACE
                 ;
 
 array_init_list:    array_init_element TOKEN_COMMA array_init_list
-                        { $$ = $1; $1->left = $3; }
+                        { $$ = $1; $1->right= $3; }
                     | array_init_element
                         { $$ = $1; }
                     ;
 
 array_init_element: literals_expr
-                        { $$ = $1; }
+                        { $$ = expr_create(EXPR_ARGS, $1, 0); }
                     | array_init
-                        { $$ = $1; }
+                        { $$ = expr_create(EXPR_ARGS, $1, 0); }
                     ;
 
 /* Function Declarations */
@@ -432,7 +432,7 @@ literals_expr: TOKEN_STRING_LITERAL
                 | TOKEN_FALSE
                     { $$ = expr_create_boolean_literal(0); }
                 | TOKEN_IDENTIFIER
-                    { $$ = expr_create_name(yytext); }
+                    { $$ = expr_create_name($1); free($1); }
                 | TOKEN_LPAREN expr TOKEN_RPAREN
                     { $$ = expr_create(EXPR_GROUPS, $2, 0); }
                 ;
@@ -444,9 +444,9 @@ expr_list:     non_empty_expr_list
                ;
 
 non_empty_expr_list:    expr TOKEN_COMMA non_empty_expr_list 
-                            { $$ = $1; $1->right = $3; }
+                            { $$ = expr_create(EXPR_ARGS, $1, 0); $1->right = $3; }
                         | expr
-                            { $$ = $1; }
+                            { $$ = expr_create(EXPR_ARGS, $1, 0); }
                         ;
 
 %%

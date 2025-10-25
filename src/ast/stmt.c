@@ -110,6 +110,7 @@ void stmt_print(Stmt *s, int indent){
 			print_indent(indent);
 			printf("return");
 			if (s->expr){
+				putchar(' ');
 				expr_print(s->expr);
 			}
 			printf(";\n");

@@ -61,7 +61,7 @@ void decl_print(Decl *d, int indent){
     type_print(d->type);
 
     if (d->value){
-        printf(" =");
+        printf(" = ");
         expr_print(d->value);
         printf(";\n");
     } else if (d->code){
