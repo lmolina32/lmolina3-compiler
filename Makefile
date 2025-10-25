@@ -28,11 +28,6 @@ INCLUDES=		-Isrc/main \
 				-Isrc/utils \
 				-Ibuild
 
-SOURCES= 		src/main/bminor.c \
-				src/main/bminor_functions.c \
-				src/encoder/encoder.c \
-				src/scanner/tokens_to_string.c \
-
 OBJECTS=		build/bminor.o \
 				build/bminor_functions.o \
 				build/encoder.o \
@@ -152,8 +147,8 @@ clean:
 	@rm -f ./build/scanner.c ./build/parser.c ./build/token.h ./build/parser.output 
 
 	@echo "Removing Test Logs"
-	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out
-	@rm -f ./test/book_test_cases/parser/*.out
+	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out ./test/printer/*.out
+	@rm -f ./test/book_test_cases/parser/*.out ./test/book_test_cases/printer/*.out
 
 	@echo "Removing bminor"
 	@rm -f $(BMINOR) $(OLD_BMINOR)
