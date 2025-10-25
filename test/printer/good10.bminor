@@ -1,0 +1,16 @@
+main: function void () = {
+    test_arr: array[] array[] array[] auto = {{{}}};
+    test_arr: array[] array[] array[] array[] array[] array [] array[] array[] auto = {{{{{{{{}}}}}}}, {{{{{{{}}}}}}}};
+
+    for(;;)
+        for (;;)
+            for (;;)
+                for (;;)
+                    if (i)
+                        print i, i, i, i, i, i, i, "hello";
+
+    valid_print: integer = i * 5 / 20 % 5;
+    my_func(a, b, 10 + 10, "hell", 'c', true, false, #array, mult_func(a, b));
+
+    return                             ;
+}
