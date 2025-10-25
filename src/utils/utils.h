@@ -6,8 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 /* Macros */
+
 #define MALLOC_CHECK(ptr) \
     do { \
         if (ptr == NULL){ \
@@ -16,6 +18,29 @@
         } \
     } while (0)
 
+#define FILE_CHECK(ptr, file) \
+    do { \
+        if (ptr == NULL){ \
+            fprintf(stderr, "%s %s\n", strerror(errno), file); \
+            exit(EXIT_FAILURE); \
+        } \
+    } while (0)
+
+/* Print indent */
+
+#define print_indent(i) \
+    do { \
+        for (int _i = 0; _i < ((i) * 4); _i++) \
+        printf(" "); \
+    } while (0)
+
+/* File open */
+
+#define safe_fopen(f, s) ({ \
+    FILE *_fp = fopen((f), (s)); \
+    FILE_CHECK(_fp, f); \
+    _fp; \
+})
 
 /* Malloc */
 
@@ -32,6 +57,7 @@
 })
 
 /* strdup */
+
 #define safe_strdup(s) ({ \
     char *_ptr = strdup(s); \
     MALLOC_CHECK(_ptr); \
