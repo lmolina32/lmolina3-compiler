@@ -1,4 +1,5 @@
 %{
+#include "utils.h"
 #include "encoder.h"
 #include "token.h"
 
@@ -21,7 +22,7 @@ INTEGER         [0-9]+
 HEXIDECIMAL     0x[0-9a-fA-F]+ 
 BINARY          0b[01]+
 
-SCIENTIFIC      ([0-9]+\.?[0-9]*[eE][+-]?[0-9]+(\.[0-9]+)*)
+SCIENTIFIC      ([0-9]+\.?[0-9]*[eE][+-]?[0-9]+(\.[0-9]+)?)
 DOUBLE_VALUE    ([0-9]+\.[0-9]+)
 
 BOOL            (true|false)
@@ -131,7 +132,7 @@ while           { return TOKEN_WHILE; }
 {SCIENTIFIC}    { return TOKEN_DOUBLE_SCIENTIFIC_LITERAL; }
 {DOUBLE_VALUE}  { return TOKEN_DOUBLE_LITERAL; }
 
-{IDENTIFIER}    { return TOKEN_IDENTIFIER; }
+{IDENTIFIER}    { yylval.name = safe_strdup(yytext); return TOKEN_IDENTIFIER; }
 {NOT_IDENT}     { return TOKEN_ERROR; }
 
 .               { return TOKEN_ERROR; }
