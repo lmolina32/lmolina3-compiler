@@ -62,7 +62,8 @@ bminor/
 │   ├── parser/         # Syntax analysis (Bison)
 │   ├── ast/            # Abstract Syntax Tree definitions
 │   ├── encoder/        # String literal encoding
-│   └── library/        # Symbol table and runtime library
+│   ├── library/        # Symbol table and runtime library
+│   └── utils/          # utility functions used by compiler
 ├── test/               # Test cases organized by phase
 │   └── scripts/        # Individual test scripts for each phase
 ├── build/              # Compiled object files (generated)
