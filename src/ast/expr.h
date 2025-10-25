@@ -3,9 +3,11 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-#include "symbol.h"
-
 #include <stdio.h>
+
+/* Forward Declaration */
+
+typedef struct Symbol Symbol;
 
 /* Structure */
 
@@ -43,7 +45,8 @@ typedef enum {
 	EXPR_CHAR_LIT, 				//  char literal 'a'
 	EXPR_STR_LIT,				//  string literal "hello"
 	EXPR_BOOL_LIT,				//  boolean literal 'true' 'false'
-	EXPR_IDENT					//  identifier    my_function 
+	EXPR_IDENT,					//  identifier    my_function 
+	EXPR_ARR_ELE				//  array element 1, 2, 3
 } expr_t;
 
 typedef struct Expr Expr;
@@ -53,16 +56,17 @@ struct Expr {
 	Expr *left;						// left child of expr kind (e.g 5+4, left child is 5)
 	Expr *right;					// right child of expr kind (e.g 5+4, right child is 4)
 
-	const char *name;				// identifier (e.g a[b], a is name)
+	char *name;						// identifier (e.g a[b], a is name)
 	int literal_value;				// literal value (char, int, hex, bin, bool)
 	double double_literal_value;	// double lit val (double & double scientific)
-	const char * string_literal;	// string literal 
+	char *string_literal;			// string literal 
 	Symbol *symbol;					// include const, vars, and funcs 
 };
 
 /* Functions */
 
 Expr* 	expr_create(expr_t kind, Expr *left, Expr *right);
+void	expr_destroy(Expr *e);
 Expr* 	expr_create_name(const char *n);
 Expr* 	expr_create_integer_literal(int c);
 Expr* 	expr_create_boolean_literal(int c);

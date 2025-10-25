@@ -3,10 +3,12 @@
 #ifndef PARAM_LIST_H
 #define PARAM_LIST_H
 
-#include "type.h"
-#include "symbol.h"
-
 #include <stdio.h>
+
+/* Forward Declaration */
+
+typedef struct Type Type;
+typedef struct Symbol Symbol;
 
 /* Structure */
 
@@ -22,6 +24,7 @@ struct Param_list {
 /* Functions */
 
 Param_list*		 param_list_create(const char *name, Type *type, Param_list *next);
+void			 param_list_destroy(Param_list *a);
 void 			 param_list_print(Param_list *a);
 
 #endif

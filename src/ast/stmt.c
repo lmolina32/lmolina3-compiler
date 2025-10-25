@@ -1,7 +1,15 @@
 /* stmt.c: stmt structure functions */
 
+#include "decl.h"
+#include "expr.h"
+#include "param_list.h"
 #include "stmt.h"
+#include "symbol.h"
+#include "type.h"
 #include "utils.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Functions */
 
@@ -26,8 +34,24 @@ Stmt* stmt_create(stmt_t kind, Decl *decl, Expr *init_expr, Expr *expr, Expr *ne
 	stmt->next_expr = next_expr;
 	stmt->body = body;
 	stmt->else_body = else_body;
-	stmt->next = stmt->next;
+	stmt->next = next;
 	return stmt;
+}
+
+/**
+ * Frees the Stmt struct 
+ * @param s pointer to Stmt struct 
+ */
+void stmt_destroy(Stmt *s){
+	if (!s) return;
+	decl_destroy(s->decl);
+	expr_destroy(s->init_expr);
+	expr_destroy(s->expr);
+	expr_destroy(s->next_expr);
+	stmt_destroy(s->body);
+	stmt_destroy(s->else_body);
+	stmt_destroy(s->next);
+	free(s);
 }
 
 /**
@@ -36,5 +60,64 @@ Stmt* stmt_create(stmt_t kind, Decl *decl, Expr *init_expr, Expr *expr, Expr *ne
  * @param indent The indentation level for formatting output
  **/
 void stmt_print(Stmt *s, int indent){
-	return NULL;
+	if (!s) return; 
+	switch (s->kind){
+		case STMT_DECL:
+			decl_print(s->decl, indent);
+			break;
+		case STMT_EXPR:
+			print_indent(indent);
+			expr_print(s->expr);
+			printf(";\n");
+			break;
+		case STMT_IF_ELSE:
+			print_indent(indent);
+			printf("if (");
+			expr_print(s->expr);
+			printf("){\n");
+			stmt_print(s->body, indent + 1);
+			print_indent(indent);
+			putchar('}');
+			if (s->else_body){
+				printf(" else {\n");
+				stmt_print(s->else_body, indent + 1);
+				print_indent(indent);
+				printf("}\n");
+			} else {
+				putchar('\n');
+			}
+			break;
+		case STMT_FOR:
+			print_indent(indent);
+			printf("for (");
+			expr_print(s->init_expr);
+			putchar(';');
+			expr_print(s->expr);
+			putchar(';');
+			expr_print(s->next_expr);
+			printf("){\n");
+			stmt_print(s->body, indent + 1);
+			print_indent(indent);
+			printf("}\n");
+			break;
+		case STMT_PRINT:
+			print_indent(indent);
+			printf("print ");
+			expr_print(s->expr);
+			printf(";\n");
+			break;
+		case STMT_RETURN:
+			print_indent(indent);
+			printf("return");
+			if (s->expr){
+				expr_print(s->expr);
+			}
+			printf(";\n");
+			break;
+		case STMT_BLOCK:
+			stmt_print(s->body, indent);
+			break;
+	}
+
+	stmt_print(s->next, indent);
 }

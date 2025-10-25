@@ -3,12 +3,14 @@
 #ifndef DECL_H
 #define DECL_H
 
-#include "type.h"
-#include "stmt.h"
-#include "expr.h"
-#include "symbol.h"
-
 #include <stdio.h>
+
+/* Forward declaration */
+
+typedef struct Type Type;
+typedef struct Expr Expr;
+typedef struct Stmt Stmt;
+typedef struct Symbol Symbol;
 
 /* Structure */
 
@@ -26,6 +28,7 @@ struct Decl {
 /* Functions */
 
 Decl*	 decl_create(const char *name, Type *type, Expr *value, Stmt *code, Decl *next);
+void	 decl_destroy(Decl *d);
 void 	 decl_print(Decl *d, int indent);
 
 #endif

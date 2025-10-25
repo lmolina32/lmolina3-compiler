@@ -1,7 +1,15 @@
 /* expr.c: expr structure functions */
 
+#include "decl.h"
 #include "expr.h"
+#include "param_list.h"
+#include "stmt.h"
+#include "symbol.h"
+#include "type.h"
 #include "utils.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Functions */
 
@@ -18,6 +26,25 @@ Expr* expr_create(expr_t kind, Expr *left, Expr *right){
 	expr->left = left;
 	expr->right = right;
 	return expr;
+}
+
+/** Frees the Expr struct 
+ * @param e pointer to the Expr struct 
+ */
+void expr_destroy(Expr *e){
+	if (!e) return;
+	if (e->name) {
+		free(e->name);
+	}
+
+	if (e->string_literal) {
+		free(e->string_literal);
+	}
+
+	expr_destroy(e->left);
+	expr_destroy(e->right);
+	symbol_destroy(e->symbol);
+	free(e);
 }
 
 /**
@@ -98,5 +125,4 @@ Expr* expr_create_string_literal(const char *str){
  * @param   e        The expression to print
  **/
 void expr_print(Expr *e){
-	return NULL;
 }

@@ -1,7 +1,15 @@
 /* decl.c: decl structure functions */
 
 #include "decl.h"
+#include "expr.h"
+#include "param_list.h"
+#include "stmt.h"
+#include "symbol.h"
+#include "type.h"
 #include "utils.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Functions */
 
@@ -25,10 +33,47 @@ Decl* decl_create(const char *name, Type *type, Expr *value, Stmt *code, Decl *n
 }
 
 /**
+ * Frees the Decl Struct 
+ * @param d pointer to the Decl struct 
+ */
+void decl_destroy(Decl *d){
+    if (!d) return;
+    if (d->name){
+        free(d->name);
+    }
+
+    type_destroy(d->type);
+    expr_destroy(d->value);
+    stmt_destroy(d->code);
+    symbol_destroy(d->symbol);
+    decl_destroy(d->next);
+    free(d);
+}
+/**
  * Prints a declaration node and its contents to stdout.
  * @param   d           The declaration to print
  * @param   indent      The indentation level for formatting output
  **/
 void decl_print(Decl *d, int indent){
-	return NULL;
+    if (!d) { return; }
+    print_indent(indent); 
+    printf("%s:", d->name);
+    type_print(d->type);
+
+    if (d->value){
+        printf(" =");
+        expr_print(d->value);
+        printf(";\n");
+    } else if (d->code){
+        printf(" = {\n");
+
+        stmt_print(d->code, indent + 1);
+        print_indent(indent);
+        printf("}\n");
+    } else {
+        printf(";\n");
+    }
+
+    decl_print(d->next, 0);
+
 }

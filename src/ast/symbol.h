@@ -3,9 +3,11 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
-#include "type.h"
-
 #include <stdio.h> 
+
+/* Forward Declaration */
+
+typedef struct Type Type;
 
 /* Structure */
 
@@ -27,5 +29,6 @@ struct Symbol {
 /* Functions */
 
 Symbol* 	symbol_create(symbol_t kind, Type *type, const char *name);
+void		symbol_destroy(Symbol *s);
 
 #endif
