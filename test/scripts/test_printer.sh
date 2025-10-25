@@ -18,5 +18,5 @@ done
 
 for testfile in ./test/printer/good*.bminor
 do
-	valgrind --leak-check=full --show-leak-kinds=all ./bin/bminor --print $testfile &> $testfile.valgrind.out
+	valgrind --leak-check=full --show-leak-kinds=all -s ./bin/bminor --print $testfile &> $testfile.valgrind.out
 done
