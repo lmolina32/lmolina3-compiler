@@ -22,6 +22,8 @@ int main(int argc, char *argv[]){
         if (!scan(argv[argind++])) return EXIT_FAILURE;
     } else if (streq(command, "--parse")){
         if (!parse(argv[argind++])) return EXIT_FAILURE;
+    } else if (streq(command, "--print")){
+        if (!pretty_print(argv[argind++])) return EXIT_FAILURE;
     } else { return EXIT_FAILURE; }
 
     return EXIT_SUCCESS;
