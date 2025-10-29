@@ -15,9 +15,13 @@
 /* Global Precedence array */
 
 static const int expr_associativity[EXPR_COUNT] = {
-	// 0 -> right 
-	// 1 -> left 
+	// 0 -> left  
+	// 1 -> right  
+	[EXPR_ASSIGN] = 1,
 	[EXPR_ARR_LEN] = 1,
+	[EXPR_EXPO] = 1, 
+	[EXPR_NOT] = 1,
+	[EXPR_NEGATION] = 1
 };
 
 static const int expr_precedence[EXPR_COUNT] = {
@@ -41,7 +45,7 @@ static const int expr_precedence[EXPR_COUNT] = {
 	[EXPR_ARR_LEN] = 8,			    
 	[EXPR_INCREMENT] = 9,			    
 	[EXPR_DECREMENT] = 9,			    
-	[EXPR_GROUPS] = 0,				
+	[EXPR_GROUPS] = 10,				
 	[EXPR_FUNC] = 10,					
 	[EXPR_ARGS] = 10,					
 	[EXPR_INDEX] = 10,					
@@ -167,27 +171,84 @@ Expr* expr_create_string_literal(const char *str){
 }
 
 /**
- * Functions check precedence and adds parenthesis if necessary 
- * @param e  ptr to expression structure
- * @return ptr to expression structure with wrapped structure 
+ * This function unwraps nested expr_groups chained together 
+ * @param e  ptr to expression struct we want to unwrap 
+ * @return   ptr to expression struct that is unwrapped of all the expr_groups
  */
-Expr *expr_precedence_check(Expr *e){
-	if (e->left && (expr_precedence[e->left->kind] < expr_precedence[e->kind])){
-		e->left = expr_create(EXPR_GROUPS, e->left, 0);
+Expr *expr_unwrap_groups(Expr *e){
+	if (!e) return NULL;
+
+	while (e && e->kind == EXPR_GROUPS && e->left) {
+		e = e->left;
 	}
 
-	if (e->left && expr_associativity[e->kind] == 1 && (expr_precedence[e->left->kind] == expr_precedence[e->kind])){
-		e->left = expr_create(EXPR_GROUPS, e->left, 0);
-	}
-
-	if (e->right && (expr_precedence[e->right->kind] < expr_precedence[e->kind])){
-		e->right = expr_create(EXPR_GROUPS, e->right, 0);
-	}
-
-	if (e->right && expr_associativity[e->kind] == 0 && (expr_precedence[e->right->kind] == expr_precedence[e->kind])){
-		e->right = expr_create(EXPR_GROUPS, e->right, 0);
-	}
 	return e;
+}
+
+/**
+ * Checks if the child needs parenthesis based on precedence or associativity  
+ * @param Parent 	ptr of parent or root of the child, holds the operation we are trying to check if child needs parenthesis 
+ * @param child		ptr of child we are trying to see if they need parenthesis 
+ * @param is_left	1 if left child of parent or 0 if right child of parent 
+ * @return			1 if the child needs parenthesis, 0 if they do not
+ */
+int expr_need_parens(Expr *parent, Expr *child, int is_left){
+	if (!child || !parent) return 0;
+
+	int parent_prec = expr_precedence[parent->kind];
+	int child_prec = expr_precedence[child->kind];
+
+	// check precedence for child compared to parent
+	if (child_prec < parent_prec){
+		return 1;
+	}
+
+	// check associativity when precedence is the same 
+	if ( child_prec == parent_prec){
+		
+		// if associativity left (e.g eval left to right) and evaluating right child add parens  
+		if (expr_associativity[parent->kind] == 0 && !is_left){
+			return 1;
+		}
+
+		// if associativity is right (e.g eval right to left) and evaluating left child add parens
+		if (expr_associativity[parent->kind] == 1 && is_left){
+			return 1;
+		}
+	}
+
+	return 0;
+	
+}
+
+/**
+ * Takes the parent and child and determines if parenthesis are needed them prints them out knowing the context
+ * @param parent 	ptr to root or parent of child 
+ * @param child		ptr to child of parent (left or right)
+ * @param is_left	integer: 1 if left child, 0 if right child 
+ */
+void expr_print_with_context(Expr *parent, Expr *child, int is_left){
+	if (!child) return; 
+
+	if (child->kind == EXPR_GROUPS){
+		Expr *expr_unwrapped = expr_unwrap_groups(child);
+
+		if (parent && expr_need_parens(parent, expr_unwrapped, is_left)){
+			putchar('(');
+			expr_print(expr_unwrapped);
+			putchar(')');
+		} else {
+			expr_print(expr_unwrapped);
+		}
+	} else {
+		if (parent && expr_need_parens(parent, child, is_left)){
+			putchar('(');
+			expr_print(child);
+			putchar(')');
+		} else {
+			expr_print(child);
+		}
+	}
 }
 
 /**
@@ -200,138 +261,112 @@ void expr_print(Expr *e){
 
 	switch (e->kind){
 		case EXPR_ADD:					//	addition +
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('+');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_SUB:					//	subtraction -
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('-');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_MUL:					//	multiplication *
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('*');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_DIV:					//  division  /
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('/');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_ASSIGN:				// 	assignment =  
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar(' ');
 			putchar('=');
 			putchar(' ');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_OR:					//  logical or ||
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('|');
 			putchar('|');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_AND:					//  logical and  &&
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('&');
 			putchar('&');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_EQ:					//  comparison equal  ==
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('=');
 			putchar('=');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_NOT_EQ:				//  comparison not equal  !=
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('!');
 			putchar('=');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_LT:					//  comparison less than  <
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('<');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_LTE:					//  comparison less than or equal  <=
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('<');
 			putchar('=');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_GT:					//  comparison greater than > 
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('>');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_GTE:					//  comparison greater than or equal >=
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('>');
 			putchar('=');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_REM:					//  remainder %
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('%');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_EXPO:					//  exponentiation ^  
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('^');
-			expr_print(e->right);
+			expr_print_with_context(e, e->right, 0);
 			break;
 		case EXPR_NOT:					//  logical not !
-			e = expr_precedence_check(e);
 			putchar('!');
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			break;
 		case EXPR_NEGATION:			    //  negation  -
-			e = expr_precedence_check(e);
 			putchar('-');
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			break;
 		case EXPR_ARR_LEN:			    //  array len #
-			e = expr_precedence_check(e);
 			putchar('#');
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			break;
 		case EXPR_INCREMENT:			//  increment ++ 
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('+');
 			putchar('+');
 			break;
 		case EXPR_DECREMENT:			//  decrement -- 
-			e = expr_precedence_check(e);
-			expr_print(e->left);
+			expr_print_with_context(e, e->left, 1);
 			putchar('-');
 			putchar('-');
 			break;
 		case EXPR_GROUPS:				//  grouping ()
-			if (e->left->kind == EXPR_GROUPS){
-				expr_print(e->left);
-				break;
-			}
-			putchar('(');
-			expr_print(e->left);
-			putchar(')');
+			expr_print(expr_unwrap_groups(e));
 			break;
 		case EXPR_FUNC:					//  function call f()
 			expr_print(e->left);
