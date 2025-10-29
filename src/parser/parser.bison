@@ -39,13 +39,13 @@ Decl *root = 0;
 
 /* Literals */ 
 %token <name> TOKEN_IDENTIFIER
-%token TOKEN_STRING_LITERAL
-%token TOKEN_INTEGER_LITERAL
-%token TOKEN_HEXIDECIMAL_LITERAL
-%token <name> TOKEN_BINARY_LITERAL
-%token TOKEN_DOUBLE_LITERAL
-%token TOKEN_DOUBLE_SCIENTIFIC_LITERAL
-%token TOKEN_CHAR_LITERAL
+%token <string> TOKEN_STRING_LITERAL
+%token <int_literal>TOKEN_INTEGER_LITERAL
+%token <int_literal>TOKEN_HEXIDECIMAL_LITERAL
+%token <int_literal>TOKEN_BINARY_LITERAL
+%token <double_lit>TOKEN_DOUBLE_LITERAL
+%token <double_lit>TOKEN_DOUBLE_SCIENTIFIC_LITERAL
+%token <string> TOKEN_CHAR_LITERAL
 
 /* Keywords */
 %token TOKEN_ARRAY
@@ -109,11 +109,14 @@ Decl *root = 0;
     Expr *expr;
     Symbol *symbol;
     char *name;
+    char *string; 
+    int *int_literal;
+    double *double_lit; 
 }
 
 %type <decl> program decl_list decl var_decl func_decl
 %type <stmt> stmt_list stmt unmatched_stmt matched_stmt base_stmt expr_stmt print_stmt return_stmt block
-%type <expr> array_init array_init_list array_init_element for_init for_cond for_updt print_list expr assign_expr or_expr and_expr eq_expr comp_expr add_expr mul_expr exp_expr unary_expr postfix_expr literals_expr expr_list non_empty_expr_list id
+%type <expr> array_init array_init_list array_init_element for_init for_cond for_updt expr assign_expr or_expr and_expr eq_expr comp_expr add_expr mul_expr exp_expr unary_expr postfix_expr literals_expr expr_list non_empty_expr_list id expr_list_init
 %type <param_list> param_list non_empty_param_list param_decl
 %type <type> type atomic_type return_type array_type
  
@@ -152,7 +155,7 @@ array_init:     TOKEN_LBRACE array_init_list TOKEN_RBRACE
                 ;
 
 array_init_list:    array_init_element TOKEN_COMMA array_init_list
-                        { $$ = $1; $1->right= $3; }
+                        { $$ = $1; $1->right = $3; }
                     | array_init_element
                         { $$ = $1; }
                     ;
@@ -299,16 +302,10 @@ expr_stmt:  expr TOKEN_SEMICOLON
                 {$$ = stmt_create(STMT_EXPR, 0, 0, $1, 0, 0, 0, 0); }
             ;
 
-print_stmt: TOKEN_PRINT print_list TOKEN_SEMICOLON
+print_stmt: TOKEN_PRINT non_empty_expr_list TOKEN_SEMICOLON
                 { $$ = stmt_create(STMT_PRINT, 0, 0, $2, 0, 0, 0, 0); }
             | TOKEN_PRINT TOKEN_SEMICOLON
                 { $$ = stmt_create(STMT_PRINT, 0, 0, 0, 0, 0, 0, 0); }
-            ;
-
-print_list: expr TOKEN_COMMA print_list
-                { $$ = $1; $1->right = $3; }
-            | expr
-                { $$ = $1; }
             ;
 
 return_stmt: TOKEN_RETURN TOKEN_SEMICOLON
@@ -412,19 +409,19 @@ postfix_expr:    literals_expr
                 ;
 
 literals_expr: TOKEN_STRING_LITERAL
-                    { $$ = expr_create_string_literal(yytext); }
+                    { $$ = expr_create_string_literal($1); free($1); }
                 | TOKEN_INTEGER_LITERAL
-                    { $$ = expr_create_integer_literal(atoi(yytext)); }
+                    { $$ = expr_create_integer_literal(*$1); free($1); }
                 | TOKEN_HEXIDECIMAL_LITERAL
-                    { $$ = expr_create_integer_literal(strtol(yytext, NULL, 0)); }
+                    { $$ = expr_create_integer_literal(*$1); free($1); }
                 | TOKEN_BINARY_LITERAL
-                    { $$ = expr_create_integer_literal(strtol($1, NULL, 2)); free($1); }
+                    { $$ = expr_create_integer_literal(*$1); free($1); }
                 | TOKEN_DOUBLE_LITERAL
-                    { $$ = expr_create_double_literal(strtod(yytext, NULL)); }
+                    { $$ = expr_create_double_literal(*$1); free($1); }
                 | TOKEN_DOUBLE_SCIENTIFIC_LITERAL
-                    { $$ = expr_create_double_literal(strtod(yytext, NULL)); }
+                    { $$ = expr_create_double_literal(*$1); free($1); }
                 | TOKEN_CHAR_LITERAL
-                    { $$ = expr_create_char_literal(yytext); }
+                    { $$ = expr_create_char_literal($1); free($1); }
                 | TOKEN_TRUE
                     { $$ = expr_create_boolean_literal(1); }
                 | TOKEN_FALSE
@@ -432,7 +429,7 @@ literals_expr: TOKEN_STRING_LITERAL
                 | TOKEN_IDENTIFIER
                     { $$ = expr_create_name($1); free($1); }
                 | TOKEN_LPAREN expr TOKEN_RPAREN
-                    { $$ = $2; }
+                    { $$ = expr_create(EXPR_GROUPS, $2, 0); }
                 ;
 
 expr_list:     non_empty_expr_list
@@ -441,9 +438,13 @@ expr_list:     non_empty_expr_list
                     { $$ = 0; }
                ;
 
-non_empty_expr_list:    expr TOKEN_COMMA non_empty_expr_list 
-                            { $$ = expr_create(EXPR_ARGS, $1, 0); $1->right = $3; }
-                        | expr
+non_empty_expr_list:    expr_list_init TOKEN_COMMA non_empty_expr_list 
+                            { $$ = $1; $1->right = $3; }
+                        | expr_list_init
+                            { $$ = $1; }
+                        ;
+
+expr_list_init:         expr
                             { $$ = expr_create(EXPR_ARGS, $1, 0); }
                         ;
 
