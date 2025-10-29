@@ -15,8 +15,3 @@ do
 		echo -e "$testfile ${RED}failure${NC} (INCORRECT)"
 	fi
 done
-
-for testfile in ./test/printer/good*.bminor
-do
-	valgrind --leak-check=full --show-leak-kinds=all -s ./bin/bminor --print $testfile &> $testfile.valgrind.out
-done

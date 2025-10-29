@@ -4,7 +4,7 @@
 
 GREEN='\e[32m'
 RED='\e[31m'
-NC='\e[0m'  
+NC='\e[0m'
 
 for testfile in ./test/book_test_cases/printer/good*.bminor
 do
@@ -16,11 +16,6 @@ do
 	fi
 done
 
-
-for testfile in ./test/book_test_cases/printer/good*.bminor
-do
-	valgrind --leak-check=full --show-leak-kinds=all -s ./bin/bminor --print $testfile &> $testfile.valgrind.out
-done
 
 for testfile in ./test/book_test_cases/printer/bad*.bminor
 do

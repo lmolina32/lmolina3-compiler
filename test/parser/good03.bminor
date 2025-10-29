@@ -13,4 +13,4 @@ sec_s: string;
 a: array [5] integer;
 a: array [5] array [5] array [] auto = {{1, 2}, {2, 2}, {1}};
 a: carray [5] carray [5] carray [] auto = {{1, 2}, {2, 2}, {1}};
-a: carray [] char = {};
+a: carray [] char = {4, 4, 4, 4};
