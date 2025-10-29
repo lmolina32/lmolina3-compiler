@@ -1,0 +1,26 @@
+// testing types 
+a: integer = 12313;
+a: integer = 1312341431;
+a: integer = 0b10101;
+a: integer=0b1010101;
+a: integer = 0b111111;
+a: integer = 0b100000;
+a:integer=0x121aef;
+a:integer=0xf;
+a: double = 131.213143;
+a: double = 1313e-3.1;
+a: double = 131e+12;
+a: double = 13E+2;
+a:double =13232323E-8;
+a: string = "\n";
+a: char = '\n';
+a: char = 'a';
+a: char = 'b';
+strstr: string = "hello this is suppose to work \n \t\ ' like a charm \t\\n\0xa";
+arr_arrAAAbb_b: array [5] integer = {1, 2, 3, 4, 5};
+arrrr________: array [10] array [10] integer = {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, {1, 1, 1,1 ,1 ,1,1 ,1 ,1 ,1}};
+arr____: array[100] double = {{{{{{{{{{{{0}}}}}}}}}}}};
+boolllls: boolean = true;
+boolllls: boolean = false;
+arr: array[5] integer = {{{{{{0}}}}}};
+arr: array[5] integer = {1, 1, 1, 1, 5};

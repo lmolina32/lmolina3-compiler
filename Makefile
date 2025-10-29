@@ -16,6 +16,7 @@ HEADERS=		$(wildcard src/main/*.h) \
 				$(wildcard src/parser/*.h) \
 				$(wildcard src/ast/*.h) \
 				$(wildcard src/library/*.h) \
+				$(wildcard src/utils/*.h) \
 				$(wildcard build/*.h) 
 
 INCLUDES=		-Isrc/main \
@@ -24,19 +25,21 @@ INCLUDES=		-Isrc/main \
 				-Isrc/parser \
 				-Isrc/ast \
 				-Isrc/library \
+				-Isrc/utils \
 				-Ibuild
-
-SOURCES= 		src/main/bminor.c \
-				src/main/bminor_functions.c \
-				src/encoder/encoder.c \
-				src/scanner/tokens_to_string.c \
 
 OBJECTS=		build/bminor.o \
 				build/bminor_functions.o \
 				build/encoder.o \
 				build/tokens_to_string.o \
 				build/scanner.o \
-				build/parser.o
+				build/parser.o \
+				build/decl.o \
+				build/expr.o \
+				build/param_list.o \
+				build/stmt.o \
+				build/type.o \
+				build/symbol.o 
 
 BMINOR=			bin/bminor 
 OLD_BMINOR=		bminor
@@ -74,6 +77,11 @@ build/%.o: src/scanner/%.c $(HEADERS)
 	@echo "Compiling $@"
 	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 	
+# Compile ast 
+build/%.o: src/ast/%.c $(HEADERS)
+	@echo "Compiling $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+
 # Generate scanner
 build/scanner.c: src/scanner/scanner.flex build/token.h 
 	@echo "Generating $@"
@@ -90,7 +98,7 @@ build/scanner.o: build/scanner.c build/token.h
 	@$(CC) $(INCLUDES) -c -o $@ $< -lfl 
 
 # compile parser 
-build/parser.o: build/parser.c build/token.h
+build/parser.o: build/parser.c build/token.h $(HEADERS)
 	@echo "Compiling $@"
 	@$(CC) $(INCLUDES) -c -o $@ $<
 
@@ -99,10 +107,8 @@ build/parser.o: build/parser.c build/token.h
 test:	test-all
 
 test-all: $(BMINOR) 
-	@chmod +x ./test/run_all_tests.sh
-	@chmod +x ./test/run_book_tests.sh
 	@chmod +x ./test/scripts/*.sh
-	@./test/run_all_tests.sh
+	@./test/scripts/run_all_tests.sh
 
 test-encode: $(BMINOR) 
 	@echo "Testing Encode"
@@ -121,13 +127,17 @@ test-parser: $(BMINOR)
 	@echo "---------------------------------------"
 	@chmod +x ./test/scripts/test_parser.sh
 	@./test/scripts/test_parser.sh
+	
+test-printer: $(BMINOR) 
+	@echo "Testing printer"
+	@echo "---------------------------------------"
+	@chmod +x ./test/scripts/test_printer.sh
+	@./test/scripts/test_printer.sh
 
 test-book: $(BMINOR)
-	@echo "Testing Book Test cases"
-	@echo "---------------------------------------"
-	@chmod +x ./test/run_book_tests.sh
+	@chmod +x ./test/scripts/run_book_tests.sh
 	@chmod +x ./test/book_test_cases/scripts/*.sh
-	@./test/run_book_tests.sh
+	@./test/scripts/run_book_tests.sh
 
 # clean 
 
@@ -139,8 +149,8 @@ clean:
 	@rm -f ./build/scanner.c ./build/parser.c ./build/token.h ./build/parser.output 
 
 	@echo "Removing Test Logs"
-	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out
-	@rm -f ./test/book_test_cases/parser/*.out
+	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out ./test/printer/*.out
+	@rm -f ./test/book_test_cases/parser/*.out ./test/book_test_cases/printer/*.out
 
 	@echo "Removing bminor"
 	@rm -f $(BMINOR) $(OLD_BMINOR)

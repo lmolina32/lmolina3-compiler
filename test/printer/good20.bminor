@@ -1,0 +1,13 @@
+x: integer;
+y: boolean;
+c: char;
+s: string;
+a: array[] auto;
+init: function void (x: integer, y: boolean, c: char, s:string, a: array[] auto) = {
+    x = 0;
+    y = false;
+    c = '\0';
+    s = "hello";
+    a[x++-- * x] = 10 * y * c * s; 
+    print x                      , y   , c , s, a , (x*y*c*s*a)&&a;
+}

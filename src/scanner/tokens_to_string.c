@@ -4,7 +4,6 @@
 
 /* constants */
 const char *token_names[TOKEN_NUM] = {
-    "TOKEN_EOF",
     "TOKEN_ERROR",
     "TOKEN_IDENTIFIER",
     "TOKEN_STRING_LITERAL",

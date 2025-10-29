@@ -1,0 +1,3 @@
+a: integer = 8 * 8 + 8;
+a: integer = 8 * (8 + 8);
+a: integer = (8 * 8) + 8;

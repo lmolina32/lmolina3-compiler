@@ -6,7 +6,7 @@ arr:array[5] array[5] integer;
 str: string = "hello world";
 fxn : function  integer () =
 {
-	x: array[5] integer = {};
+	x: array[5] integer = {1, 1, 1, 1, 1};
 	arr[3][2] = 5;
 	x = arr[2][3];
 	x++;

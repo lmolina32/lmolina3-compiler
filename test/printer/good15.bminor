@@ -1,0 +1,9 @@
+main: function void() = {
+	x:integer = 5;
+	y:integer = 4;
+	if(!((4*x^5 + 4) - 4 >= 1))
+	{
+		x = 6;
+		
+	} else if (((x>5&&(x^7)))) x = 10;
+}

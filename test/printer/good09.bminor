@@ -1,0 +1,22 @@
+main: function void (argc: integer, argv: array [] string) = {
+    // An arithmetic expression statement.
+y = m*x + b;
+
+// An if-else statement.
+if( temp>100 ) {
+    print "It's really hot!\n";
+} else if( temp>70 ) {
+    print "It's pretty warm.\n";
+} else {
+    print "It's not too bad.\n";
+}
+
+// A for loop statement.
+for( i=0; i<100; i++ ) {
+    print i;
+}
+            for(i=0;;i++) if(i > 10) print i;
+// A return statement.
+return (f-32)*5/9;  
+                                
+}

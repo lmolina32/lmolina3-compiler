@@ -4,6 +4,13 @@
 #include "encoder.h"
 #include "tokens_to_string.h"
 #include "token.h"
+#include "decl.h"
+#include "expr.h"
+#include "param_list.h"
+#include "stmt.h"
+#include "symbol.h"
+#include "type.h"
+#include "utils.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -20,12 +27,7 @@ int encode(char *file_name){
     char encoded_string[BUFSIZ];
     char decoded_string[BUFSIZ];
 
-    FILE *f = fopen(file_name, "r");
-
-    if (!f) {
-        fprintf(stderr, "%s %s\n", strerror(errno), file_name);
-        return false;
-    }
+    FILE *f = safe_fopen(file_name, "r");
 
     if(!fgets(encoded_string, BUFSIZ, f)){
         fprintf(stderr, "Read error or Empty file\n");
@@ -35,13 +37,14 @@ int encode(char *file_name){
 
     // decode and encode strings
     if (!string_decode(encoded_string, decoded_string)) {
+        fprintf(stderr, "Failed to decode encoded string: %s\n", encoded_string);
         fclose(f);
         return false;
     }
 
-    printf("decoded string: %s\n", decoded_string);
+    printf("Decoded string: %s\n", decoded_string);
     string_encode(decoded_string, encoded_string);
-    printf("encoded string from decoded: %s\n", encoded_string);
+    printf("\n\nEncoded string from decoded: %s\n", encoded_string);
     
     fclose(f);
 
@@ -54,15 +57,11 @@ int encode(char *file_name){
  * @return  True if able to scan and tokenize, otherwise false 
  **/
 int scan(char *file_name){
-    yyin = fopen(file_name, "r");
-    size_t t;
-
-    if (!yyin) {
-        fprintf(stderr, "%s %s\n", strerror(errno), file_name);
-        return false;
-    }
-
     int exit_code = true;
+    size_t t;
+    yyin = safe_fopen(file_name, "r");
+
+    yyrestart(yyin);
     
     while ((t = yylex()) != 0) {
         switch (t){
@@ -88,29 +87,55 @@ int scan(char *file_name){
     }
     
     fclose(yyin);
+    yylex_destroy();
     return exit_code;
 }
 
 /**
- * Reads in file and scans the code and tokenizes it
+ * Reads in file and parses the file to see if it fits in the 
+ * grammar for Bminor  
  * @param   file_name       name of file to open
  * @return  True if able to scan & parse, otherwise false 
  **/
 int parse(char *file_name){
-    yyin = fopen(file_name, "r");
-
-    if (!yyin) {
-        fprintf(stderr, "%s %s\n", strerror(errno), file_name);
-        return false;
-    }
+    int exit_code = true;
+    yyin = safe_fopen(file_name, "r");
 
     yyrestart(yyin);
 
     if(yyparse() == 0){
         printf("Prase Successful\n");
-        return true;
     } else {
         fprintf(stderr, "Parse Error\n");
-        return false;
+        exit_code = false;
     }
+
+    decl_destroy(root);
+    fclose(yyin);
+    yylex_destroy();
+    return exit_code;
+}
+
+/**
+ * Reads in File, parses File then pretty prints out the program
+ * @param   file_name       name of file to open 
+ * @return  True if valid parse and able to pretty print, otherwise false 
+ */
+int pretty_print(char *file_name){
+    int exit_code = true;
+    yyin = safe_fopen(file_name, "r");
+
+    yyrestart(yyin);
+
+    if(yyparse() == 0){
+        decl_print(root, 0);
+    } else {
+        fprintf(stderr, "Parse Error\n");
+        exit_code = false;
+    }
+
+    decl_destroy(root);
+    fclose(yyin);
+    yylex_destroy();
+    return exit_code;
 }

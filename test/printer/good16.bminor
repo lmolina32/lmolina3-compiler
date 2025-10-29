@@ -1,0 +1,24 @@
+fxn: function integer (x:integer)=
+{
+    x--++--++--++--++;
+    (x+x)++;
+    (x--)++;
+	return x++++;
+}
+
+fxn2: function char (x:integer, y:char, z:boolean)=
+{
+	if(y=='z')
+		return 'Z';
+	else
+		return 'z';
+}
+
+fxn3: function char (x: array [] integer, y:char, z: array [] array [] boolean)=
+{
+	if(y=='z')
+        for (i = 0; i < 10; i++) if ((i % 2)&&(true || false)) print 'Z', i;
+		return 'Z';
+    if (y == 'z') return 'Z'; else
+		return 'z';
+}

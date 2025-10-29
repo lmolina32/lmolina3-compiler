@@ -1,4 +1,5 @@
 %{
+#include "utils.h"
 #include "encoder.h"
 #include "token.h"
 
@@ -17,18 +18,15 @@ NOT_COMMENTS    \/\*.*
 IDENTIFIER      [a-zA-Z_][a-zA-Z_0-9]{0,254}
 NOT_IDENT       [a-zA-Z_][a-zA-Z_0-9]{255,}
 
+/* literals */
 INTEGER         [0-9]+
 HEXIDECIMAL     0x[0-9a-fA-F]+ 
 BINARY          0b[01]+
-
-SCIENTIFIC      ([0-9]+\.?[0-9]*[eE][+-]?[0-9]+(\.[0-9]+)*)
+SCIENTIFIC      ([0-9]+\.?[0-9]*[eE][+-]?[0-9]+(\.[0-9]+)?)
 DOUBLE_VALUE    ([0-9]+\.[0-9]+)
-
 BOOL            (true|false)
-
 CHAR_BACKSLASH  (\\0x[0-9a-fA-F]{2}|\\[\x20-\x7f])
 CHAR_VALUE      \'([\x00-\x26\x28-\xff]|{CHAR_BACKSLASH})\'
-
 STRING_VALUE    \"([^\"\\\n]|\\.)*\" 
 
 %option yylineno 
@@ -88,21 +86,18 @@ while           { return TOKEN_WHILE; }
 ":"             { return TOKEN_COLON; }
 ","             { return TOKEN_COMMA; }
 
-{STRING_VALUE}  {   char buffer[BUFSIZ];
+{STRING_VALUE}  {   // decode string lit and save in yylval 
+                    char buffer[BUFSIZ];
                     if(!string_decode(yytext, buffer)){
                         return TOKEN_ERROR;
                     }
-
-                    int sz = strlen(buffer);
-
-                    for (int i = 0; i < sz; i++){
-                        yytext[i] = buffer[i];
-                    }
-                    yytext[sz] = '\0';
+                    char *string_lit = safe_calloc(sizeof(char), strlen(buffer) + 1); 
+                    strcpy(string_lit, buffer);
+                    yylval.string = string_lit;
 
                     return TOKEN_STRING_LITERAL;
                 }
-{CHAR_VALUE}    { 
+{CHAR_VALUE}    {   // decode char literal and save in yylval
                     int len = strlen(yytext);
                     char buffer[BUFSIZ];
 
@@ -115,23 +110,51 @@ while           { return TOKEN_WHILE; }
                         return TOKEN_ERROR;
                     }
 
-                    len = strlen(buffer);
-
-                    for (int i = 0; i < len; i++){
-                        yytext[i] = buffer[i];
-                    }
-                    yytext[len] = '\0';
+                    char *char_lit = safe_calloc(sizeof(char), strlen(buffer) + 1); 
+                    strcpy(char_lit, buffer);
+                    yylval.string = char_lit;
 
                     return TOKEN_CHAR_LITERAL; 
                 }
 
-{BINARY}        { return TOKEN_BINARY_LITERAL; }
-{HEXIDECIMAL}   { return TOKEN_HEXIDECIMAL_LITERAL; }
-{INTEGER}       { return TOKEN_INTEGER_LITERAL; }
-{SCIENTIFIC}    { return TOKEN_DOUBLE_SCIENTIFIC_LITERAL; }
-{DOUBLE_VALUE}  { return TOKEN_DOUBLE_LITERAL; }
+{BINARY}        {   // convert binary to integer and save in yylval 
+                    char *binary_str = safe_calloc(sizeof(char), strlen(yytext) - 1); 
+                    strncpy(binary_str, yytext + 2, strlen(yytext) - 2);
+                    int *bin = safe_calloc(sizeof(int), 1);
+                    *bin = strtol(binary_str, 0, 2);
+                    free(binary_str);
+                    yylval.int_literal = bin;
+                    return TOKEN_BINARY_LITERAL; 
+                }
+{HEXIDECIMAL}   {   // convert hex to int and save in yylval 
+                    int *hex = safe_calloc(sizeof(int), 1);
+                    *hex = strtol(yytext, 0, 0);
+                    yylval.int_literal = hex;
+                    return TOKEN_HEXIDECIMAL_LITERAL; 
+                }
+{INTEGER}       {   // convert string int to int and save in yylval
+                    int *integer = safe_calloc(sizeof(int), 1);
+                    *integer = atoi(yytext);
+                    yylval.int_literal = integer;
+                    return TOKEN_INTEGER_LITERAL;
+                }
+{SCIENTIFIC}    {   // convert string sci to int and save in yylval
+                    double *sci = safe_calloc(sizeof(double), 1);
+                    *sci = strtod(yytext, 0);
+                    yylval.double_lit = sci;
+                    return TOKEN_DOUBLE_SCIENTIFIC_LITERAL; 
+                }
+{DOUBLE_VALUE}  {   // convert string double to double and save in yylval
+                    double *d = safe_calloc(sizeof(double), 1);
+                    *d = strtod(yytext, 0);
+                    yylval.double_lit = d;
+                    return TOKEN_DOUBLE_LITERAL; 
+                }
 
-{IDENTIFIER}    { return TOKEN_IDENTIFIER; }
+{IDENTIFIER}    {   // save identifier in name  
+                    yylval.name = safe_strdup(yytext); 
+                    return TOKEN_IDENTIFIER; 
+                }
 {NOT_IDENT}     { return TOKEN_ERROR; }
 
 .               { return TOKEN_ERROR; }
