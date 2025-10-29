@@ -1,0 +1,5 @@
+main: function void () = {
+    print;
+    if (x) for(;;) if(x) for(;;) print;
+    return ((((((((((((((((((((((((x+x+(x+x)))))))))))))))))))))))));
+}

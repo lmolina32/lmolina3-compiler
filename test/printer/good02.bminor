@@ -5,4 +5,5 @@ main: function void () = {
     a: integer = (x+z)*10;
     a: integer = (((((((((((x)))))))))))*10;
     a: integer = #a*a;
+    return (((((((FAlSE&&A)))))));
 }

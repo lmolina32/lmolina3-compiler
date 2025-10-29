@@ -1,0 +1,14 @@
+main: function void (argc: integer, argv: array [] string) = {
+    my_func(a, b, x + 5);
+    func__(               );
+    x = x * x * (5 + 4);
+    x = (((((true&&false)))))||a;
+    x = #a*a*a;
+    x = 5*5++;
+
+    x = ((true||false))&&a;
+    x = (t*7)++;
+    y = (78*89*x)--;
+    y = (5+5)/5;
+    y = 5*4*(5*4);
+}

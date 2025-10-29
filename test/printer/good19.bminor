@@ -1,0 +1,9 @@
+printarray: function void ( a: array [] integer ) = {
+	i: integer;
+	for( i=0;i<#a;i++) {
+		print a[i], "\n";
+	}
+    for (i=0;;i++) print i, i, i, i ,i;
+    for (i=0; i&&i<10; i--) if ((((((x((((((x(((((x))))))))))))))))) print i;
+    return (((((((x*x(x^x)&&x^x)))))));
+}

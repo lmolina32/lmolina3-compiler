@@ -23,3 +23,4 @@ arr____: array[100] double = {{{{{{{{{{{{0}}}}}}}}}}}};
 boolllls: boolean = true;
 boolllls: boolean = false;
 arr: array[5] integer = {{{{{{0}}}}}};
+arr: array[5] integer = {1, 1, 1, 1, 5};

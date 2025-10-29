@@ -1,0 +1,15 @@
+main: function integer ( argc: integer, argv: array [] string ) =
+{
+}
+boolFunction: function boolean(intVar:integer) =
+{
+	return intVar > 5;
+}
+intFunction: function integer(n: integer) =
+{
+	total:integer = 0;
+	count: integer;
+	for(count = 0; count < n+1; count++)
+		total = total + count;
+	
+}

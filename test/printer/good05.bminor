@@ -1,0 +1,5 @@
+main: function void () = {
+    my_func(((5+54)), 1, 232, 2342, 'a', "qfdafda", "adfa\n");
+    if (x) for(;;) x = i;
+    x= 10; x = 20; x = 30;
+}
