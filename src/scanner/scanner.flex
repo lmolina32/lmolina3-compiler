@@ -126,7 +126,12 @@ while           { return TOKEN_WHILE; }
                     return TOKEN_CHAR_LITERAL; 
                 }
 
-{BINARY}        { return TOKEN_BINARY_LITERAL; }
+{BINARY}        {   
+                    char *binary_str = safe_calloc(strlen(yytext) - 1, sizeof(char)); 
+                    strncpy(binary_str, yytext + 2, strlen(yytext) - 2);
+                    yylval.name = binary_str;
+                    return TOKEN_BINARY_LITERAL; 
+                }
 {HEXIDECIMAL}   { return TOKEN_HEXIDECIMAL_LITERAL; }
 {INTEGER}       { return TOKEN_INTEGER_LITERAL; }
 {SCIENTIFIC}    { return TOKEN_DOUBLE_SCIENTIFIC_LITERAL; }

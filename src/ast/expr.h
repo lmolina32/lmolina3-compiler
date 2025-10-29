@@ -46,7 +46,7 @@ typedef enum {
 	EXPR_STR_LIT,				//  string literal "hello"
 	EXPR_BOOL_LIT,				//  boolean literal 'true' 'false'
 	EXPR_IDENT,					//  identifier    my_function 
-	EXPR_ARR_ELE				//  array element 1, 2, 3
+	EXPR_COUNT
 } expr_t;
 
 typedef struct Expr Expr;
@@ -71,8 +71,9 @@ Expr* 	expr_create_name(const char *n);
 Expr* 	expr_create_integer_literal(int c);
 Expr* 	expr_create_boolean_literal(int c);
 Expr*	expr_create_double_literal(double c);
-Expr* 	expr_create_char_literal(char c);
+Expr* 	expr_create_char_literal(char *c);
 Expr* 	expr_create_string_literal(const char *str);
+Expr* 	expr_precedence_check(Expr *e);
 void 	expr_print(Expr *e);
 
 #endif

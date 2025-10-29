@@ -42,7 +42,7 @@ Decl *root = 0;
 %token TOKEN_STRING_LITERAL
 %token TOKEN_INTEGER_LITERAL
 %token TOKEN_HEXIDECIMAL_LITERAL
-%token TOKEN_BINARY_LITERAL
+%token <name> TOKEN_BINARY_LITERAL
 %token TOKEN_DOUBLE_LITERAL
 %token TOKEN_DOUBLE_SCIENTIFIC_LITERAL
 %token TOKEN_CHAR_LITERAL
@@ -149,8 +149,6 @@ var_decl:   id TOKEN_COLON type TOKEN_SEMICOLON
 
 array_init:     TOKEN_LBRACE array_init_list TOKEN_RBRACE
                     { $$ = expr_create(EXPR_BRACES, 0, $2); }
-                | TOKEN_LBRACE TOKEN_RBRACE
-                    { $$ = expr_create(EXPR_BRACES, 0, 0); }
                 ;
 
 array_init_list:    array_init_element TOKEN_COMMA array_init_list
@@ -330,7 +328,7 @@ expr:           assign_expr
 
 assign_expr:     or_expr 
                     { $$ = $1; }
-                | or_expr TOKEN_ASSIGNMENT or_expr
+                | or_expr TOKEN_ASSIGNMENT assign_expr 
                     { $$ = expr_create(EXPR_ASSIGN, $1, $3); }
                 ;
 
@@ -418,15 +416,15 @@ literals_expr: TOKEN_STRING_LITERAL
                 | TOKEN_INTEGER_LITERAL
                     { $$ = expr_create_integer_literal(atoi(yytext)); }
                 | TOKEN_HEXIDECIMAL_LITERAL
-                    { char *ptr; $$ = expr_create_integer_literal(strtol(yytext, &ptr, 16)); }
+                    { $$ = expr_create_integer_literal(strtol(yytext, NULL, 0)); }
                 | TOKEN_BINARY_LITERAL
-                    { char *ptr; $$ = expr_create_integer_literal(strtol(yytext, &ptr, 2)); }
+                    { $$ = expr_create_integer_literal(strtol($1, NULL, 2)); free($1); }
                 | TOKEN_DOUBLE_LITERAL
-                    { char *ptr; $$ = expr_create_double_literal(strtod(yytext, &ptr)); }
+                    { $$ = expr_create_double_literal(strtod(yytext, NULL)); }
                 | TOKEN_DOUBLE_SCIENTIFIC_LITERAL
-                    { char *ptr; $$ = expr_create_double_literal(strtod(yytext, &ptr)); }
+                    { $$ = expr_create_double_literal(strtod(yytext, NULL)); }
                 | TOKEN_CHAR_LITERAL
-                    { $$ = expr_create_char_literal(*yytext); }
+                    { $$ = expr_create_char_literal(yytext); }
                 | TOKEN_TRUE
                     { $$ = expr_create_boolean_literal(1); }
                 | TOKEN_FALSE
@@ -434,7 +432,7 @@ literals_expr: TOKEN_STRING_LITERAL
                 | TOKEN_IDENTIFIER
                     { $$ = expr_create_name($1); free($1); }
                 | TOKEN_LPAREN expr TOKEN_RPAREN
-                    { $$ = expr_create(EXPR_GROUPS, $2, 0); }
+                    { $$ = $2; }
                 ;
 
 expr_list:     non_empty_expr_list
