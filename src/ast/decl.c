@@ -69,7 +69,6 @@ void decl_print(Decl *d, int indent){
 
         stmt_print(d->code, 0);
         print_indent(indent);
-        printf("\n");
     } else {
         printf(";\n");
     }

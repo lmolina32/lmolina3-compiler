@@ -80,7 +80,7 @@ void stmt_print(Stmt *s, int indent){
 				printf("{\n");
 				stmt_print(s->body->body, indent + 1);
 				print_indent(indent);
-				printf("}\n");
+				putchar('}');
 			} else {
 				printf("{\n");
 				stmt_print(s->body, indent + 1);
@@ -89,8 +89,7 @@ void stmt_print(Stmt *s, int indent){
 			}
 			
 			if (s->else_body){
-				print_indent(indent);
-				printf("else ");
+				printf(" else ");
 				if (s->else_body->kind == STMT_BLOCK){
 					printf("{\n");
 					stmt_print(s->else_body->body, indent + 1);
@@ -103,7 +102,7 @@ void stmt_print(Stmt *s, int indent){
 					printf("}\n");
 				}
 			} else {
-				putchar('\n');
+				printf("\n");
 			}
 			break;
 		case STMT_FOR:
@@ -117,7 +116,7 @@ void stmt_print(Stmt *s, int indent){
 			printf(")");
 			
 			if (s->body && s->body->kind == STMT_BLOCK){
-				printf("{\n");
+				printf(" {\n");
 				stmt_print(s->body->body, indent + 1);
 				print_indent(indent);
 				printf("}\n");
