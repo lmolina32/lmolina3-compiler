@@ -97,6 +97,7 @@ bminor/
 ### Development of code
 
 - used AI to rewrite README.md and create /docs/bminor_language.md
+  - feed in the old readme and prompted the LLM to make a more concise and clear readme. Explained the current steps I have implemented in the compiler as well as passed in my code structure.
 - used AI to find best structure to use when implementing precedence. The issue was that I wrote the enum out of order and needed a way to pass the enum value like `EXPR_ADD` and get the precedence value associated with that expression. The prompt I gave is:
   - I have a typedef enum that has a bunch of precedence rules like expr_add, expr_sub, expr_group i want to create another structure that has all the values tied to their precedence going from lower precedence to higher precedence and I want to use the enum value to index or get the value of precedence how could you implement something like this in C?
   - from this prompt I learned you can implement arrays with enums values and everything else is set to 0, e.g (`static const int expr_precedence[EXPR_COUNT] = { [EXPR_ADD] = 1}`)

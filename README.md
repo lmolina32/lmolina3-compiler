@@ -28,6 +28,9 @@ The compiler supports multiple modes of operation:
 # Parse a source file (syntax analysis)
 ./bin/bminor --parse <filename.bminor>
 
+# Print parsed source file (pretty printing)
+./bin/bminor --print <filename.bminor>
+
 ```
 
 ### Exit Codes
@@ -43,13 +46,14 @@ Run the test suites to verify compiler functionality:
 make test-all        # Run all tests (not book test cases)
 make test-scanner    # Test lexical analysis
 make test-parser     # Test syntax analysis
+make test-printer    # Test pretty printing
 make test-encode     # Test string encoding
 make test-book       # Run book test cases
 ```
 
 Test cases are organized in `test/` by compiler phase, with both valid (`good*.bminor`) and invalid (`bad*.bminor`) test programs.
 
-- Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`
+- Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`, `test/printer`
 - Book test cases: `test/book_test_cases/parser`
 
 ## Project Structure
