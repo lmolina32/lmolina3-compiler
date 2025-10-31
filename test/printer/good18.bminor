@@ -1,0 +1,20 @@
+main: function integer(argc: integer, argv: array [] auto) = {
+    if (x){
+        x = x + x;
+        for (i = 0; i < len * 5; i++){
+            print i;
+            print i * i, len, 5;
+        }
+        if (x) {
+            if (x+ x){
+                for (;;) print;
+            }
+    else {
+        if (x) {
+            print 'v', "alid";
+        }
+    }
+        } else 
+            if (x) i + i;
+    }
+}

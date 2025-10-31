@@ -10,4 +10,7 @@ init: function void (x: integer, y: boolean, c: char, s:string, a: array[] auto)
     s = "hello";
     a[x++-- * x] = 10 * y * c * s; 
     print x                      , y   , c , s, a , (x*y*c*s*a)&&a;
+    a = a[x++ * x];
+    my_func(1, arg, 'c');
+    print a, s, c, "hello", '\'';
 }

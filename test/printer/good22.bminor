@@ -1,0 +1,15 @@
+main: function void () = {
+    {{{{x = x + x;}}}}
+        x = x + x;
+    if (x) {
+        print 'h', 'e', 'l' , 'l', 'o';
+        for (x; x; x){
+            return;
+        }
+    }
+    if (x) 
+        for (;;) 
+    a = - -a;
+    a = !!!!!a;
+    a = !!!!!!!!(a + a);
+}

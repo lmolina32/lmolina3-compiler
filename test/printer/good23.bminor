@@ -1,0 +1,37 @@
+main: function void () = {
+x = (a + b) + c;   // expected output: -> x = a + b + c
+x = a + (b + c);   // expected output: -> x = a + (b + c)
+x = (a * b) * c;   // expected output: -> x = a * b * c
+x = a * (b * c);   // expected output: -> x = a * (b * c)
+x = (a && b) && c;   // expected output: -> x = a && b && c
+x = a && (b && c);   // expected output: -> x = a && (b && c)
+x = (a || b) || c;   // expected output: -> x = a || b || c
+x = a || (b || c);   // expected output: -> x = a || (b || c)
+x = a ^ (b ^ c);   // expected output: -> x = a ^ b ^ c
+x = (a ^ b) ^ c;   // expected output: -> x = (a ^ b) ^ c
+a = (b = c);   // expected output: -> a = b = c
+x = a + (b * c);   // expected output: -> x = a + b * c
+x = (a + b) * c;   // expected output: -> x = (a + b) * c
+x = a * (b ^ c);   // expected output: -> x = a * b ^ c
+x = (a * b) ^ c;   // expected output: -> x = (a * b) ^ c
+x = (a && b) || c;   // expected output: -> x = a && b || c
+x = a && (b || c);   // expected output: -> x = a && (b || c)
+x = (a == b) && c;   // expected output: -> x = a == b && c
+x = a == (b && c);   // expected output: -> x = a == (b && c)
+x = (a + b) == c;   // expected output: -> x = a + b == c
+x = a + (b == c);   // expected output: -> x = a + (b == c)
+x = ! (a == b);   // expected output: -> x = !(a == b)
+x = (!a) == b;   // expected output: -> x = !a == b
+x = -(a * b);   // expected output: -> x = -(a * b)
+x = (-a) * b;   // expected output: -> x = -a * b
+x = # (a + b);   // expected output: -> x = #(a + b)
+x = (#a) + b;   // expected output: -> x = #a + b
+x = (a++) * b;   // expected output: -> x = a++ * b
+x = (a--) + b;   // expected output: -> x = a-- + b
+x = (a + b) * (c ^ (d - e));   // expected output: -> x = (a + b) * c ^ (d - e)
+x = (a + b) * c ^ d - e;   // expected output: -> x = (a + b) * c ^ d - e
+x = a && (b || c) || (d && e);   // expected output: -> x = a && (b || c) || d && e
+x = !(a + b * c) && (#d == 5);   // expected output: -> x = !(a + b * c) && (#d == 5)
+x = (a + b) * (c + d);   // expected output: -> x = (a + b) * (c + d)
+x = (a * b) + (c / d);   // expected output: -> x = a * b + c / d
+}

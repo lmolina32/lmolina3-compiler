@@ -4,9 +4,9 @@ if ( x <= 5 ) {
 } else if (x >= 5) {
     return false;
 } else if (x != 5) { 
-    return 10e-744
+    return 10e-7
 } else if (x == 5) {
-    return 131314343441234
+    return 131334
 } else if ( x > 5 || x < 6){
     x++;
 } else if ( x > 10 && x < 15){

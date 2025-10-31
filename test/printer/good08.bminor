@@ -6,5 +6,5 @@ my_int: function void (arg:integer, arr: array [] auto);
 my_int: function void(arg: integer, arr: array[] auto) = {
     print arr[arg*arg/arg];
     print;
-    {{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{return x;}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+    {{{{{return;}}}}}
 }
