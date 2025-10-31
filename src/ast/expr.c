@@ -15,8 +15,8 @@
 /* Global Precedence array */
 
 static const int expr_associativity[EXPR_COUNT] = {
-	// 0 -> left  
-	// 1 -> right  
+	// 0 -> left associative  
+	// 1 -> right associative 
 	[EXPR_ASSIGN] = 1,
 	[EXPR_ARR_LEN] = 1,
 	[EXPR_EXPO] = 1, 
@@ -206,6 +206,10 @@ int expr_need_parens(Expr *parent, Expr *child, int is_left){
 	// check associativity when precedence is the same 
 	if ( child_prec == parent_prec){
 		
+		// if !!!!!a ensures that !(!(!(!a))) is not printed out 
+		if (child->kind == EXPR_NOT && parent->kind == EXPR_NOT){
+			return 0;
+		}
 		// if associativity left (e.g eval left to right) and evaluating right child add parens  
 		if (expr_associativity[parent->kind] == 0 && !is_left){
 			return 1;

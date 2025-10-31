@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 %}
 
 /* Definitions */
@@ -121,32 +123,69 @@ while           { return TOKEN_WHILE; }
                     char *binary_str = safe_calloc(sizeof(char), strlen(yytext) - 1); 
                     strncpy(binary_str, yytext + 2, strlen(yytext) - 2);
                     int *bin = safe_calloc(sizeof(int), 1);
-                    *bin = strtol(binary_str, 0, 2);
+                    errno = 0; 
+                    char *endptr;
+                    *bin = strtol(binary_str, &endptr, 2);
+                    if (errno == ERANGE){
+                        printf("Error: Overflow/Underflow for '%s'\n", binary_str);
+                        free(binary_str);
+                        free(bin);
+                        exit(1);
+                    }
+
                     free(binary_str);
                     yylval.int_literal = bin;
                     return TOKEN_BINARY_LITERAL; 
                 }
 {HEXIDECIMAL}   {   // convert hex to int and save in yylval 
                     int *hex = safe_calloc(sizeof(int), 1);
-                    *hex = strtol(yytext, 0, 0);
+                    errno = 0;
+                    char *endptr;
+                    *hex = strtol(yytext, &endptr, 0);
+                    if (errno == ERANGE){
+                        printf("Error: Overflow/Underflow for '%s'\n", yytext);
+                        free(hex);
+                        exit(1);
+                    }
                     yylval.int_literal = hex;
                     return TOKEN_HEXIDECIMAL_LITERAL; 
                 }
 {INTEGER}       {   // convert string int to int and save in yylval
                     int *integer = safe_calloc(sizeof(int), 1);
-                    *integer = atoi(yytext);
+                    char *endptr;
+                    errno = 0;
+                    *integer = strtol(yytext, &endptr, 10);
+                    if (errno == ERANGE){
+                        printf("Error: Overflow/Underflow for '%s'\n", yytext);
+                        free(integer);
+                        exit(1);
+                    }
                     yylval.int_literal = integer;
                     return TOKEN_INTEGER_LITERAL;
                 }
 {SCIENTIFIC}    {   // convert string sci to int and save in yylval
                     double *sci = safe_calloc(sizeof(double), 1);
-                    *sci = strtod(yytext, 0);
+                    char *endptr;
+                    errno = 0;
+                    *sci = strtod(yytext, &endptr);
+                    if (errno == ERANGE){
+                        printf("Error: Overflow/Underflow for '%s'\n", yytext);
+                        free(sci);
+                        exit(1);
+                    }
                     yylval.double_lit = sci;
                     return TOKEN_DOUBLE_SCIENTIFIC_LITERAL; 
                 }
 {DOUBLE_VALUE}  {   // convert string double to double and save in yylval
                     double *d = safe_calloc(sizeof(double), 1);
-                    *d = strtod(yytext, 0);
+                    char *endptr;
+                    errno = 0;
+                    *d = strtod(yytext, &endptr);
+                    if (errno == ERANGE){
+                        printf("Error: Overflow/Underflow for '%s'\n", yytext);
+                        free(d);
+                        exit(1);
+                    }
                     yylval.double_lit = d;
                     return TOKEN_DOUBLE_LITERAL; 
                 }

@@ -65,11 +65,11 @@ void decl_print(Decl *d, int indent){
         expr_print(d->value);
         printf(";\n");
     } else if (d->code){
-        printf(" = {\n");
+        printf(" = ");
 
-        stmt_print(d->code, indent + 1);
+        stmt_print(d->code, 0);
         print_indent(indent);
-        printf("}\n");
+        printf("\n");
     } else {
         printf(";\n");
     }

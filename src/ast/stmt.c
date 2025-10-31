@@ -74,15 +74,34 @@ void stmt_print(Stmt *s, int indent){
 			print_indent(indent);
 			printf("if (");
 			expr_print(s->expr);
-			printf("){\n");
-			stmt_print(s->body, indent + 1);
-			print_indent(indent);
-			putchar('}');
-			if (s->else_body){
-				printf(" else {\n");
-				stmt_print(s->else_body, indent + 1);
+			printf(") ");
+			
+			if (s->body && s->body->kind == STMT_BLOCK){
+				printf("{\n");
+				stmt_print(s->body->body, indent + 1);
 				print_indent(indent);
 				printf("}\n");
+			} else {
+				printf("{\n");
+				stmt_print(s->body, indent + 1);
+				print_indent(indent);
+				putchar('}');
+			}
+			
+			if (s->else_body){
+				print_indent(indent);
+				printf("else ");
+				if (s->else_body->kind == STMT_BLOCK){
+					printf("{\n");
+					stmt_print(s->else_body->body, indent + 1);
+					print_indent(indent);
+					printf("}\n");
+				} else {
+					printf("{\n");
+					stmt_print(s->else_body, indent + 1);
+					print_indent(indent);
+					printf("}\n");
+				}
 			} else {
 				putchar('\n');
 			}
@@ -95,10 +114,19 @@ void stmt_print(Stmt *s, int indent){
 			expr_print(s->expr);
 			putchar(';');
 			expr_print(s->next_expr);
-			printf("){\n");
-			stmt_print(s->body, indent + 1);
-			print_indent(indent);
-			printf("}\n");
+			printf(")");
+			
+			if (s->body && s->body->kind == STMT_BLOCK){
+				printf("{\n");
+				stmt_print(s->body->body, indent + 1);
+				print_indent(indent);
+				printf("}\n");
+			} else {
+				printf(" {\n");
+				stmt_print(s->body, indent + 1);
+				print_indent(indent);
+				printf("}\n");
+			}
 			break;
 		case STMT_PRINT:
 			print_indent(indent);
@@ -116,7 +144,11 @@ void stmt_print(Stmt *s, int indent){
 			printf(";\n");
 			break;
 		case STMT_BLOCK:
-			stmt_print(s->body, indent);
+			print_indent(indent);
+			printf("{\n");
+			stmt_print(s->body, indent + 1);
+			print_indent(indent);
+			printf("}\n");
 			break;
 	}
 
