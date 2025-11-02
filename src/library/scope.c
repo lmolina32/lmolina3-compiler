@@ -1,7 +1,7 @@
-/* symbol_table.c: symbol_table function definitions */
+/* scope.c: scope function definitions */
 
 #include "hash_table.h"
-#include "symbol_table.h"
+#include "scope.h"
 #include "symbol.h"
 
 #include <stdio.h>
