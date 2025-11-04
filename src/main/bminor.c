@@ -17,13 +17,20 @@ int main(int argc, char *argv[]){
 
     char *command = argv[argind++];
     if (streq(command, "--encode")){
-        if (!encode(argv[argind++])) return EXIT_FAILURE;
+        if (!encode(argv[argind++])) 
+            return EXIT_FAILURE;
     } else if (streq(command, "--scan")) {
-        if (!scan(argv[argind++])) return EXIT_FAILURE;
+        if (!scan(argv[argind++])) 
+            return EXIT_FAILURE;
     } else if (streq(command, "--parse")){
-        if (!parse(argv[argind++])) return EXIT_FAILURE;
+        if (!parse(argv[argind++])) 
+            return EXIT_FAILURE;
     } else if (streq(command, "--print")){
-        if (!pretty_print(argv[argind++])) return EXIT_FAILURE;
+        if (!pretty_print(argv[argind++])) 
+            return EXIT_FAILURE;
+    } else if (streq(command, "--resolve")){
+        if (!resolve(argv[argind++])) 
+            return EXIT_FAILURE;
     } else { return EXIT_FAILURE; }
 
     return EXIT_SUCCESS;

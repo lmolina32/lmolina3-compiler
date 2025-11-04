@@ -23,5 +23,6 @@ int     encode(char *file_name);
 int     scan(char *file_name);
 int     parse(char *file_name);
 int     pretty_print(char *file_name);
+int     resolve(char *file_name);
 
 #endif 

@@ -10,6 +10,7 @@
 #include "stmt.h"
 #include "symbol.h"
 #include "type.h"
+#include "scope.h"
 #include "utils.h"
 
 #include <stdbool.h>
@@ -139,3 +140,31 @@ int pretty_print(char *file_name){
     yylex_destroy();
     return exit_code;
 }
+
+/**
+ * Reads in file, parses File then does name resolution for all decls, stmts, and exprs 
+ * @param   file_name       name of file to open 
+ * @return  True if valid parse and able to resolve,  otherwise false 
+ **/
+int resolve(char *file_name){
+    int exit_code = true;
+    yyin = safe_fopen(file_name, "r");
+
+    yyrestart(yyin);
+
+    if(yyparse() == 0){
+        scope_enter(); 
+        decl_resolve(root);
+        scope_exit();
+        exit_code = stack.status ? false : true ;
+    } else {
+        fprintf(stderr, "Parse Error\n");
+        exit_code = false;
+    }
+
+    fclose(yyin);
+    yylex_destroy();
+    return exit_code;
+}
+
+
