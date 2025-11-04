@@ -6,6 +6,7 @@
 #include "stmt.h"
 #include "symbol.h"
 #include "type.h"
+#include "scope.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -75,4 +76,32 @@ void decl_print(Decl *d, int indent){
 
     decl_print(d->next, 0);
 
+}
+
+/**
+ * Performs name resolution for declarations
+ * @param   d       Declaration structure to perform name resolution
+ **/
+void decl_resolve(Decl *d){
+    if (!d) return;
+
+    symbol_t sym_type = scope_level() > 1 ? SYMBOL_LOCAL : SYMBOL_GLOBAL;
+
+    d->symbol = symbol_create(sym_type, d->type, d->name);
+    expr_resolve(d->value);
+
+    if (scope_lookup_current(d->name)){
+        fprintf(stderr, "resolver: resolver error: Redeclaring an Identifier in the same scope %s\n", d->name);
+        stack.status = 1;
+    } else {
+        scope_bind(d->name, d->symbol);    
+    }
+
+    if (d->code){
+        scope_enter();
+        param_list_resolve(d->type->params);
+        stmt_resolve(d->code);
+        scope_exit();
+    }
+    decl_resolve(d->next);
 }

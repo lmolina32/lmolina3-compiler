@@ -30,6 +30,7 @@ struct Decl {
 Decl*	 decl_create(const char *name, Type *type, Expr *value, Stmt *code, Decl *next);
 void	 decl_destroy(Decl *d);
 void 	 decl_print(Decl *d, int indent);
+void     decl_resolve(Decl *d);
 
 #endif
 

@@ -6,6 +6,7 @@
 #include "stmt.h"
 #include "symbol.h"
 #include "type.h"
+#include "scope.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -60,4 +61,33 @@ void param_list_print(Param_list *a){
 	} else {
 		putchar(' ');
 	}
+}
+
+/**
+ * Create deepcopy of param list
+ * @param  a        Param list struct to deep copy 
+ * @return          ptr to deepcopy or Null if unsuccesful 
+ **/
+Param_list* param_list_deep_copy(Param_list *a){
+    if (!a) return NULL;
+    return param_list_create(a->name, type_deep_copy(a->type), param_list_deep_copy(a->next));
+}
+
+
+/**
+ * Perform name resolution for the param_list structure
+ * @param   a       Param List sturcutre to perform name resolution
+ **/
+void param_list_resolve(Param_list *a){
+    if (!a) return;
+    a->symbol = symbol_create(SYMBOL_PARAM, a->type, a->name);
+    
+    if (scope_lookup_current(a->name)){
+        fprintf(stderr, "resolver error: Redeclaring an Identifier %s\n", a->name);
+        stack.status = 1;
+    } else {
+        scope_bind(a->name, a->symbol);    
+    }
+
+    param_list_resolve(a->next);
 }

@@ -14,7 +14,8 @@ typedef struct Type Type;
 typedef enum {
 	SYMBOL_LOCAL,
 	SYMBOL_PARAM,
-	SYMBOL_GLOBAL
+	SYMBOL_GLOBAL,
+    SYMBOL_LEN,
 } symbol_t;
 
 typedef struct Symbol Symbol;
@@ -26,9 +27,13 @@ struct Symbol {
 	int which;
 };
 
+
+extern const char *sym_to_str[SYMBOL_LEN];
+
 /* Functions */
 
 Symbol* 	symbol_create(symbol_t kind, Type *type, const char *name);
 void		symbol_destroy(Symbol *s);
+Symbol*     symbol_deep_copy(Symbol *s);
 
 #endif

@@ -6,6 +6,7 @@
 #include "stmt.h"
 #include "symbol.h"
 #include "type.h"
+#include "scope.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -152,4 +153,32 @@ void stmt_print(Stmt *s, int indent){
 	}
 
 	stmt_print(s->next, indent);
+}
+
+/**
+ * Perform name resolution for statment structures 
+ * @param   s       Statment structure to perform name resolution 
+ **/
+void stmt_resolve(Stmt *s){
+    if (!s) return;
+    decl_resolve(s->decl);
+    expr_resolve(s->init_expr);
+    expr_resolve(s->expr);
+    expr_resolve(s->next_expr);
+
+    if (s->kind == STMT_BLOCK){
+        scope_enter();
+        stmt_resolve(s->body);
+        scope_exit();
+        
+        if (s->else_body){
+            scope_enter();
+            stmt_resolve(s->else_body);
+            scope_exit();
+        }
+    } else {
+        stmt_resolve(s->body);
+    }
+
+    stmt_resolve(s->next);
 }

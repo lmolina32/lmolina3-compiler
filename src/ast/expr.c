@@ -7,12 +7,11 @@
 #include "symbol.h"
 #include "type.h"
 #include "encoder.h"
+#include "scope.h"
 #include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-/* Global Precedence array */
 
 static const int expr_associativity[EXPR_COUNT] = {
 	// 0 -> left associative  
@@ -431,4 +430,40 @@ void expr_print(Expr *e){
 			exit(1);
 	}
 
+}
+
+/**
+ * Crete a deep copy of the expression structure 
+ * @param   e       Expression structure to create deep copy of 
+ * @return  ptr to expression struct or NULL if unsuccesful
+ **/
+Expr* expr_deep_copy(Expr *e){
+    if (!e) return NULL;
+    return expr_create(e->kind, expr_deep_copy(e->left), expr_deep_copy(e->right));
+}
+
+/**
+ * Perform name resolution on Expression structure 
+ * @param   e       Expression structure to perform name resolution
+ **/
+void expr_resolve(Expr *e){
+    if (!e) return;
+    
+    if (e->kind == EXPR_IDENT){
+        e->symbol = symbol_deep_copy(scope_lookup(e->name));
+        if (e->symbol){
+            if (e->symbol->kind == SYMBOL_GLOBAL){
+                printf("resolver: %s resolves to %s %s\n", e->name, sym_to_str[e->symbol->kind], e->symbol->name);            
+            } else {
+                printf("resolver: %s resolves to %s %d\n", e->name, sym_to_str[e->symbol->kind], e->symbol->which);            
+                
+            }
+        } else {
+            printf("resolver error: %s is not defined", e->name);
+            stack.status = 1;
+        }
+    } else {
+        expr_resolve(e->left);
+        expr_resolve(e->right);
+    }
 }

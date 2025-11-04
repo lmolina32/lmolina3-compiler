@@ -40,5 +40,6 @@ struct Stmt {
 Stmt* 		stmt_create(stmt_t kind, Decl *decl, Expr *init_expr, Expr *expr, Expr *next_expr, Stmt *body, Stmt *else_body, Stmt *next);
 void		stmt_destroy(Stmt *s);
 void 		stmt_print(Stmt *s, int indent);
+void        stmt_resolve(Stmt *s);
 
 #endif

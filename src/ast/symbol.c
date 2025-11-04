@@ -10,6 +10,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+/* Global arrays */
+const char *sym_to_str[SYMBOL_LEN] = {
+    [SYMBOL_LOCAL] = "local",
+    [SYMBOL_PARAM] = "param",
+    [SYMBOL_GLOBAL] = "global",
+};
+
 /* Functions */
 
 /**
@@ -39,4 +47,14 @@ void symbol_destroy(Symbol *s){
 
     type_destroy(s->type);
     free(s);
+}
+
+/**
+ * This creates a deep copy of a symbol structure 
+ * @param   s       symbol structure to make deep copy
+ * @return  deep copy of symbol structure, otherwise NULL
+ **/
+Symbol* symbol_deep_copy(Symbol *s){
+    if (!s) return NULL;
+    return symbol_create(s->kind, type_deep_copy(s->type), s->name);
 }
