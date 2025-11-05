@@ -1,0 +1,13 @@
+my_sqrt: function double (d: double) = {
+    return d ^ 0.5;
+}
+
+atoi: function integer(s: string);
+
+main: function void (argc: integer, argv: carray [] string) = {
+    i: integer;
+   for (i = 0; i < argc; i++){
+        print my_sqrt(atoi(argv[i]));
+   }
+   return 0;
+}

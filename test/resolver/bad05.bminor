@@ -1,0 +1,6 @@
+x: integer = 10;
+z: integer = 20;
+
+my_sqrt: double = 10.0;
+my_sqrt: function void (i: integer);
+z: function void (beta_int: integer);

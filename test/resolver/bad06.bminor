@@ -1,0 +1,10 @@
+main: function void () = {
+    x: integer = 10;
+    y: integer = 15;
+
+   if (x < y) {
+       s: string = "hello";
+       print s;
+   }
+    s = "char hello";
+}

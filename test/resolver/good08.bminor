@@ -1,0 +1,16 @@
+arr: array [100] array [100] array [100] integer;
+
+fill_array: function void (i_len: integer, j_len: integer, z_len: integer) = {
+    i: integer;
+    j: integer;
+    z: integer; 
+
+    for (i = 0; i < i_len; i++)
+        for (j = 0; j < j_len; j++)
+            for (z = 0; z < z_len; z++){
+                arr[i][j][z] = i * j * z;
+                if (i * j > j * z){
+                    print i * j, "greater than", j * z;
+                }
+            }
+}

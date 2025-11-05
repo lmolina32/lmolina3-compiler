@@ -1,0 +1,7 @@
+d: double = 10.10;
+
+main: function void () = {
+    print d;
+    d: double = 5;
+    print d;
+}

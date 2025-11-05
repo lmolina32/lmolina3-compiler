@@ -1,0 +1,7 @@
+main: function void () = {
+    z: integer = 10;
+       {
+           xz: integer = 10;
+       }
+    z: integer = 10;
+}
