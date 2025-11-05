@@ -450,16 +450,16 @@ void expr_resolve(Expr *e){
     if (!e) return;
     
     if (e->kind == EXPR_IDENT){
-        e->symbol = symbol_deep_copy(scope_lookup(e->name));
+        e->symbol = scope_lookup(e->name);
         if (e->symbol){
             if (e->symbol->kind == SYMBOL_GLOBAL){
-                printf("resolver: %s resolves to %s %s\n", e->name, sym_to_str[e->symbol->kind], e->symbol->name);            
+                printf("resolver: %s resolves to %s %s\n", e->name, sym_to_str[e->symbol->kind], e->symbol->name);
             } else {
                 printf("resolver: %s resolves to %s %d\n", e->name, sym_to_str[e->symbol->kind], e->symbol->which);            
                 
             }
         } else {
-            printf("resolver error: %s is not defined", e->name);
+            printf("resolver error: %s is not defined\n", e->name);
             stack.status = 1;
         }
     } else {
