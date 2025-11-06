@@ -1,3 +1,4 @@
+my_sqrt: function double (x: double);
 arr: array [5] auto;
 int: integer = 10;
 global_pi: double = 3.14;

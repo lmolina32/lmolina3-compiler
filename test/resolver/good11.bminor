@@ -48,3 +48,55 @@ z: function void () = {
     print main;
     print z; 
 }
+
+
+another_main: function void () = {
+    x: integer = 10;
+    print x; // 0
+    y: integer = 10;
+    print y; // 1
+    {
+        z: integer = 10;
+        print z; //2
+    }
+    {
+        u: integer = 10;
+        print u;
+        {
+            op: integer = 10;
+            print op;
+            {
+                yu: integer = 10;
+                print yu;
+                np: integer = 10;
+                print np;
+                {
+                    {
+                        {
+                            {
+                                {
+                                    {
+                                        {
+                                            {
+                                                ada: integer = 10;
+                                                print ada;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    n: integer = 10;
+    print n; // 3
+}
+
+zz: function void () = {
+    print main;
+    print zz; 
+}
