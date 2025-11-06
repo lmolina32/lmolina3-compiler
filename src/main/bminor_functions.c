@@ -162,6 +162,7 @@ int resolve(char *file_name){
         exit_code = false;
     }
 
+    decl_destroy(root);
     fclose(yyin);
     yylex_destroy();
     return exit_code;
