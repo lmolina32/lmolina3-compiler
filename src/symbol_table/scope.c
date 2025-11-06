@@ -73,7 +73,8 @@ void scope_bind( const char *name, Symbol *sym ){
     }
 
     if (!hash_table_insert(stack.top->hashmap, name, (void *)sym)){
-        fprintf(stderr, "scope_bind: hash table insert failed for %s", name);
+        fprintf(stderr, "scope_bind: hash table insert failed for %s\n", name);
+        stack.status = 1;
         exit(1);
     }
 }
