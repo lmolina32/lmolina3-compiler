@@ -68,9 +68,11 @@ void param_list_print(Param_list *a){
  * @param  a        Param list struct to deep copy 
  * @return          ptr to deepcopy or Null if unsuccesful 
  **/
-Param_list* param_list_deep_copy(Param_list *a){
+Param_list* param_list_copy(Param_list *a){
     if (!a) return NULL;
-    return param_list_create(a->name, type_deep_copy(a->type), param_list_deep_copy(a->next));
+    Param_list *p = param_list_create(a->name, type_copy(a->type), param_list_copy(a->next));
+	p->symbol = symbol_copy(a->symbol);
+	return p;
 }
 
 

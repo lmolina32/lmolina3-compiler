@@ -76,7 +76,7 @@ Expr*	expr_unwrap_groups(Expr *e);
 int 	expr_need_parens(Expr *parent, Expr *child, int is_left);
 void 	expr_print_with_context(Expr *parent, Expr *child, int is_left);
 void 	expr_print(Expr *e);
-Expr*   expr_deep_copy(Expr *e);
+Expr*   expr_copy(Expr *e);
 void    expr_resolve(Expr *e);
 
 #endif

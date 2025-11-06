@@ -26,7 +26,7 @@ struct Param_list {
 Param_list*		 param_list_create(const char *name, Type *type, Param_list *next);
 void			 param_list_destroy(Param_list *a);
 void 			 param_list_print(Param_list *a);
-Param_list*      param_list_deep_copy(Param_list *a);
+Param_list*      param_list_copy(Param_list *a);
 void             param_list_resolve(Param_list *a);
 
 #endif

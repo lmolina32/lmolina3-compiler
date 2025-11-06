@@ -106,8 +106,10 @@ void type_print(Type *t){
  * @param    t      Type structure to create deep copy 
  * @return   returns pointer to deep copy of Type structure, otherwise NULL 
  **/
-Type* type_deep_copy(Type *t){
+Type* type_copy(Type *t){
     if (!t) return NULL;
-Type*		  type_create(type_t kind, Type *subtype, Param_list *params, Expr * arr_len);
-    return type_create(t->kind, type_deep_copy(t->subtype), param_list_deep_copy(t->params), expr_deep_copy(t->arr_len));
+    Type *new_t = type_create(t->kind, type_copy(t->subtype), param_list_copy(t->params), expr_copy(t->arr_len));
+	new_t->arr_len = expr_copy(t->arr_len);
+	return new_t;
 }
+

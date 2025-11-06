@@ -45,7 +45,7 @@ void symbol_destroy(Symbol *s){
         free(s->name);
     }
 
-    type_destroy(s->type);
+    //type_destroy(s->type);
     free(s);
 }
 
@@ -54,7 +54,10 @@ void symbol_destroy(Symbol *s){
  * @param   s       symbol structure to make deep copy
  * @return  deep copy of symbol structure, otherwise NULL
  **/
-Symbol* symbol_deep_copy(Symbol *s){
+Symbol* symbol_copy(Symbol *s){
     if (!s) return NULL;
-    return symbol_create(s->kind, type_deep_copy(s->type), s->name);
+    Symbol *new_s = symbol_create(s->kind, type_copy(s->type), s->name);
+    new_s->which = s->which;
+    new_s->func_decl = s->func_decl; 
+    return new_s;
 }

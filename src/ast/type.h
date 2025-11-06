@@ -40,6 +40,6 @@ struct Type {
 Type*		  type_create(type_t kind, Type *subtype, Param_list *params, Expr * arr_len);
 void		  type_destroy(Type *t);
 void          type_print(Type *t);
-Type*         type_deep_copy(Type *t);
+Type*         type_copy(Type *t);
 
 #endif

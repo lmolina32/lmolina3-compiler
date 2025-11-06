@@ -25,6 +25,7 @@ struct Symbol {
 	Type *type;
 	char *name;
 	int which;
+	int func_decl;
 };
 
 
@@ -34,6 +35,6 @@ extern const char *sym_to_str[SYMBOL_LEN];
 
 Symbol* 	symbol_create(symbol_t kind, Type *type, const char *name);
 void		symbol_destroy(Symbol *s);
-Symbol*     symbol_deep_copy(Symbol *s);
+Symbol*     symbol_copy(Symbol *s);
 
 #endif

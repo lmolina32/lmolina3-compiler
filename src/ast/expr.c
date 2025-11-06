@@ -92,7 +92,7 @@ void expr_destroy(Expr *e){
 
 	expr_destroy(e->left);
 	expr_destroy(e->right);
-	symbol_destroy(e->symbol);
+	//symbol_destroy(e->symbol);
 	free(e);
 }
 
@@ -437,9 +437,15 @@ void expr_print(Expr *e){
  * @param   e       Expression structure to create deep copy of 
  * @return  ptr to expression struct or NULL if unsuccesful
  **/
-Expr* expr_deep_copy(Expr *e){
+Expr* expr_copy(Expr *e){
     if (!e) return NULL;
-    return expr_create(e->kind, expr_deep_copy(e->left), expr_deep_copy(e->right));
+    Expr* new_e = expr_create(e->kind, expr_copy(e->left), expr_copy(e->right));
+	new_e->name = e->name ? safe_strdup(e->name) : NULL;
+	new_e->literal_value = e->literal_value;
+	new_e->double_literal_value = e->double_literal_value;
+	new_e->string_literal = e->string_literal ? safe_strdup(e->string_literal) : NULL;
+	new_e->symbol = symbol_copy(e->symbol);
+	return new_e;
 }
 
 /**
@@ -448,7 +454,6 @@ Expr* expr_deep_copy(Expr *e){
  **/
 void expr_resolve(Expr *e){
     if (!e) return;
-    
     if (e->kind == EXPR_IDENT){
         e->symbol = scope_lookup(e->name);
         if (e->symbol){
@@ -456,7 +461,6 @@ void expr_resolve(Expr *e){
                 printf("resolver: %s resolves to %s %s\n", e->name, sym_to_str[e->symbol->kind], e->symbol->name);
             } else {
                 printf("resolver: %s resolves to %s %d\n", e->name, sym_to_str[e->symbol->kind], e->symbol->which);            
-                
             }
         } else {
             printf("resolver error: %s is not defined\n", e->name);

@@ -61,22 +61,36 @@ void decl_print(Decl *d, int indent){
     printf("%s:", d->name);
     type_print(d->type);
 
-    if (d->value){
+    if (d->value){      // print decl expression 
         printf(" = ");
         expr_print(d->value);
         printf(";\n");
-    } else if (d->code){
+    } else if (d->code){ // function, print body 
         printf(" = ");
 
         stmt_print(d->code, 0);
         print_indent(indent);
-    } else {
+    } else {            // decl with no expression or body
         printf(";\n");
     }
 
     decl_print(d->next, 0);
 
 }
+
+/**
+ * Creates a deep copy of for the declaration structure 
+ * @param   d       decl structure to deep copy 
+ * @return  ptr to the deep copy of the decl structure, otherwise NULL. 
+ */
+Decl *decl_copy(Decl *d){
+    if (!d) return NULL;
+    Decl *new_d = decl_create(d->name, type_copy(d->type), expr_copy(d->value), stmt_copy(d->code), decl_copy(d->next));
+    new_d->symbol = symbol_copy(d->symbol);
+    return new_d;
+}
+
+Decl*	 decl_create(const char *name, Type *type, Expr *value, Stmt *code, Decl *next);
 
 /**
  * Performs name resolution for declarations
@@ -86,22 +100,52 @@ void decl_resolve(Decl *d){
     if (!d) return;
 
     symbol_t sym_type = scope_level() > 1 ? SYMBOL_LOCAL : SYMBOL_GLOBAL;
-
     d->symbol = symbol_create(sym_type, d->type, d->name);
     expr_resolve(d->value);
 
-    if (scope_lookup_current(d->name)){
-        fprintf(stderr, "resolver: resolver error: Redeclaring an Identifier in the same scope %s\n", d->name);
-        stack.status = 1;
-    } else {
-        scope_bind(d->name, d->symbol);    
+    Symbol *sym = scope_lookup_current(d->name);
+
+    // function declaration  
+    if ((d->type->kind == TYPE_FUNCTION) && !d->code){
+        d->symbol->func_decl = 1;
     }
 
-    if (d->code){
-        scope_enter();
-        param_list_resolve(d->type->params);
-        stmt_resolve(d->code);
-        scope_exit();
+    // resolve for non function decls 
+    if (d->type->kind != TYPE_FUNCTION){
+        if (sym && sym->type->kind != TYPE_FUNCTION){
+            fprintf(stderr, "resolver error: Redeclaring an Identifier '%s' in the same scope\n", d->name);
+            stack.status = 1;
+        } else if (sym && sym->type->kind == TYPE_FUNCTION){
+            fprintf(stderr, "resolver error: Declaring Identifier with function name '%s'\n", d->name);
+            stack.status = 1;
+        } else {
+            scope_bind(d->name, d->symbol);    
+        }
+    } else { // resolve for function decls 
+        // TODO: not every decl will have its own reference
+        if (sym && sym->type->kind != TYPE_FUNCTION){
+            fprintf(stderr, "resolver error: Reusing Identifier '%s' for function name\n", d->name);
+            stack.status = 1;
+        } else if (sym && !d->symbol->func_decl && sym->func_decl){       // func init && func decl
+            sym->func_decl = 0;     // function has been initialized 
+            symbol_destroy(d->symbol);
+            d->symbol = sym;
+        } else if (sym && !d->symbol->func_decl && !sym->func_decl){      // func as already bee init so error
+            fprintf(stderr, "resolver error: redefinition of '%s'\n", d->name);
+            stack.status = 1;
+        } else if (sym && d->symbol->func_decl && sym->func_decl){ 
+           // throw error in typechecking if prototype don't match 
+        } else {
+            scope_bind(d->name, d->symbol);    
+        }
+
+        if (d->code){
+            scope_enter();
+            param_list_resolve(d->type->params);
+            stmt_resolve(d->code);
+            scope_exit();
+        }
     }
+
     decl_resolve(d->next);
 }

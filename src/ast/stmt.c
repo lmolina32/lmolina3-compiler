@@ -156,6 +156,17 @@ void stmt_print(Stmt *s, int indent){
 }
 
 /**
+ * Perform a deep copy on the stmt structure 
+ * @param 	s 		Statement stucture to create a deep copy of
+ * @return  ptr to deep copy of structure, otherwise NULL
+ */
+Stmt *stmt_copy(Stmt *s){
+	if (!s) return NULL;
+	return stmt_create(s->kind, decl_copy(s->decl), expr_copy(s->init_expr), expr_copy(s->expr), expr_copy(s->next_expr), stmt_copy(s->body), stmt_copy(s->else_body), stmt_copy(s->next));
+
+}
+
+/**
  * Perform name resolution for statment structures 
  * @param   s       Statment structure to perform name resolution 
  **/
