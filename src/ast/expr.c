@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 static const int expr_associativity[EXPR_COUNT] = {
 	// 0 -> left associative  
@@ -24,6 +25,8 @@ static const int expr_associativity[EXPR_COUNT] = {
 };
 
 static const int expr_precedence[EXPR_COUNT] = {
+	// lowest precedence = 0
+	// highest precedence = 10
 	[EXPR_ADD] = 4,					
 	[EXPR_SUB] = 4,					
 	[EXPR_MUL] = 5,					
@@ -82,6 +85,9 @@ Expr* expr_create(expr_t kind, Expr *left, Expr *right){
  */
 void expr_destroy(Expr *e){
 	if (!e) return;
+
+	Expr *left = e->left;
+	Expr *right = e->right;
 	if (e->name) {
 		free(e->name);
 		e->name = NULL;
@@ -91,11 +97,7 @@ void expr_destroy(Expr *e){
 		free(e->string_literal);
 		e->string_literal = NULL;
 	}
-
-	Expr *left = e->left;
-	e->left = NULL;
-	Expr *right = e->right;
-	e->right = NULL;
+	e->left = e->right = NULL;
 
 	free(e);
 	expr_destroy(left);
