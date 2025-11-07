@@ -103,3 +103,12 @@ bminor/
   - from this prompt I learned you can implement arrays with enums values and everything else is set to 0, e.g (`static const int expr_precedence[EXPR_COUNT] = { [EXPR_ADD] = 1}`)
 - what was easy was to set up all the functions initially like `expr_create, decl_create` etc. Additionally, it was relatively easy to set up the bison semantic actions for most of the rules. For most of the printing it was pretty straight forward initially with the printing for all of the different structures in the AST.
 - The hardest part initially was getting the `parser.bison` to run. I rewrote the header files to use `typedef` for all the structs and for some reason `parser.bison` was not reading in the structures correctly. The issue was fixed but it took a while to get it to work with forward declarations and forcing the header files to be in the `parser.bison` file with `%code requires`. Additionally, the precedence printing was extremely confusing and hard to figure out. I iterated through several different ideas and fell back to the original idea of walking down the groups and determining precedence. The tricky part was figuring out I also had to take into account the associativity of different operators. Additionally, while pretty printing I ran into issues on my semantic actions which were tricky to figure out, locate and then fix. Additionally, I had issues with getting the correct tokens from `yytext` but the issue was easy to fix once I found the correct stack overflow page that talked about the issue.
+
+## Resolver 
+### Structure 
+- `src/symbol_table` was created which is where the `scope.c` and `hash_table.c` live. 
+
+### Development of code 
+- No AI was used for creating the code. 
+- What was easy was initially create all the scope functions and walking the tree to create the name resolution. I thought it was pretty straight forward to figure out how to push things onto the symbol table when to enter and leave scopes and when to name resolve. 
+- The hard part began when I started dealing with the which for locals and params. This took me a while to figure out where and when to update the which statement. Additionally, the functions prototypes and the function declarations were though to get right. Initially I thought the resolver was super easy but dealing with these two issues were difficult to figure out and to ensure they were working together. 
