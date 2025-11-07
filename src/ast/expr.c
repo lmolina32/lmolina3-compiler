@@ -209,6 +209,7 @@ int expr_need_parens(Expr *parent, Expr *child, int is_left){
 		if (child->kind == EXPR_NOT && parent->kind == EXPR_NOT){
 			return 0;
 		}
+
 		// if associativity left (e.g eval left to right) and evaluating right child add parens  
 		if (expr_associativity[parent->kind] == 0 && !is_left){
 			return 1;
@@ -425,7 +426,7 @@ void expr_print(Expr *e){
 		case EXPR_IDENT:				//  identifier    my_function 
 			printf("%s", e->name);
 			break;
-		default:
+		default:						//  if not defined identifier then error 
 			fprintf(stderr, "Invalid Expression type\n");
 			exit(1);
 	}

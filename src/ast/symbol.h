@@ -26,6 +26,7 @@ struct Symbol {
 	char *name;
 	int which;
 	int func_decl;
+	Symbol *prototype_def;
 };
 
 

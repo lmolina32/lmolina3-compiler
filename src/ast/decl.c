@@ -50,6 +50,7 @@ void decl_destroy(Decl *d){
     decl_destroy(d->next);
     free(d);
 }
+
 /**
  * Prints a declaration node and its contents to stdout.
  * @param   d           The declaration to print
@@ -89,8 +90,6 @@ Decl *decl_copy(Decl *d){
     new_d->symbol = symbol_copy(d->symbol);
     return new_d;
 }
-
-Decl*	 decl_create(const char *name, Type *type, Expr *value, Stmt *code, Decl *next);
 
 /**
  * Performs name resolution for declarations
@@ -135,8 +134,12 @@ void decl_resolve(Decl *d){
             stack.status = 1;
         } else if (sym && d->symbol->func_decl && !sym->func_decl){
             // prototype def again + func definition already defined
+            sym->prototype_def = d->symbol; 
         } else if (sym && d->symbol->func_decl && sym->func_decl){ 
            // throw error in typechecking if prototype don't match 
+           fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
+           symbol_destroy(d->symbol);
+           d->symbol = sym;
         } else {
             scope_bind(d->name, d->symbol);    
         }
@@ -144,7 +147,9 @@ void decl_resolve(Decl *d){
         if (d->code){
             scope_enter();
             param_list_resolve(d->type->params);
+            scope_enter();
             stmt_resolve(d->code);
+            scope_exit();
             scope_exit();
         }
     }

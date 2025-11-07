@@ -63,7 +63,7 @@ void stmt_destroy(Stmt *s){
 void stmt_print(Stmt *s, int indent){
 	if (!s) return; 
 	switch (s->kind){
-		case STMT_DECL:
+		case STMT_DECL:			
 			decl_print(s->decl, indent);
 			break;
 		case STMT_EXPR:
@@ -167,8 +167,8 @@ Stmt *stmt_copy(Stmt *s){
 }
 
 /**
- * Perform name resolution for statment structures 
- * @param   s       Statment structure to perform name resolution 
+ * Perform name resolution for statement structures 
+ * @param   s       Statement structure to perform name resolution 
  **/
 void stmt_resolve(Stmt *s){
     if (!s) return;
@@ -177,19 +177,33 @@ void stmt_resolve(Stmt *s){
     expr_resolve(s->expr);
     expr_resolve(s->next_expr);
 
-    if (s->kind == STMT_BLOCK){
+    if (s->kind == STMT_BLOCK){ 	// new block enter scope 
         scope_enter();
         stmt_resolve(s->body);
         scope_exit();
-        
-        if (s->else_body){
-            scope_enter();
-            stmt_resolve(s->else_body);
-            scope_exit();
-        }
-    } else {
+    } else if (s->kind == STMT_FOR || s->kind == STMT_IF_ELSE){  // check single decl in for and if stmts
+		if(s->body && s->body->kind == STMT_DECL){
+			fprintf(stderr, "resolver error: '%s' can not be declared in a single-line %s\n", s->body->decl->name, s->kind == STMT_FOR ? "for loop" : "if statement");
+			decl_resolve(s->body->decl);
+			stack.status = 1;
+		} else {
+        	stmt_resolve(s->body);
+		}
+	} else {
         stmt_resolve(s->body);
     }
+
+	if (s->else_body){
+		if (s->else_body->kind == STMT_DECL) {  // check decls in single else stmts
+			fprintf(stderr, "resolver error: '%s' can not be declared in a single-line %s\n", s->else_body->decl->name, "else statement");
+			decl_resolve(s->body->decl);
+			stack.status = 1;
+		} else{
+			scope_enter();
+			stmt_resolve(s->else_body);
+			scope_exit();
+		}
+	}
 
     stmt_resolve(s->next);
 }

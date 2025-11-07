@@ -85,7 +85,7 @@ void param_list_resolve(Param_list *a){
     a->symbol = symbol_create(SYMBOL_PARAM, a->type, a->name);
     
     if (scope_lookup_current(a->name)){
-        fprintf(stderr, "resolver error: Redeclaring the same parameter Identifier%s\n", a->name);
+        fprintf(stderr, "resolver error: Redeclaring the same parameter Identifier %s\n", a->name);
         stack.status = 1;
     } else {
         scope_bind(a->name, a->symbol);    
