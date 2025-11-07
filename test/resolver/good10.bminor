@@ -1,0 +1,5 @@
+my_func: function void (i: integer, z: integer, y: integer) = {
+    print i, z, y;
+    i = i * z * y;
+    d: double = i * z / y && true;
+}

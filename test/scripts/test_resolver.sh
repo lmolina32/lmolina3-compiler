@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# run parser tests
+# run resolve tests
 GREEN='\e[32m'
 RED='\e[31m'
 NC='\e[0m'  
 
-for testfile in ./test/parser/good*.bminor
+for testfile in ./test/resolver/good*.bminor
 do
-	if ./bin/bminor --parse $testfile &> $testfile.out
+	if ./bin/bminor --resolve $testfile &> $testfile.out
 	then
 		echo -e "$testfile success ${GREEN}(as expected)${NC} "
 	else
@@ -15,9 +15,9 @@ do
 	fi
 done
 
-for testfile in ./test/parser/bad*.bminor
+for testfile in ./test/resolver/bad*.bminor
 do
-	if ./bin/bminor --parse $testfile &> $testfile.out
+	if ./bin/bminor --resolve $testfile &> $testfile.out
 	then
 		echo -e "$testfile  success ${RED}(INCORRECT)${NC} "
 	else

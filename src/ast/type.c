@@ -36,8 +36,11 @@ Type* type_create(type_t kind, Type *subtype, Param_list *params, Expr *arr_len)
 void type_destroy(Type *t){
 	if (!t) return; 
 	param_list_destroy(t->params); 
+	t->params = NULL;
 	type_destroy(t->subtype); 
+	t->subtype = NULL;
 	expr_destroy(t->arr_len);
+	t->arr_len = NULL;
 	free(t);
 }
 
@@ -100,3 +103,16 @@ void type_print(Type *t){
 	type_print(t->subtype);
 
 }
+
+/**
+ * Create a deep copy of type structure 
+ * @param    t      Type structure to create deep copy 
+ * @return   returns pointer to deep copy of Type structure, otherwise NULL 
+ **/
+Type* type_copy(Type *t){
+    if (!t) return NULL;
+    Type *new_t = type_create(t->kind, type_copy(t->subtype), param_list_copy(t->params), expr_copy(t->arr_len));
+	new_t->arr_len = expr_copy(t->arr_len);
+	return new_t;
+}
+

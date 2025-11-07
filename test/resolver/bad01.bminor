@@ -1,0 +1,7 @@
+d: double = 10;
+c: char = 'c';
+c: char = 's';
+
+my_char: function void () = {
+    print c, c, c;
+}

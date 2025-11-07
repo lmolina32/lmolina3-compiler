@@ -31,6 +31,9 @@ The compiler supports multiple modes of operation:
 # Print parsed source file (pretty printing)
 ./bin/bminor --print <filename.bminor>
 
+# Resolve parsed source file (name resolution) 
+./bin/bminor --resolve <filename.bminor>
+
 ```
 
 ### Exit Codes
@@ -44,16 +47,17 @@ Run the test suites to verify compiler functionality:
 
 ```bash
 make test-all        # Run all tests (not book test cases)
+make test-encode     # Test string encoding
 make test-scanner    # Test lexical analysis
 make test-parser     # Test syntax analysis
 make test-printer    # Test pretty printing
-make test-encode     # Test string encoding
+make test-resolver   # Test name resolution  
 make test-book       # Run book test cases
 ```
 
 Test cases are organized in `test/` by compiler phase, with both valid (`good*.bminor`) and invalid (`bad*.bminor`) test programs.
 
-- Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`, `test/printer`
+- Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`, `test/printer`, `test/resolver`
 - Book test cases: `test/book_test_cases/parser`
 
 ## Project Structure
@@ -66,8 +70,9 @@ bminor/
 │   ├── parser/         # Syntax analysis (Bison)
 │   ├── ast/            # Abstract Syntax Tree definitions
 │   ├── encoder/        # String literal encoding
-│   ├── library/        # Symbol table and runtime library
-│   └── utils/          # utility functions used by compiler
+│   ├── library/        # Runtime library
+│   ├── symbol_table/   # Symbol table and scope functions  
+│   └── utils/          # Utility functions used by compiler
 ├── test/               # Test cases organized by phase
 │   └── scripts/        # Individual test scripts for each phase
 ├── build/              # Compiled object files (generated)
@@ -89,7 +94,7 @@ The AST is defined across several header files in `src/ast/`:
 
 ### Symbol Table
 
-The `hash_table` module (`src/library/`) implements a string-based hash table for symbol management, used to map variable names to their definitions during name resolution and type checking.
+The `hash_table` module (`src/symbol_table/`) implements a string-based hash table for symbol management, used to map variable names to their definitions during name resolution and type checking.
 
 ### Standard Library
 

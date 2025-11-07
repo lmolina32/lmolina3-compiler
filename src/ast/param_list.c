@@ -6,6 +6,7 @@
 #include "stmt.h"
 #include "symbol.h"
 #include "type.h"
+#include "scope.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -36,12 +37,19 @@ void param_list_destroy(Param_list *a){
 	if (!a) return;
 	if (a->name) {
 		free(a->name);
+		a->name = NULL;
 	}
 
 	type_destroy(a->type);
+	a->type = NULL;
 	symbol_destroy(a->symbol);
-	param_list_destroy(a->next);
+	a->symbol = NULL;
+
+	Param_list *next = a->next;
+	a->next = NULL;
 	free(a);
+
+	param_list_destroy(next);
 }
 
 /**
@@ -60,4 +68,35 @@ void param_list_print(Param_list *a){
 	} else {
 		putchar(' ');
 	}
+}
+
+/**
+ * Create deepcopy of param list
+ * @param  a        Param list struct to deep copy 
+ * @return          ptr to deepcopy or Null if unsuccesful 
+ **/
+Param_list* param_list_copy(Param_list *a){
+    if (!a) return NULL;
+    Param_list *p = param_list_create(a->name, type_copy(a->type), param_list_copy(a->next));
+	p->symbol = symbol_copy(a->symbol);
+	return p;
+}
+
+
+/**
+ * Perform name resolution for the param_list structure
+ * @param   a       Param List sturcutre to perform name resolution
+ **/
+void param_list_resolve(Param_list *a){
+    if (!a) return;
+    a->symbol = symbol_create(SYMBOL_PARAM, a->type, a->name);
+    
+    if (scope_lookup_current(a->name)){
+        fprintf(stderr, "resolver error: Redeclaring the same parameter Identifier %s\n", a->name);
+        stack.status = 1;
+    } else {
+        scope_bind(a->name, a->symbol);    
+    }
+
+    param_list_resolve(a->next);
 }

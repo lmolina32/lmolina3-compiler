@@ -1,0 +1,17 @@
+x: integer = 10;
+
+main: function integer (a: integer, d: double)= {
+   x: integer = 10;
+   {
+       x: integer = 10;
+       {
+            x: integer = 10;
+       }
+       {
+           {
+                x: integer = 10;
+           }
+           x: integer = 10;
+       }
+   }
+}

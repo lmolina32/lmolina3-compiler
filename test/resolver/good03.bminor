@@ -1,0 +1,10 @@
+my_function: function void(x: integer, y: integer, z: integer);
+sqrt_function: function double(d: double, z: double);
+
+/* globals */
+i: integer = 10;
+
+main: function void () = {
+    print i;
+    my_function(i, i, i);
+}

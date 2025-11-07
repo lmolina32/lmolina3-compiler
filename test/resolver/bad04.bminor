@@ -1,0 +1,5 @@
+main: function void (argc: integer) = {
+    print argc, i;
+    i: integer = 10;
+    print argc, i;
+}

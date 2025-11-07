@@ -6,7 +6,31 @@
 #include <stdio.h>
 
 /* forward declaration */
+
 typedef struct Symbol Symbol;
+
+/* Strcutres */ 
+
+typedef struct Symbol_node Symbol_node;
+
+struct Symbol_node {
+    struct hash_table *hashmap;
+    Symbol_node *next; 
+    int params;
+    int local;
+};
+
+typedef struct Symbol_stack Symbol_stack;
+
+struct Symbol_stack {
+    Symbol_node *top;
+    int size; 
+    int status; 
+};
+
+/* Global Variables */
+
+extern Symbol_stack stack;
 
 /* function s*/
 

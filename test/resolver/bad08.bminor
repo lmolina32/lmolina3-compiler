@@ -1,0 +1,14 @@
+main: function void (argc: integer, argv: array [] string) = {
+    i: integer;
+    for (i = 0; i < argc; i++)
+        print argv[i];
+}
+main: function void (argc: integer, argv: array [] string) = {
+    i: integer;
+    for (i = 0; i < argc; i++)
+        print i;
+}
+
+main: integer = x;
+main: double = x;
+

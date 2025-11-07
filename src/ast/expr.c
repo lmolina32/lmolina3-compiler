@@ -7,12 +7,12 @@
 #include "symbol.h"
 #include "type.h"
 #include "encoder.h"
+#include "scope.h"
 #include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-/* Global Precedence array */
+#include <stdbool.h>
 
 static const int expr_associativity[EXPR_COUNT] = {
 	// 0 -> left associative  
@@ -25,6 +25,8 @@ static const int expr_associativity[EXPR_COUNT] = {
 };
 
 static const int expr_precedence[EXPR_COUNT] = {
+	// lowest precedence = 0
+	// highest precedence = 10
 	[EXPR_ADD] = 4,					
 	[EXPR_SUB] = 4,					
 	[EXPR_MUL] = 5,					
@@ -83,18 +85,23 @@ Expr* expr_create(expr_t kind, Expr *left, Expr *right){
  */
 void expr_destroy(Expr *e){
 	if (!e) return;
+
+	Expr *left = e->left;
+	Expr *right = e->right;
 	if (e->name) {
 		free(e->name);
+		e->name = NULL;
 	}
 
 	if (e->string_literal) {
 		free(e->string_literal);
+		e->string_literal = NULL;
 	}
+	e->left = e->right = NULL;
 
-	expr_destroy(e->left);
-	expr_destroy(e->right);
-	symbol_destroy(e->symbol);
 	free(e);
+	expr_destroy(left);
+	expr_destroy(right);
 }
 
 /**
@@ -210,6 +217,7 @@ int expr_need_parens(Expr *parent, Expr *child, int is_left){
 		if (child->kind == EXPR_NOT && parent->kind == EXPR_NOT){
 			return 0;
 		}
+
 		// if associativity left (e.g eval left to right) and evaluating right child add parens  
 		if (expr_associativity[parent->kind] == 0 && !is_left){
 			return 1;
@@ -426,9 +434,49 @@ void expr_print(Expr *e){
 		case EXPR_IDENT:				//  identifier    my_function 
 			printf("%s", e->name);
 			break;
-		default:
+		default:						//  if not defined identifier then error 
 			fprintf(stderr, "Invalid Expression type\n");
 			exit(1);
 	}
 
+}
+
+/**
+ * Crete a deep copy of the expression structure 
+ * @param   e       Expression structure to create deep copy of 
+ * @return  ptr to expression struct or NULL if unsuccesful
+ **/
+Expr* expr_copy(Expr *e){
+    if (!e) return NULL;
+    Expr* new_e = expr_create(e->kind, expr_copy(e->left), expr_copy(e->right));
+	new_e->name = e->name ? safe_strdup(e->name) : NULL;
+	new_e->literal_value = e->literal_value;
+	new_e->double_literal_value = e->double_literal_value;
+	new_e->string_literal = e->string_literal ? safe_strdup(e->string_literal) : NULL;
+	new_e->symbol = symbol_copy(e->symbol);
+	return new_e;
+}
+
+/**
+ * Perform name resolution on Expression structure 
+ * @param   e       Expression structure to perform name resolution
+ **/
+void expr_resolve(Expr *e){
+    if (!e) return;
+    if (e->kind == EXPR_IDENT){
+        e->symbol = scope_lookup(e->name);
+        if (e->symbol){
+            if (e->symbol->kind == SYMBOL_GLOBAL){
+                printf("resolver: %s resolves to %s %s\n", e->name, sym_to_str[e->symbol->kind], e->symbol->name);
+            } else {
+                printf("resolver: %s resolves to %s %d\n", e->name, sym_to_str[e->symbol->kind], e->symbol->which);            
+            }
+        } else {
+            printf("resolver error: %s is not defined\n", e->name);
+            stack.status = 1;
+        }
+    } else {
+        expr_resolve(e->left);
+        expr_resolve(e->right);
+    }
 }

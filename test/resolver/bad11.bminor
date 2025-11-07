@@ -1,0 +1,5 @@
+my_sqrt: function integer (i: integer ) = {
+    return x ^ 0.5;
+}
+
+my_sqrt: integer = 10;

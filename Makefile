@@ -15,6 +15,7 @@ HEADERS=		$(wildcard src/main/*.h) \
 				$(wildcard src/scanner/*.h) \
 				$(wildcard src/parser/*.h) \
 				$(wildcard src/ast/*.h) \
+				$(wildcard src/symbol_table/*.h) \
 				$(wildcard src/library/*.h) \
 				$(wildcard src/utils/*.h) \
 				$(wildcard build/*.h) 
@@ -24,6 +25,7 @@ INCLUDES=		-Isrc/main \
 				-Isrc/scanner \
 				-Isrc/parser \
 				-Isrc/ast \
+				-Isrc/symbol_table \
 				-Isrc/library \
 				-Isrc/utils \
 				-Ibuild
@@ -39,7 +41,9 @@ OBJECTS=		build/bminor.o \
 				build/param_list.o \
 				build/stmt.o \
 				build/type.o \
-				build/symbol.o 
+				build/symbol.o \
+				build/scope.o \
+				build/hash_table.o 
 
 BMINOR=			bin/bminor 
 OLD_BMINOR=		bminor
@@ -79,6 +83,11 @@ build/%.o: src/scanner/%.c $(HEADERS)
 	
 # Compile ast 
 build/%.o: src/ast/%.c $(HEADERS)
+	@echo "Compiling $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+
+# Compile symbol_table 
+build/%.o: src/symbol_table/%.c $(HEADERS)
 	@echo "Compiling $@"
 	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
@@ -133,6 +142,12 @@ test-printer: $(BMINOR)
 	@echo "---------------------------------------"
 	@chmod +x ./test/scripts/test_printer.sh
 	@./test/scripts/test_printer.sh
+
+test-resolver: $(BMINOR) 
+	@echo "Testing resolver"
+	@echo "---------------------------------------"
+	@chmod +x ./test/scripts/test_resolver.sh
+	@./test/scripts/test_resolver.sh
 
 test-book: $(BMINOR)
 	@chmod +x ./test/scripts/run_book_tests.sh

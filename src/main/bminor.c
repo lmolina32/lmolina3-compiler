@@ -3,29 +3,48 @@
 #include "bminor_functions.h"
 #include "utils.h"
 
+#include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
 /* Main Execution */
 
-int main(int argc, char *argv[]){
+int main(int argc, const char *argv[]){
     int argind = 1;
+    bool status = true;
+
+    // error check for correct arguments 
+    if (argc > 1 && (streq(argv[1], "-h") || streq(argv[1], "--help"))) {
+        usage(argv[0]);
+        return EXIT_SUCCESS;
+    }
+
     if (argc < 3){
         fprintf(stderr, "Failed not enough command line arguments\n");
+        usage(argv[0]);
         return EXIT_FAILURE;
     }
 
-    char *command = argv[argind++];
-    if (streq(command, "--encode")){
-        if (!encode(argv[argind++])) return EXIT_FAILURE;
-    } else if (streq(command, "--scan")) {
-        if (!scan(argv[argind++])) return EXIT_FAILURE;
-    } else if (streq(command, "--parse")){
-        if (!parse(argv[argind++])) return EXIT_FAILURE;
-    } else if (streq(command, "--print")){
-        if (!pretty_print(argv[argind++])) return EXIT_FAILURE;
-    } else { return EXIT_FAILURE; }
+    const char *command = argv[argind++];
+    const char *filename = argv[argind++];
 
-    return EXIT_SUCCESS;
+    // parse commands
+    if (streq(command, "--encode")){
+        status = encode(filename);
+    } else if (streq(command, "--scan")) {
+        status = scan(filename);
+    } else if (streq(command, "--parse")){
+        status = parse(filename);
+    } else if (streq(command, "--print")){
+        status = pretty_print(filename);
+    } else if (streq(command, "--resolve")){
+        status = resolve(filename);
+    } else { 
+        fprintf(stderr, "Failed: Unknown command '%s'\n", command);
+        usage(argv[0]);
+    }
+
+    return status ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 

@@ -1,0 +1,21 @@
+func: function void () = {
+    x: integer;
+
+    if (x) {
+        x: integer;
+        print x;
+    } else {
+        x: integer;
+        print x;
+    }
+
+    for (;;) {
+        x: integer;
+        print x;
+    }
+
+    if (x)
+        x++;
+    else
+        x--;
+}

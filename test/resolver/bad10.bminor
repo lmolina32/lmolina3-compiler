@@ -1,0 +1,4 @@
+my_sqrt: function void (d: double) = {
+    i: integer = 10;
+    return i * d * g;
+}
