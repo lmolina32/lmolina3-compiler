@@ -64,13 +64,8 @@ int scope_level(){
 void scope_bind( const char *name, Symbol *sym ){
     if (!name || !sym || !stack.top) return;
 
-    if (sym->kind == SYMBOL_PARAM){
-        sym->which = stack.top->params;
-        stack.top->params++;
-    } else {
-        sym->which = stack.top->local;
-        stack.top->local++;
-    }
+    sym->which = stack.top->local;
+    stack.top->local++;
 
     if (!hash_table_insert(stack.top->hashmap, name, (void *)sym)){
         fprintf(stderr, "scope_bind: hash table insert failed for %s\n", name);

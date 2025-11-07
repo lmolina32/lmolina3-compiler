@@ -133,6 +133,8 @@ void decl_resolve(Decl *d){
         } else if (sym && !d->symbol->func_decl && !sym->func_decl){      // func as already bee init so error
             fprintf(stderr, "resolver error: redefinition of '%s'\n", d->name);
             stack.status = 1;
+        } else if (sym && d->symbol->func_decl && !sym->func_decl){
+            // prototype def again + func definition already defined
         } else if (sym && d->symbol->func_decl && sym->func_decl){ 
            // throw error in typechecking if prototype don't match 
         } else {
