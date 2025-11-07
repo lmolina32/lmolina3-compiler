@@ -108,6 +108,10 @@ bminor/
 ### Structure 
 - `src/symbol_table` was created which is where the `scope.c` and `hash_table.c` live. 
 
+### Notes 
+- which count resets from params and locals as discussed in class. We discussed in class that for params you enter a scope and then when you enter the function body you enter a new scope as well. This means the params which count starts at 0 and the local which count starts at 0. But, in the function body you do not reset the which count when entering a new scope for if-else or for loops. 
+- For bminor you can have several function prototypes with the same name. The types are not checked so at this stage you can have functions with the same name returning different types and having different parameters ( this will be handled in the type checker). But, you cannot have multiple function definitions so once you init a function with braces you will get a resolver error for using the same function name and initializing it with braces and stmt block. 
+
 ### Development of code 
 - No AI was used for creating the code. 
 - What was easy was initially create all the scope functions and walking the tree to create the name resolution. I thought it was pretty straight forward to figure out how to push things onto the symbol table when to enter and leave scopes and when to name resolve. 
