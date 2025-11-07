@@ -2,6 +2,12 @@ sqrt: function integer (i: integer, d: double, c: char, s: string) = {
   print i, d, c, s;
   x: integer = 5;
   print x;
+  {
+    x: integer = 5;
+    print x;
+  }
+  y: integer = 5;
+  print y;
 }
 
 my_sqrt: function integer (i: integer, d: double, c: char, s: string) = {

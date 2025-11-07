@@ -1,0 +1,10 @@
+func: function void (a: integer, b: integer) = {
+    x: integer = 10;
+    if (x)
+        x: integer = 10;
+    else
+        x: integer = 10;
+
+    for (;;)
+        x: integer = 10;
+}

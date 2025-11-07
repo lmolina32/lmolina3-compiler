@@ -1,9 +1,21 @@
-y: integer = 10;
+func: function void () = {
+    x: integer;
 
-my_sqrt: function void (i: integer, b: integer, w: integer, ui: integer, o: integer, z: integer) = {
-    sss: integer = 10;
-    ssss: integer =10;
-    sssss: integer = 10;
-    x: integer = 10;
-    z: auto = x + y + z;
+    if (x) {
+        x: integer;
+        print x;
+    } else {
+        x: integer;
+        print x;
+    }
+
+    for (;;) {
+        x: integer;
+        print x;
+    }
+
+    if (x)
+        x++;
+    else
+        x--;
 }
