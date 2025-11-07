@@ -36,8 +36,11 @@ Type* type_create(type_t kind, Type *subtype, Param_list *params, Expr *arr_len)
 void type_destroy(Type *t){
 	if (!t) return; 
 	param_list_destroy(t->params); 
+	t->params = NULL;
 	type_destroy(t->subtype); 
+	t->subtype = NULL;
 	expr_destroy(t->arr_len);
+	t->arr_len = NULL;
 	free(t);
 }
 

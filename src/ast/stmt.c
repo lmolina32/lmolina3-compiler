@@ -46,13 +46,22 @@ Stmt* stmt_create(stmt_t kind, Decl *decl, Expr *init_expr, Expr *expr, Expr *ne
 void stmt_destroy(Stmt *s){
 	if (!s) return;
 	decl_destroy(s->decl);
+	s->decl = NULL;
 	expr_destroy(s->init_expr);
+	s->init_expr = NULL;
 	expr_destroy(s->expr);
+	s->expr = NULL;
 	expr_destroy(s->next_expr);
+	s->next_expr = NULL;
 	stmt_destroy(s->body);
+	s->body = NULL;
 	stmt_destroy(s->else_body);
-	stmt_destroy(s->next);
+	s->else_body = NULL;
+	Stmt *next = s->next;
+	s->next = NULL;
 	free(s);
+
+	stmt_destroy(next);
 }
 
 /**

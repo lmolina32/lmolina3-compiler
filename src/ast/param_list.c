@@ -37,12 +37,19 @@ void param_list_destroy(Param_list *a){
 	if (!a) return;
 	if (a->name) {
 		free(a->name);
+		a->name = NULL;
 	}
 
 	type_destroy(a->type);
+	a->type = NULL;
 	symbol_destroy(a->symbol);
-	param_list_destroy(a->next);
+	a->symbol = NULL;
+
+	Param_list *next = a->next;
+	a->next = NULL;
 	free(a);
+
+	param_list_destroy(next);
 }
 
 /**

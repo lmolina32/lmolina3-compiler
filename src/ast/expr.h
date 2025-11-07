@@ -64,19 +64,19 @@ struct Expr {
 
 /* Functions */
 
-Expr* 	expr_create(expr_t kind, Expr *left, Expr *right);
+Expr   *expr_create(expr_t kind, Expr *left, Expr *right);
 void	expr_destroy(Expr *e);
-Expr* 	expr_create_name(const char *n);
-Expr* 	expr_create_integer_literal(int c);
-Expr* 	expr_create_boolean_literal(int c);
-Expr*	expr_create_double_literal(double c);
-Expr* 	expr_create_char_literal(char *c);
-Expr* 	expr_create_string_literal(const char *str);
-Expr*	expr_unwrap_groups(Expr *e);
+Expr   *expr_create_name(const char *n);
+Expr   *expr_create_integer_literal(int c);
+Expr   *expr_create_boolean_literal(int c);
+Expr   *expr_create_double_literal(double c);
+Expr   *expr_create_char_literal(char *c);
+Expr   *expr_create_string_literal(const char *str);
+Expr   *expr_unwrap_groups(Expr *e);
 int 	expr_need_parens(Expr *parent, Expr *child, int is_left);
 void 	expr_print_with_context(Expr *parent, Expr *child, int is_left);
 void 	expr_print(Expr *e);
-Expr*   expr_copy(Expr *e);
+Expr   *expr_copy(Expr *e);
 void    expr_resolve(Expr *e);
 
 #endif

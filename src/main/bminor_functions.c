@@ -13,18 +13,84 @@
 #include "scope.h"
 #include "utils.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 
+/* Globals */
+
+extern FILE   *yyin;
+extern int     yylex();
+extern char   *yytext; 
+extern int     yyparse();
+extern int     yyrestart();
+extern int     yylex_destroy();
+extern Decl    *root;
+
+/* Helper Functions */
+
+/**
+ * Handles common setup: opens the file and sets up the scanner.
+ * @param file_name name of file to open
+ * @return True on successful setup, otherwise false.
+ */
+static bool setup_compiler(const char *file_name) {
+    if (!file_name) {
+        fprintf(stderr, "Error: Filename is NULL.\n");
+        return false;
+    }
+
+    yyin = safe_fopen(file_name, "r");
+    if (!yyin) return false; 
+    yyrestart(yyin);
+    return true;
+}
+
+/**
+ * Handles common cleanup: destroys AST, closes file, and destroys scanner state.
+ * @param destroy_ast True if the root AST node (root) should be destroyed.
+ */
+static void cleanup_compiler(bool destroy_ast) {
+    if (destroy_ast && root) {
+        decl_destroy(root);
+        root = NULL; 
+    }
+
+    if (yyin) {
+        fclose(yyin);
+        yyin = NULL;
+    }
+    yylex_destroy();
+}
+
 /* functions */
+
+/**
+ * Display usage message.
+ * @param       program     String containing name of program.
+ **/
+void usage(const char *program) {
+    // Standard usage format: program [stage] [input file]
+    fprintf(stderr, "Usage: %s [options] <Bminor source file>\n\n", program); 
+    fprintf(stderr, "Options (Choose one stage):\n");
+    fprintf(stderr, "   --encode       Reads a file containing a string literal, decodes and re-encodes it.\n");
+    fprintf(stderr, "   --scan         Scans the source file and prints a list of tokens.\n");
+    fprintf(stderr, "   --parse         Parses the source file against the Bminor grammar (Syntax Check).\n");
+    fprintf(stderr, "   --print         Parses the file and pretty-prints the resulting AST.\n");
+    fprintf(stderr, "   --resolve       Performs name resolution (semantic check).\n");
+    fprintf(stderr, "   --typecheck     Performs type checking (semantic check).\n");
+    fprintf(stderr, "\nGeneral Options:\n");
+    fprintf(stderr, "   -h or --help    Print this help message.\n");
+}
 
 /**
  * Reads in file containing a string literal, then decodes and encodes the string
  * @param   s       name of file to open
  * @return  True if valid string literal, otherwise false 
  **/
-int encode(char *file_name){
+bool encode(const char *file_name){
     char encoded_string[BUFSIZ];
     char decoded_string[BUFSIZ];
 
@@ -48,7 +114,6 @@ int encode(char *file_name){
     printf("\n\nEncoded string from decoded: %s\n", encoded_string);
     
     fclose(f);
-
     return true;
 }
 
@@ -57,13 +122,12 @@ int encode(char *file_name){
  * @param   file_name       name of file to open
  * @return  True if able to scan and tokenize, otherwise false 
  **/
-int scan(char *file_name){
-    int exit_code = true;
-    size_t t;
-    yyin = safe_fopen(file_name, "r");
-
-    yyrestart(yyin);
+bool scan(const char *file_name){
+    if (!setup_compiler(file_name)) return false;
     
+    bool exit_code = true;
+    size_t t;
+
     while ((t = yylex()) != 0) {
         switch (t){
             case TOKEN_STRING_LITERAL:
@@ -87,8 +151,7 @@ int scan(char *file_name){
         if (t == TOKEN_ERROR) exit_code = false;
     }
     
-    fclose(yyin);
-    yylex_destroy();
+    cleanup_compiler(false);
     return exit_code;
 }
 
@@ -98,12 +161,10 @@ int scan(char *file_name){
  * @param   file_name       name of file to open
  * @return  True if able to scan & parse, otherwise false 
  **/
-int parse(char *file_name){
-    int exit_code = true;
-    yyin = safe_fopen(file_name, "r");
+bool parse(const char *file_name){
+    if (!setup_compiler(file_name)) return false;
 
-    yyrestart(yyin);
-
+    bool exit_code = true;
     if(yyparse() == 0){
         printf("Prase Successful\n");
     } else {
@@ -111,9 +172,7 @@ int parse(char *file_name){
         exit_code = false;
     }
 
-    decl_destroy(root);
-    fclose(yyin);
-    yylex_destroy();
+    cleanup_compiler(true);
     return exit_code;
 }
 
@@ -122,12 +181,10 @@ int parse(char *file_name){
  * @param   file_name       name of file to open 
  * @return  True if valid parse and able to pretty print, otherwise false 
  */
-int pretty_print(char *file_name){
-    int exit_code = true;
-    yyin = safe_fopen(file_name, "r");
+bool pretty_print(const char *file_name){
+    if (!setup_compiler(file_name)) return false;
 
-    yyrestart(yyin);
-
+    bool exit_code = true;
     if(yyparse() == 0){
         decl_print(root, 0);
     } else {
@@ -135,9 +192,7 @@ int pretty_print(char *file_name){
         exit_code = false;
     }
 
-    decl_destroy(root);
-    fclose(yyin);
-    yylex_destroy();
+    cleanup_compiler(true);
     return exit_code;
 }
 
@@ -146,25 +201,21 @@ int pretty_print(char *file_name){
  * @param   file_name       name of file to open 
  * @return  True if valid parse and able to resolve,  otherwise false 
  **/
-int resolve(char *file_name){
-    int exit_code = true;
-    yyin = safe_fopen(file_name, "r");
+bool resolve(const char *file_name){
+    if (!setup_compiler(file_name)) return false;
 
-    yyrestart(yyin);
-
+    bool exit_code = true;
     if(yyparse() == 0){
         scope_enter(); 
         decl_resolve(root);
         scope_exit();
-        exit_code = stack.status ? false : true ;
+        exit_code = stack.status ? false : true;
     } else {
         fprintf(stderr, "Parse Error\n");
         exit_code = false;
     }
 
-    decl_destroy(root);
-    fclose(yyin);
-    yylex_destroy();
+    cleanup_compiler(true);
     return exit_code;
 }
 

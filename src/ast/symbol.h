@@ -21,12 +21,13 @@ typedef enum {
 typedef struct Symbol Symbol;
 
 struct Symbol {
-	symbol_t kind;
-	Type *type;
-	char *name;
-	int which;
-	int func_decl;
-	Symbol *prototype_def;
+	symbol_t kind;				// Type of Declaration
+	Type *type;					// Type structure associated with Decl
+	char *name;					// Name associated with Decl 
+	int which;					// The positional location when the Decl was defined
+	int func_decl;				// Prototype flag: 1-> Prototype, 0-> Not Prototype 
+	Symbol *prototype_def;		// Prototype definition symbol struct 
+	Symbol *func_init;			// Function initialization symbols struct 
 };
 
 
@@ -34,8 +35,8 @@ extern const char *sym_to_str[SYMBOL_LEN];
 
 /* Functions */
 
-Symbol* 	symbol_create(symbol_t kind, Type *type, const char *name);
+Symbol 	   *symbol_create(symbol_t kind, Type *type, const char *name);
 void		symbol_destroy(Symbol *s);
-Symbol*     symbol_copy(Symbol *s);
+Symbol     *symbol_copy(Symbol *s);
 
 #endif

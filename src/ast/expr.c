@@ -84,16 +84,22 @@ void expr_destroy(Expr *e){
 	if (!e) return;
 	if (e->name) {
 		free(e->name);
+		e->name = NULL;
 	}
 
 	if (e->string_literal) {
 		free(e->string_literal);
+		e->string_literal = NULL;
 	}
 
-	expr_destroy(e->left);
-	expr_destroy(e->right);
-	//symbol_destroy(e->symbol);
+	Expr *left = e->left;
+	e->left = NULL;
+	Expr *right = e->right;
+	e->right = NULL;
+
 	free(e);
+	expr_destroy(left);
+	expr_destroy(right);
 }
 
 /**

@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 /* Functions */
 
@@ -39,16 +40,25 @@ Decl* decl_create(const char *name, Type *type, Expr *value, Stmt *code, Decl *n
  */
 void decl_destroy(Decl *d){
     if (!d) return;
+
+    Decl *next = d->next;
+    d->next = NULL;
+
     if (d->name){
         free(d->name);
+        d->name = NULL;
     }
 
     type_destroy(d->type);
+    d->type = NULL;
     expr_destroy(d->value);
+    d->type = NULL;
     stmt_destroy(d->code);
+    d->code = NULL;
     symbol_destroy(d->symbol);
-    decl_destroy(d->next);
+    d->symbol = NULL;
     free(d);
+    decl_destroy(next);
 }
 
 /**
@@ -68,9 +78,7 @@ void decl_print(Decl *d, int indent){
         printf(";\n");
     } else if (d->code){ // function, print body 
         printf(" = ");
-
         stmt_print(d->code, 0);
-        print_indent(indent);
     } else {            // decl with no expression or body
         printf(";\n");
     }
@@ -98,52 +106,69 @@ Decl *decl_copy(Decl *d){
 void decl_resolve(Decl *d){
     if (!d) return;
 
-    symbol_t sym_type = scope_level() > 1 ? SYMBOL_LOCAL : SYMBOL_GLOBAL;
-    d->symbol = symbol_create(sym_type, d->type, d->name);
+    d->symbol = symbol_create(scope_level() > 1 ? SYMBOL_LOCAL : SYMBOL_GLOBAL, d->type, d->name);
+
     expr_resolve(d->value);
 
     Symbol *sym = scope_lookup_current(d->name);
-
-    // function declaration  
     if ((d->type->kind == TYPE_FUNCTION) && !d->code){
+        // 1 if function prototype 
+        // 0 if not function prototype -> function definition if decl of TYPE_FUNCTION
         d->symbol->func_decl = 1;
     }
 
-    // resolve for non function decls 
+    int is_prototype = d->symbol->func_decl; 
+    // case 1: Non function declarations (integers, Arrays, ...) 
     if (d->type->kind != TYPE_FUNCTION){
-        if (sym && sym->type->kind != TYPE_FUNCTION){
-            fprintf(stderr, "resolver error: Redeclaring an Identifier '%s' in the same scope\n", d->name);
+        if (sym) {
+            // Error: Redeclaration or Variable/Function name collision
+            if (sym->type->kind == TYPE_FUNCTION){
+                fprintf(stderr, "resolver error: Declaring Identifier with function name '%s'\n", d->name);
+            } else{
+                fprintf(stderr, "resolver error: Redeclaring an Identifier '%s' in the same scope\n", d->name);
+            }
             stack.status = 1;
-        } else if (sym && sym->type->kind == TYPE_FUNCTION){
-            fprintf(stderr, "resolver error: Declaring Identifier with function name '%s'\n", d->name);
-            stack.status = 1;
-        } else {
+        } else{
             scope_bind(d->name, d->symbol);    
         }
-    } else { // resolve for function decls 
-        // TODO: not every decl will have its own reference
-        if (sym && sym->type->kind != TYPE_FUNCTION){
-            fprintf(stderr, "resolver error: Reusing Identifier '%s' for function name\n", d->name);
-            stack.status = 1;
-        } else if (sym && !d->symbol->func_decl && sym->func_decl){       // func init && func decl
-            sym->func_decl = 0;     // function has been initialized 
-            symbol_destroy(d->symbol);
-            d->symbol = sym;
-        } else if (sym && !d->symbol->func_decl && !sym->func_decl){      // func as already bee init so error
-            fprintf(stderr, "resolver error: redefinition of '%s'\n", d->name);
-            stack.status = 1;
-        } else if (sym && d->symbol->func_decl && !sym->func_decl){
-            // prototype def again + func definition already defined
-            sym->prototype_def = d->symbol; 
-        } else if (sym && d->symbol->func_decl && sym->func_decl){ 
-           // throw error in typechecking if prototype don't match 
-           fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
-           symbol_destroy(d->symbol);
-           d->symbol = sym;
-        } else {
+    // case 2: Function Declaration (Prototypes or Definitions)
+    } else {  
+
+        if (sym){
+            int sym_is_prototype = sym->func_decl; // symbol is function prototype
+
+            // Error: Function name conflicts with non-function symbol
+            if (sym->type->kind != TYPE_FUNCTION){
+                fprintf(stderr, "resolver error: Reusing Identifier '%s' for function name\n", d->name);
+                stack.status = 1;
+            // Case 2a: New definition (not prototype) AND existing symbol is a prototype
+            } else if (!is_prototype && sym_is_prototype){
+                sym->func_decl = 0;     // function has been initialized 
+                d->symbol->prototype_def = sym;
+                sym->func_init = d->symbol;
+            // Case 2b: New definition AND existing symbol is already a definition
+            } else if (!is_prototype && !sym_is_prototype){
+                fprintf(stderr, "resolver error: redefinition of '%s'\n", d->name);
+                stack.status = 1;
+            // Case 2c: New prototype AND existing symbol is already defined
+            } else if (is_prototype && !sym_is_prototype){
+                // Case 2c-1: Prototype and definition defined -> pass on prototype for typechecking 
+                if (sym->prototype_def){
+                    d->symbol->prototype_def = sym->prototype_def;
+                // Case 2c-2: Definition only defined -> pass on def symbol for typechecking 
+                } else {
+                    d->symbol->prototype_def = sym->func_init;
+                }
+            // Case 2d: New prototype AND existing symbol is also a prototype
+            } else if (is_prototype && sym_is_prototype){ 
+                fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
+                d->symbol->prototype_def = sym;
+            }
+        } else{
             scope_bind(d->name, d->symbol);    
         }
 
+        // Resolve for function body 
         if (d->code){
             scope_enter();
             param_list_resolve(d->type->params);

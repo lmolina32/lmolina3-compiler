@@ -43,9 +43,9 @@ void symbol_destroy(Symbol *s){
     if (!s) return;
     if (s->name) {
         free(s->name);
+        s->name = NULL;
     }
 
-    //type_destroy(s->type);
     free(s);
 }
 
