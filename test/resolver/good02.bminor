@@ -1,10 +1,11 @@
 sqrt: function integer (i: integer, d: double, c: char, s: string) = {
   print i, d, c, s;
-  for (i = 0; i < d; i++){
-    print s;
-  }
-  x: integer = d * i;
+  x: integer = 5;
   print x;
+}
+
+my_sqrt: function integer (i: integer, d: double, c: char, s: string) = {
   print i, d, c, s;
+  x: integer = 5;
   print x;
 }

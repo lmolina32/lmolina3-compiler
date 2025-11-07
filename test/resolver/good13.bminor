@@ -1,0 +1,9 @@
+y: integer = 10;
+
+my_sqrt: function void (i: integer, b: integer, w: integer, ui: integer, o: integer, z: integer) = {
+    sss: integer = 10;
+    ssss: integer =10;
+    sssss: integer = 10;
+    x: integer = 10;
+    z: auto = x + y + z;
+}

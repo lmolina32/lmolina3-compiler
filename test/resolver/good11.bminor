@@ -1,5 +1,9 @@
-main: function void () = {
+main: function void (param1: integer, param2: integer, param3: integer) = {
+    print param1;
+    print param2;
+    print param3;
     x: integer = 10;
+    x = 5;
     print x; // 0
     y: integer = 10;
     print y; // 1

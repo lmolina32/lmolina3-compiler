@@ -1,9 +1,4 @@
 my_sqrt: function double (x: double);
-my_sqrt: function double (x: double);
-my_sqrt: function double (x: double);
-my_sqrt: function double (x: double);
-my_sqrt: function double (x: double);
-my_sqrt: function double (x: double);
 
 main: function void (argc: integer, argv: carray[] string) = {
     x: integer = 25;
@@ -13,3 +8,4 @@ main: function void (argc: integer, argv: carray[] string) = {
 my_sqrt: function double (x: double) = {
     return x ^ 0.5;
 }
+
