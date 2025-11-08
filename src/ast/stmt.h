@@ -33,6 +33,7 @@ struct Stmt {
 	Stmt *body;			// if, for, function body 
 	Stmt *else_body;	// else body 
 	Stmt *next;			// ptr to next stmt
+	Symbol *func_sym;	// symbol associated with function above it 
 };
 
 /* Function */
@@ -42,5 +43,6 @@ void		stmt_destroy(Stmt *s);
 void 		stmt_print(Stmt *s, int indent);
 Stmt	   *stmt_copy(Stmt *s);
 void        stmt_resolve(Stmt *s);
+void		stmt_typecheck(Stmt *s);
 
 #endif

@@ -1,5 +1,6 @@
 /* stmt.c: stmt structure functions */
 
+#include "bminor_context.h"
 #include "decl.h"
 #include "expr.h"
 #include "param_list.h"
@@ -77,13 +78,13 @@ void stmt_print(Stmt *s, int indent){
 			break;
 		case STMT_EXPR:
 			print_indent(indent);
-			expr_print(s->expr);
+			expr_print(s->expr, stdout);
 			printf(";\n");
 			break;
 		case STMT_IF_ELSE:
 			print_indent(indent);
 			printf("if (");
-			expr_print(s->expr);
+			expr_print(s->expr, stdout);
 			printf(") ");
 			
 			if (s->body && s->body->kind == STMT_BLOCK){
@@ -118,11 +119,11 @@ void stmt_print(Stmt *s, int indent){
 		case STMT_FOR:
 			print_indent(indent);
 			printf("for (");
-			expr_print(s->init_expr);
+			expr_print(s->init_expr, stdout);
 			putchar(';');
-			expr_print(s->expr);
+			expr_print(s->expr, stdout);
 			putchar(';');
-			expr_print(s->next_expr);
+			expr_print(s->next_expr, stdout);
 			printf(")");
 			
 			if (s->body && s->body->kind == STMT_BLOCK){
@@ -140,7 +141,7 @@ void stmt_print(Stmt *s, int indent){
 		case STMT_PRINT:
 			print_indent(indent);
 			printf("print ");
-			expr_print(s->expr);
+			expr_print(s->expr, stdout);
 			printf(";\n");
 			break;
 		case STMT_RETURN:
@@ -148,7 +149,7 @@ void stmt_print(Stmt *s, int indent){
 			printf("return");
 			if (s->expr){
 				putchar(' ');
-				expr_print(s->expr);
+				expr_print(s->expr, stdout);
 			}
 			printf(";\n");
 			break;
@@ -188,17 +189,20 @@ void stmt_resolve(Stmt *s){
 
     if (s->kind == STMT_BLOCK){ 	// new block enter scope 
         scope_enter();
+		if (s->body) s->body->func_sym = s->func_sym;
         stmt_resolve(s->body);
         scope_exit();
     } else if (s->kind == STMT_FOR || s->kind == STMT_IF_ELSE){  // check single decl in for and if stmts
 		if(s->body && s->body->kind == STMT_DECL){
 			fprintf(stderr, "resolver error: '%s' can not be declared in a single-line %s\n", s->body->decl->name, s->kind == STMT_FOR ? "for loop" : "if statement");
 			decl_resolve(s->body->decl);
-			stack.status = 1;
+			b_ctx.resolver_errors += 1;
 		} else {
+			if (s->body) s->body->func_sym = s->func_sym;
         	stmt_resolve(s->body);
 		}
 	} else {
+		if (s->body) s->body->func_sym = s->func_sym;
         stmt_resolve(s->body);
     }
 
@@ -206,13 +210,81 @@ void stmt_resolve(Stmt *s){
 		if (s->else_body->kind == STMT_DECL) {  // check decls in single else stmts
 			fprintf(stderr, "resolver error: '%s' can not be declared in a single-line %s\n", s->else_body->decl->name, "else statement");
 			decl_resolve(s->body->decl);
-			stack.status = 1;
+			b_ctx.resolver_errors += 1;
 		} else{
 			scope_enter();
+			if (s->body) s->body->func_sym = s->func_sym;
 			stmt_resolve(s->else_body);
 			scope_exit();
 		}
 	}
 
+	if (s->next) s->next->func_sym = s->func_sym;
     stmt_resolve(s->next);
+}
+
+/**
+ * Perform typechecking on the stmt struct ensuring compatibility for all stmts
+ * @param 	s 		ptr to stmt struct to typecheck  
+ */
+void stmt_typecheck(Stmt *s){
+	if (!s) return;
+	Type *t;
+	switch(s->kind){
+		case STMT_DECL:
+			decl_typecheck(s->decl);
+			break;
+		case STMT_EXPR:
+			t = expr_typecheck(s->expr);
+			type_destroy(t);
+			break;
+		case STMT_IF_ELSE:
+			t = expr_typecheck(s->expr);
+			if (t->kind != TYPE_BOOLEAN || !t) {
+				fprintf(stderr, "typechecker error: Condition in 'if' statement must be of type boolean, but got");
+				type_print(t, stderr);
+				fprintf(stderr, ".\n");
+				b_ctx.typechecker_errors++;
+			}
+			type_destroy(t);
+			stmt_typecheck(s->body);
+			stmt_typecheck(s->else_body);
+			break;
+		case STMT_FOR:
+			t = expr_typecheck(s->init_expr);
+			type_destroy(t);
+			t = expr_typecheck(s->next_expr);
+			type_destroy(t);
+			t = expr_typecheck(s->expr);
+			if (t && t->kind != TYPE_BOOLEAN) {
+				fprintf(stderr, "typechecker error: Condition in 'for' loop must be of type boolean, but got");
+				type_print(t, stderr);
+				fprintf(stderr, ".\n");
+				b_ctx.typechecker_errors++;
+			}
+			type_destroy(t);
+			stmt_typecheck(s->body);
+			break;
+		case STMT_PRINT:
+			t = expr_typecheck(s->expr);
+			type_destroy(t);
+			break;
+		case STMT_RETURN:
+			t = expr_typecheck(s->expr);
+			if (!t) t = type_create(TYPE_VOID, 0, 0, 0);
+			if (t->kind != s->func_sym->type->subtype->kind){
+				fprintf(stderr, "typechecker error: Return type mismatch. Expected");
+				type_print(s->func_sym->type->subtype, stderr);
+				fprintf(stderr, ", but got");
+				type_print(t, stderr);
+				fprintf(stderr, ".\n");
+				b_ctx.typechecker_errors++;
+			}
+			type_destroy(t);
+			break;
+		case STMT_BLOCK:
+			stmt_typecheck(s->body);
+			break;
+	}
+	stmt_typecheck(s->next);
 }
