@@ -6,6 +6,6 @@ main: function void (argc: integer, argv: carray[] string) = {
 }
 
 my_sqrt: function double (x: double) = {
-    return x ^ 0.5;
+    return 10.0;
 }
 

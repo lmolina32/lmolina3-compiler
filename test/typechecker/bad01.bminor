@@ -1,0 +1,20 @@
+a: integer = 5;
+
+func: function integer (a: integer, d: double) = {
+    x: integer = 5 + 10.0;
+    a: integer = 5 - 10.0;
+    b: integer = 5 * 10.0;
+    c: integer = 5 / 10.0;
+    d: integer = 5 % 10.0;
+    g: integer = 5 ^ 10.0;
+    u: string = "c";
+    u++;
+    u--;
+    i: boolean = x && x;
+    nn: boolean = x || x;
+    nnn: boolean = !x;
+    return 10.0;
+}
+
+func: function integer (a: integer);
+func: function integer (b: integer, c: integer);
