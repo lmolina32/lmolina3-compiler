@@ -223,7 +223,7 @@ void decl_typecheck(Decl *d){
         if (d->value){
             t = expr_typecheck(d->value);
             // Case 1a: types don't match throw errors
-            if (t->kind != d->type->kind){
+            if (t && t->kind != d->type->kind){
                 fprintf(stderr, "typechecker error: Cannot assign value of type");
                 type_print(t, stderr);
                 fprintf(stderr, " to variable '%s' of type ", d->name);

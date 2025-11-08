@@ -7,6 +7,7 @@
 
 /* Forward Declaration */
 typedef struct Symbol Symbol;
+typedef struct Type Type;
 
 /* Structure */
 
@@ -74,9 +75,10 @@ Expr   *expr_create_char_literal(char *c);
 Expr   *expr_create_string_literal(const char *str);
 Expr   *expr_unwrap_groups(Expr *e);
 int 	expr_need_parens(Expr *parent, Expr *child, int is_left);
-void 	expr_print_with_context(Expr *parent, Expr *child, int is_left);
-void 	expr_print(Expr *e);
+void 	expr_print_with_context(Expr *parent, Expr *child, int is_left, FILE *stream);
+void 	expr_print(Expr *e, FILE *stream);
 Expr   *expr_copy(Expr *e);
 void    expr_resolve(Expr *e);
+Type   *expr_typecheck(Expr *e);
 
 #endif

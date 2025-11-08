@@ -36,6 +36,12 @@ struct Type {
 
 };
 
+/* Macros */
+
+#define ILLEGAL_KIND_EQUALITY(t) \
+    ((t) == TYPE_VOID || (t) == TYPE_FUNCTION || \
+     (t) == TYPE_ARRAY || (t) == TYPE_CARRAY)
+
 /* Functions */
 
 Type	     *type_create(type_t kind, Type *subtype, Param_list *params, Expr * arr_len);

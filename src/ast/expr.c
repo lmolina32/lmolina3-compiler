@@ -1,5 +1,6 @@
 /* expr.c: expr structure functions */
 
+#include "bminor_context.h"
 #include "decl.h"
 #include "expr.h"
 #include "param_list.h"
@@ -239,26 +240,26 @@ int expr_need_parens(Expr *parent, Expr *child, int is_left){
  * @param child		ptr to child of parent (left or right)
  * @param is_left	integer: 1 if left child, 0 if right child 
  */
-void expr_print_with_context(Expr *parent, Expr *child, int is_left){
+void expr_print_with_context(Expr *parent, Expr *child, int is_left, FILE *stream){
 	if (!child) return; 
 
 	if (child->kind == EXPR_GROUPS){
 		Expr *expr_unwrapped = expr_unwrap_groups(child);
 
 		if (parent && expr_need_parens(parent, expr_unwrapped, is_left)){
-			putchar('(');
-			expr_print(expr_unwrapped);
-			putchar(')');
+			fprintf(stderr,"(");
+			expr_print(expr_unwrapped, stream);
+			fprintf(stderr,")");
 		} else {
-			expr_print(expr_unwrapped);
+			expr_print(expr_unwrapped, stream);
 		}
 	} else {
 		if (parent && expr_need_parens(parent, child, is_left)){
-			putchar('(');
-			expr_print(child);
-			putchar(')');
+			fprintf(stderr,"(");
+			expr_print(child, stream);
+			fprintf(stderr,")");
 		} else {
-			expr_print(child);
+			expr_print(child, stream);
 		}
 	}
 }
@@ -267,172 +268,172 @@ void expr_print_with_context(Expr *parent, Expr *child, int is_left){
  * Prints an expression tree to stdout.
  * @param   e        The expression to print
  **/
-void expr_print(Expr *e){
+void expr_print(Expr *e, FILE *stream){
 	if (!e) return; 
 	char es[BUFSIZ] = {0};
 
 	switch (e->kind){
 		case EXPR_ADD:					//	addition +
-			expr_print_with_context(e, e->left, 1);
-			putchar('+');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "+");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_SUB:					//	subtraction -
-			expr_print_with_context(e, e->left, 1);
-			putchar('-');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "-");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_MUL:					//	multiplication *
-			expr_print_with_context(e, e->left, 1);
-			putchar('*');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "*");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_DIV:					//  division  /
-			expr_print_with_context(e, e->left, 1);
-			putchar('/');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "/");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_ASSIGN:				// 	assignment =  
-			expr_print_with_context(e, e->left, 1);
-			putchar(' ');
-			putchar('=');
-			putchar(' ');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, " ");
+			fprintf(stream, "=");
+			fprintf(stream, " ");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_OR:					//  logical or ||
-			expr_print_with_context(e, e->left, 1);
-			putchar('|');
-			putchar('|');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "|");
+			fprintf(stream, "|");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_AND:					//  logical and  &&
-			expr_print_with_context(e, e->left, 1);
-			putchar('&');
-			putchar('&');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "&");
+			fprintf(stream, "&");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_EQ:					//  comparison equal  ==
-			expr_print_with_context(e, e->left, 1);
-			putchar('=');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "=");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_NOT_EQ:				//  comparison not equal  !=
-			expr_print_with_context(e, e->left, 1);
-			putchar('!');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "!");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_LT:					//  comparison less than  <
-			expr_print_with_context(e, e->left, 1);
-			putchar('<');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "<");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_LTE:					//  comparison less than or equal  <=
-			expr_print_with_context(e, e->left, 1);
-			putchar('<');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "<");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_GT:					//  comparison greater than > 
-			expr_print_with_context(e, e->left, 1);
-			putchar('>');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, ">");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_GTE:					//  comparison greater than or equal >=
-			expr_print_with_context(e, e->left, 1);
-			putchar('>');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, ">");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_REM:					//  remainder %
-			expr_print_with_context(e, e->left, 1);
-			putchar('%');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "%%");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_EXPO:					//  exponentiation ^  
-			expr_print_with_context(e, e->left, 1);
-			putchar('^');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "^");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_NOT:					//  logical not !
-			putchar('!');
-			expr_print_with_context(e, e->left, 1);
+			fprintf(stream, "!");
+			expr_print_with_context(e, e->left, 1, stream);
 			break;
 		case EXPR_NEGATION:			    //  negation  -
-			putchar('-');
-			expr_print_with_context(e, e->left, 1);
+			fprintf(stream, "-");
+			expr_print_with_context(e, e->left, 1, stream);
 			break;
 		case EXPR_ARR_LEN:			    //  array len #
-			putchar('#');
-			expr_print_with_context(e, e->left, 1);
+			fprintf(stream, "#");
+			expr_print_with_context(e, e->left, 1, stream);
 			break;
 		case EXPR_INCREMENT:			//  increment ++ 
-			expr_print_with_context(e, e->left, 1);
-			putchar('+');
-			putchar('+');
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "+");
+			fprintf(stream, "+");
 			break;
 		case EXPR_DECREMENT:			//  decrement -- 
-			expr_print_with_context(e, e->left, 1);
-			putchar('-');
-			putchar('-');
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "-");
+			fprintf(stream, "-");
 			break;
 		case EXPR_GROUPS:				//  grouping ()
-			expr_print(expr_unwrap_groups(e));
+			expr_print(expr_unwrap_groups(e), stream);
 			break;
 		case EXPR_FUNC:					//  function call f()
-			expr_print(e->left);
-			putchar('(');
-			expr_print(e->right);
-			putchar(')');
+			expr_print(e->left, stream);
+			fprintf(stream, "(");
+			expr_print(e->right, stream);
+			fprintf(stream, ")");
 			break;
 		case EXPR_ARGS:					//  function arguments a, b, c, d 
-			expr_print(e->left);
+			expr_print(e->left, stream);
 			if (e->right && e->right->kind == EXPR_ARGS){
-				putchar(',');
-				expr_print(e->right);
+				fprintf(stream, ",");
+				expr_print(e->right, stream);
 			}
 			break;
 		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
-			expr_print(e->left);
-			putchar('[');
-			expr_print(e->right);
-			putchar(']');
+			expr_print(e->left, stream);
+			fprintf(stream, "[");
+			expr_print(e->right, stream);
+			fprintf(stream, "]");
 			break;
 		case EXPR_BRACES:				//  braces {}
-			putchar('{');
-			expr_print(e->right);
-			putchar('}');	
+			fprintf(stream, "{");
+			expr_print(e->right, stream);
+			fprintf(stream, "}");	
 			break;
 		case EXPR_INT_LIT:				//  integer literal 21321 
-			printf("%d", e->literal_value);
+			fprintf(stream, "%d", e->literal_value);
 			break;
 		case EXPR_HEX_LIT:				//  hexadecimal literal 0x2123
-			printf("%d", e->literal_value);
+			fprintf(stream, "%d", e->literal_value);
 			break;
 		case EXPR_BIN_LIT:				//  binary literal 0b1010
-			printf("%d", e->literal_value);
+			fprintf(stream, "%d", e->literal_value);
 			break;
 		case EXPR_DOUBLE_LIT:			//  double literal 123131 
-			printf("%lf", e->double_literal_value);
+			fprintf(stream, "%lf", e->double_literal_value);
 			break;
 		case EXPR_DOUBLE_SCIENTIFIC_LIT://  double scientific literal 6e10 
-			printf("%lf", e->double_literal_value);
+			fprintf(stream, "%lf", e->double_literal_value);
 			break;
 		case EXPR_CHAR_LIT: 			//  char literal 'a'
 			string_encode(e->string_literal, es);
 			chomp_quotes(es);
-			printf("'%s'", es+1);
+			fprintf(stream, "'%s'", es+1);
 			break;
 		case EXPR_STR_LIT:				//  string literal "hello"
 			string_encode(e->string_literal, es);
-			printf("%s", es);
+			fprintf(stream, "%s", es);
 			break;
 		case EXPR_BOOL_LIT:				//  boolean literal 'true' 'false'
-			printf("%s", e->literal_value ? "true" : "false");
+			fprintf(stream, "%s", e->literal_value ? "true" : "false");
 			break;
 		case EXPR_IDENT:				//  identifier    my_function 
-			printf("%s", e->name);
+			fprintf(stream, "%s", e->name);
 			break;
 		default:						//  if not defined identifier then error 
 			fprintf(stderr, "Invalid Expression type\n");
@@ -444,7 +445,7 @@ void expr_print(Expr *e){
 /**
  * Crete a deep copy of the expression structure 
  * @param   e       Expression structure to create deep copy of 
- * @return  ptr to expression struct or NULL if unsuccesful
+ * @return  ptr to expression struct or NULL if unsuccessful
  **/
 Expr* expr_copy(Expr *e){
     if (!e) return NULL;
@@ -473,10 +474,227 @@ void expr_resolve(Expr *e){
             }
         } else {
             printf("resolver error: %s is not defined\n", e->name);
-            stack.status = 1;
+            b_ctx.resolver_errors += 1;
         }
     } else {
         expr_resolve(e->left);
         expr_resolve(e->right);
     }
+}
+
+/**
+ * Perform semantic type checking on an expression tree node.
+ * @param 	e 		 Pointer to the expression node to typecheck.
+ * @return  A newly allocated `struct type *` representing the expression’s
+ *         resulting type. Caller takes ownership and must free it with
+ *         `type_delete()`. Never returns NULL (TYPE_ERROR on failure).
+ */
+Type *expr_typecheck(Expr *e){
+	if (!e) return NULL;
+
+	Type *lt = expr_typecheck(e->left);
+	Type *rt = expr_typecheck(e->right);
+
+	int flag = true;
+	Expr *dummy_e = NULL;
+	Type *result = NULL;
+	switch (e->kind){
+		case EXPR_ADD:					//	addition +
+		case EXPR_SUB:					//	subtraction -
+		case EXPR_MUL:					//	multiplication *
+		case EXPR_DIV:					//  division  /
+		case EXPR_REM:					//  remainder %
+		case EXPR_EXPO:					//  exponentiation ^  
+			// expects both to be integers or both to be doubles 
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (!((lt->kind == TYPE_INTEGER && rt->kind == TYPE_INTEGER) ||
+				(lt->kind == TYPE_DOUBLE && rt->kind == TYPE_DOUBLE))){
+				fprintf(stderr, "typechecker error: Invalid operand types for '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "' operator. Got");
+				type_print(lt, stderr);
+				fprintf(stderr, " and");
+				type_print(rt, stderr);
+				fprintf(stderr, " but expected either (integer, integer) or (double, double).\n");
+				flag = false;
+				b_ctx.typechecker_errors++;
+			}
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(flag ? lt->kind : TYPE_INTEGER, 0, 0, 0);
+			break;
+		case EXPR_INCREMENT:			//  increment ++ 
+		case EXPR_DECREMENT:			//  decrement -- 
+		case EXPR_NEGATION:			    //  negation  -
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (!(lt->kind == TYPE_INTEGER || lt->kind == TYPE_DOUBLE)){
+				fprintf(stderr, "typechecker error: Invalid operand type for '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "' operator. Got");
+				type_print(lt, stderr);
+				fprintf(stderr, " but expected either (integer) or (double).\n");
+				flag = false;
+				b_ctx.typechecker_errors++;
+			}
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(flag ? lt->kind : TYPE_INTEGER, 0, 0, 0);
+			break;
+		case EXPR_ASSIGN:				// 	assignment =  
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (!type_equals(lt, rt)){
+				fprintf(stderr, "typechecker error: Invalid operand type for '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "' operator. Got");
+				type_print(lt, stderr);
+				fprintf(stderr, " and");
+				type_print(rt, stderr);
+				fprintf(stderr, " but expected (");
+				type_print(lt, stderr);
+				fprintf(stderr, ",");
+				type_print(lt, stderr);
+				fprintf(stderr,").\n");
+				b_ctx.typechecker_errors++;
+			}
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(lt->kind, 0, 0, 0);
+			break;
+		case EXPR_OR:					//  logical or ||
+		case EXPR_AND:					//  logical and  &&
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (lt->kind != TYPE_BOOLEAN || rt->kind != TYPE_BOOLEAN){
+				fprintf(stderr, "typechecker error: Invalid operand types for '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "' operator. Got");
+				type_print(lt, stderr);
+				fprintf(stderr, " and");
+				type_print(rt, stderr);
+				fprintf(stderr, " but expected (boolean).\n");
+				b_ctx.typechecker_errors++;
+			}
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(TYPE_BOOLEAN, 0, 0, 0);
+			break;
+		case EXPR_NOT:					//  logical not !
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (lt->kind != TYPE_BOOLEAN){
+				fprintf(stderr, "typechecker error: Invalid operand type for '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "' operator. Got");
+				type_print(lt, stderr);
+				fprintf(stderr, " but expected (boolean).\n");
+				b_ctx.typechecker_errors++;
+			}
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(TYPE_BOOLEAN, 0, 0, 0);
+			break;
+		case EXPR_EQ:					//  comparison equal  ==
+		case EXPR_NOT_EQ:				//  comparison not equal  !=
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (ILLEGAL_KIND_EQUALITY(lt->kind) || ILLEGAL_KIND_EQUALITY(rt->kind) ||
+				(lt->kind != rt->kind)){
+				fprintf(stderr, "type error: invalid types for equality operator '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "'. Left is '");
+				type_print(lt, stderr);
+				fprintf(stderr,"', right is '");
+				type_print(rt, stderr);
+				fprintf(stderr, "'. Equality requires matching types and cannot be applied to void, array, or function types.\n");
+				b_ctx.typechecker_errors++;
+			} 
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(TYPE_BOOLEAN, 0, 0, 0);
+			break;
+		case EXPR_LT:					//  comparison less than  <
+		case EXPR_LTE:					//  comparison less than or equal  <=
+		case EXPR_GT:					//  comparison greater than > 
+		case EXPR_GTE:					//  comparison greater than or equal >=
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (!((lt->kind == TYPE_INTEGER && rt->kind == TYPE_INTEGER) ||
+				(lt->kind == TYPE_DOUBLE && rt->kind == TYPE_DOUBLE))){
+				fprintf(stderr, "typechecker error: Invalid operand types for '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "' operator. Got");
+				type_print(lt, stderr);
+				fprintf(stderr, " and");
+				type_print(rt, stderr);
+				fprintf(stderr, ". Expected either (integer, integer) or (double, double).\n");
+				b_ctx.typechecker_errors++;
+			}
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(TYPE_BOOLEAN, 0, 0, 0);
+			break;
+		case EXPR_ARR_LEN:			    //  array len #
+			dummy_e = expr_create(e->kind, 0, 0);
+			if (lt->kind != TYPE_ARRAY){
+				fprintf(stderr, "typechecker error: '#' operator requires an array, but got");
+				type_print(lt, stderr);
+				fprintf(stderr, ".\n");
+				b_ctx.typechecker_errors++;
+			}
+			expr_destroy(dummy_e);
+			dummy_e = NULL;
+			result = type_create(TYPE_INTEGER, 0, 0, 0);
+			break;
+		case EXPR_GROUPS:				//  grouping ()
+			result = type_copy(lt);
+			break;
+		case EXPR_FUNC:					//  function call f()
+			break;
+		case EXPR_ARGS:					//  function arguments a, b, c, d 
+			break;
+		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
+			if (lt->kind == TYPE_ARRAY || lt->kind == TYPE_CARRAY){
+				if (rt->kind != TYPE_INTEGER){
+					fprintf(stderr, "typechecker error: Array index must be of type integer, but got");
+					type_print(rt, stderr);
+					fprintf(stderr, ".\n");
+					b_ctx.typechecker_errors++;
+				}
+				result = type_copy(lt->subtype);
+			} else {
+				fprintf(stderr, "typechecker error: Cannot index value of type");
+				type_print(lt, stderr);
+				fprintf(stderr, ". Only arrays support indexing.\n");
+				b_ctx.typechecker_errors++;
+				result = type_copy(lt);
+			}
+			break;
+		case EXPR_BRACES:				//  braces {}
+			break;
+		case EXPR_INT_LIT:				//  integer literal 21321 
+		case EXPR_HEX_LIT:				//  hexadecimal literal 0x2123
+		case EXPR_BIN_LIT:				//  binary literal 0b1010
+			result = type_create(TYPE_INTEGER, 0, 0, 0);
+			break;
+		case EXPR_DOUBLE_LIT:			//  double literal 123131 
+		case EXPR_DOUBLE_SCIENTIFIC_LIT://  double scientific literal 6e10 
+			result = type_create(TYPE_DOUBLE, 0, 0, 0);
+			break;
+		case EXPR_CHAR_LIT: 			//  char literal 'a'
+			result = type_create(TYPE_CHARACTER, 0, 0, 0);
+			break;
+		case EXPR_STR_LIT:				//  string literal "hello"
+			result = type_create(TYPE_STRING, 0, 0, 0);
+			break;
+		case EXPR_BOOL_LIT:				//  boolean literal 'true' 'false'
+			result = type_create(TYPE_BOOLEAN, 0, 0, 0);
+			break;
+		case EXPR_IDENT:				//  identifier    my_function 
+			result = type_copy(e->symbol->type);
+			break;
+		default:
+			fprintf(stderr, "Invalid Expression type\n");
+			exit(1);
+	}
+
+	type_destroy(lt);
+	type_destroy(rt);
+
+	return result;
 }
