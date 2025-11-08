@@ -23,6 +23,7 @@ struct Decl {
 	Stmt *code; 		// code associated with decl (funcs)
 	Symbol *symbol;     // include constants, vars, and funcs 
 	Decl *next;			// next decl (ptr)
+	int owner;
 };
 
 /* Functions */
@@ -32,6 +33,7 @@ void	 decl_destroy(Decl *d);
 void 	 decl_print(Decl *d, int indent);
 Decl	*decl_copy(Decl *d);
 void     decl_resolve(Decl *d);
+void 	 decl_typecheck(Decl *d);
 
 #endif
 

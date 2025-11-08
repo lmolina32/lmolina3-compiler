@@ -1,5 +1,6 @@
 /* decl.c: decl structure functions */
 
+#include "bminor_context.h"
 #include "decl.h"
 #include "expr.h"
 #include "param_list.h"
@@ -55,7 +56,7 @@ void decl_destroy(Decl *d){
     d->type = NULL;
     stmt_destroy(d->code);
     d->code = NULL;
-    symbol_destroy(d->symbol);
+    if (d->owner) symbol_destroy(d->symbol);
     d->symbol = NULL;
     free(d);
     decl_destroy(next);
@@ -70,11 +71,11 @@ void decl_print(Decl *d, int indent){
     if (!d) { return; }
     print_indent(indent); 
     printf("%s:", d->name);
-    type_print(d->type);
+    type_print(d->type, stdout);
 
     if (d->value){      // print decl expression 
         printf(" = ");
-        expr_print(d->value);
+        expr_print(d->value, stdout);
         printf(";\n");
     } else if (d->code){ // function, print body 
         printf(" = ");
@@ -127,8 +128,11 @@ void decl_resolve(Decl *d){
             } else{
                 fprintf(stderr, "resolver error: Redeclaring an Identifier '%s' in the same scope\n", d->name);
             }
-            stack.status = 1;
+            b_ctx.resolver_errors += 1;
+            symbol_destroy(d->symbol);
+            d->symbol = sym;
         } else{
+            d->owner = 1;
             scope_bind(d->name, d->symbol);    
         }
     // case 2: Function Declaration (Prototypes or Definitions)
@@ -140,39 +144,53 @@ void decl_resolve(Decl *d){
             // Error: Function name conflicts with non-function symbol
             if (sym->type->kind != TYPE_FUNCTION){
                 fprintf(stderr, "resolver error: Reusing Identifier '%s' for function name\n", d->name);
-                stack.status = 1;
+                b_ctx.resolver_errors += 1;
+                symbol_destroy(d->symbol);
+                d->symbol = sym;
             // Case 2a: New definition (not prototype) AND existing symbol is a prototype
             } else if (!is_prototype && sym_is_prototype){
                 sym->func_decl = 0;     // function has been initialized 
-                d->symbol->prototype_def = sym;
-                sym->func_init = d->symbol;
+                //d->symbol->prototype_def = sym;
+                //sym->func_init = d->symbol;
+                symbol_destroy(d->symbol);
+                d->symbol = sym;
             // Case 2b: New definition AND existing symbol is already a definition
             } else if (!is_prototype && !sym_is_prototype){
                 fprintf(stderr, "resolver error: redefinition of '%s'\n", d->name);
-                stack.status = 1;
+                b_ctx.resolver_errors += 1;
+                symbol_destroy(d->symbol);
+                d->symbol = sym;
             // Case 2c: New prototype AND existing symbol is already defined
             } else if (is_prototype && !sym_is_prototype){
+                fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
                 // Case 2c-1: Prototype and definition defined -> pass on prototype for typechecking 
-                if (sym->prototype_def){
-                    d->symbol->prototype_def = sym->prototype_def;
-                // Case 2c-2: Definition only defined -> pass on def symbol for typechecking 
-                } else {
-                    d->symbol->prototype_def = sym->func_init;
-                }
+                // if (sym->prototype_def){
+                //     d->symbol->prototype_def = sym->prototype_def;
+                // // Case 2c-2: Definition only defined -> pass on def symbol for typechecking 
+                // } else {
+                //     d->symbol->prototype_def = sym->func_init;
+                // }
+                symbol_destroy(d->symbol);
+                d->symbol = sym;
             // Case 2d: New prototype AND existing symbol is also a prototype
             } else if (is_prototype && sym_is_prototype){ 
                 fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
-                d->symbol->prototype_def = sym;
+                // d->symbol->prototype_def = sym;
+                symbol_destroy(d->symbol);
+                d->symbol = sym;
             }
         } else{
+            d->owner = 1;
             scope_bind(d->name, d->symbol);    
         }
 
         // Resolve for function body 
+        if (!sym) sym = scope_lookup_current(d->name);
         if (d->code){
             scope_enter();
             param_list_resolve(d->type->params);
             scope_enter();
+            d->code->func_sym = sym;
             stmt_resolve(d->code);
             scope_exit();
             scope_exit();
@@ -180,4 +198,74 @@ void decl_resolve(Decl *d){
     }
 
     decl_resolve(d->next);
+}
+
+/**
+ * Perform typechecking on the decl structure ensuring compatibility between decls
+ * @param   d       decl structure to perform typechecking
+ */
+void decl_typecheck(Decl *d){
+    if (!d) return;
+    if (!d->type){
+        b_ctx.typechecker_errors += 1;
+        fprintf(stderr, "%s is not attached to type structure\n", d->name);
+        return;
+    }
+    if (!d->symbol) {
+        b_ctx.typechecker_errors += 1;
+        fprintf(stderr, "%s is not attached to symbol structure\n", d->name);
+        return;
+    }
+
+    Type *t = NULL;
+    // Case 1: typecheck variable declarations 
+    if (d->type->kind != TYPE_FUNCTION){
+        if (d->value){
+            t = expr_typecheck(d->value);
+            // Case 1a: types don't match throw errors
+            if (t->kind != d->type->kind){
+                fprintf(stderr, "typechecker error: Cannot assign value of type");
+                type_print(t, stderr);
+                fprintf(stderr, " to variable '%s' of type ", d->name);
+                type_print(d->type, stderr);
+                fprintf(stderr, ".\n");
+                b_ctx.typechecker_errors++;
+            }
+            type_destroy(t);
+        }
+    // Case 2: typecheck function declarations (definitions & prototypes)
+    } else {
+        // Case 2a: check if function returns valid type (handled by parser)
+        if (!type_valid_return(d->type)){
+            fprintf(stderr, "typechecker error: Cannot assign");
+            type_print(t->subtype, stderr);
+            fprintf(stderr, " as function return type\n");
+            b_ctx.typechecker_errors++;
+        }
+
+        // Case 2b: functions returns don't match 
+        if (d->type->kind != d->symbol->type->kind){
+            fprintf(stderr, "typechecker error: Function return type mismatch.\n");
+            fprintf(stderr, "  Declared: ");
+            type_print(d->symbol->type, stderr);
+            fprintf(stderr, "\n  Actual:   ");
+            type_print(d->type, stderr);
+            fprintf(stderr, "\n");
+            b_ctx.typechecker_errors++;
+        }
+
+        // Case 2c: functions parameters don't match 
+        if (!param_list_equals(d->type->params, d->symbol->type->params)){
+            fprintf(stderr, "typechecker error: Parameter list mismatch for function '%s'.\n", d->name);
+            fprintf(stderr, "  Declared parameters: ");
+            param_list_print(d->symbol->type->params, stderr);
+            fprintf(stderr, "\n  Defined parameters:   ");
+            param_list_print(d->type->params, stderr);
+            fprintf(stderr, "\n");
+            b_ctx.typechecker_errors++;    
+        }
+
+        stmt_typecheck(d->code);
+    }
+    decl_typecheck(d->next);
 }
