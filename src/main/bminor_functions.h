@@ -13,6 +13,7 @@ bool     encode(const char *file_name);
 bool     scan(const char *file_name);
 bool     parse(const char *file_name);
 bool     pretty_print(const char *file_name);
-bool     resolve(const char *file_name);
+bool     resolve(const char *file_name, bool cleanup);
+bool     typecheck(const char *file_name);
 
 #endif 
