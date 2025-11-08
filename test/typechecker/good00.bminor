@@ -2,6 +2,7 @@ my_sqrt: function double (x: double);
 
 main: function void (argc: integer, argv: carray[] string) = {
     x: integer = 25;
+    b: integer = (((((((((25)))))))));
     print my_sqrt(x);
 }
 
