@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 /* Functions */
 
@@ -48,59 +49,59 @@ void type_destroy(Type *t){
  * Prints a type representation to stdout.
  * @param t The type to print
  **/
-void type_print(Type *t){
+void type_print(Type *t, FILE *stream){
 	if (!t) return; 
 	
 	switch(t->kind){
 		case TYPE_VOID:
-			printf(" void");
+			fprintf(stream," void");
 			break;
 		case TYPE_BOOLEAN:
-			printf(" boolean");
+			fprintf(stream," boolean");
 			break;
 		case TYPE_CHARACTER:
-			printf(" char");
+			fprintf(stream," char");
 			break;
 		case TYPE_INTEGER:
-			printf(" integer");
+			fprintf(stream," integer");
 			break;
 		case TYPE_DOUBLE:
-			printf(" double");
+			fprintf(stream," double");
 			break;
 		case TYPE_STRING:
-			printf(" string");
+			fprintf(stream," string");
 			break;
 		case TYPE_ARRAY:
 			if (t->arr_len) {
-				printf(" array [");
-				expr_print(t->arr_len);
+				fprintf(stream," array [");
+				expr_print(t->arr_len, stdout);
 				putchar(']');
 			} else {
-				printf(" array []");
+				fprintf(stream," array []");
 			}
 			break;
 		case TYPE_CARRAY:
 			if (t->arr_len) {
-				printf(" carray [");
-				expr_print(t->arr_len);
-				putchar(']');
+				fprintf(stream," carray [");
+				expr_print(t->arr_len, stdout);
+				fprintf(stream, "]");
 			} else {
-				printf(" carray []");
+				fprintf(stream," carray []");
 			}
 			break;
 		case TYPE_AUTO:
-			printf(" auto");
+			fprintf(stream," auto");
 			break;
 		case TYPE_FUNCTION:
-			printf(" function");
-			type_print(t->subtype);
-			putchar('(');
-			param_list_print(t->params);
-			putchar(')');
+			fprintf(stream," function");
+			type_print(t->subtype, stream);
+			fprintf(stream, "(");
+			param_list_print(t->params, stream);
+			fprintf(stream, ")");
 			return;
 	}
 
-	type_print(t->subtype);
+	type_print(t->subtype, stream);
 
 }
 
@@ -116,3 +117,34 @@ Type* type_copy(Type *t){
 	return new_t;
 }
 
+
+/**
+ * Compares two type structures and ensures they are both equal to each other. 
+ * @param	a	ptr to struct to compare another type struct with 
+ * @param	b   ptr to struct to compare another type strcut with 
+ * @return  true if both type structs are equal, otherwise false
+ */
+bool type_equals(Type *a,  Type *b){
+	// NOTE: might need to compare expr_arr 
+	if (!a && !b) return true;
+	if (!a || !b) return false;
+	if (a->kind != b->kind) return false;
+	if (!type_equals(a->subtype, b->subtype)) return false;
+	if (!param_list_equals(a->params, b->params)) return false;
+	return true;
+}
+
+
+/**
+ * Compares Type structure to see if it is has a valid return type 
+ * @param 	a 		ptr to Type structure to check valid return 
+ * @return 	true if valid return type, otherwise false
+ */
+bool type_valid_return(Type *a){
+	if (!a) return false;
+	if (a->kind != TYPE_FUNCTION) return false;
+	if (!a->subtype) return false;
+	type_t return_type = a->subtype->kind;
+	if (return_type == TYPE_FUNCTION || return_type == TYPE_ARRAY || return_type == TYPE_CARRAY) return false;
+	return true;
+}

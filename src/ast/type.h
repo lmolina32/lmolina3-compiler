@@ -4,6 +4,7 @@
 #define TYPE_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 /* Forward Declaration */
 
@@ -39,7 +40,9 @@ struct Type {
 
 Type	     *type_create(type_t kind, Type *subtype, Param_list *params, Expr * arr_len);
 void		  type_destroy(Type *t);
-void          type_print(Type *t);
+void          type_print(Type *t, FILE *stream);
 Type         *type_copy(Type *t);
+bool 		  type_equals(Type *a,  Type *b);
+bool		  type_valid_return(Type *a);
 
 #endif
