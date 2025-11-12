@@ -4,6 +4,7 @@
 #define EXPR_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 /* Forward Declaration */
 typedef struct Symbol Symbol;
@@ -80,5 +81,7 @@ void 	expr_print(Expr *e, FILE *stream);
 Expr   *expr_copy(Expr *e);
 void    expr_resolve(Expr *e);
 Type   *expr_typecheck(Expr *e);
+bool	expr_is_literal(expr_t type);
+
 
 #endif
