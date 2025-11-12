@@ -187,35 +187,41 @@ void stmt_resolve(Stmt *s){
     expr_resolve(s->expr);
     expr_resolve(s->next_expr);
 
-    if (s->kind == STMT_BLOCK){ 	// new block enter scope 
+	// Case 1: stmt is block -> enter new scope
+    if (s->kind == STMT_BLOCK){ 	 
         scope_enter();
 		if (s->body) s->body->func_sym = s->func_sym;
         stmt_resolve(s->body);
         scope_exit();
-    } else if (s->kind == STMT_FOR || s->kind == STMT_IF_ELSE){  // check single decl in for and if stmts
+	// Case 2: stmt is for and if else 
+    } else if (s->kind == STMT_FOR || s->kind == STMT_IF_ELSE){ 
+		// Case 2a: stmt body is decl which is not allowed in single line for or if
 		if(s->body && s->body->kind == STMT_DECL){
 			fprintf(stderr, "resolver error: '%s' can not be declared in a single-line %s\n", s->body->decl->name, s->kind == STMT_FOR ? "for loop" : "if statement");
 			decl_resolve(s->body->decl);
 			b_ctx.resolver_errors += 1;
+		// Case 2b: stmt is not a STMT_DECL recurse down
 		} else {
 			if (s->body) s->body->func_sym = s->func_sym;
         	stmt_resolve(s->body);
 		}
+	// Case 2: stmt if not BLOCK, FOR, or IF_ELSE recurse down
 	} else {
 		if (s->body) s->body->func_sym = s->func_sym;
         stmt_resolve(s->body);
     }
 
+	// Case 3: else body 
 	if (s->else_body){
-		if (s->else_body->kind == STMT_DECL) {  // check decls in single else stmts
+		// Case 3a: If body is decl throw error, single line decls aren't allowed
+		if (s->else_body->kind == STMT_DECL) {  
 			fprintf(stderr, "resolver error: '%s' can not be declared in a single-line %s\n", s->else_body->decl->name, "else statement");
 			decl_resolve(s->body->decl);
 			b_ctx.resolver_errors += 1;
+		// Case 3b: else boyd is not decl, recurse down and enter new scope
 		} else{
-			scope_enter();
-			if (s->body) s->body->func_sym = s->func_sym;
+			s->else_body->func_sym = s->func_sym;
 			stmt_resolve(s->else_body);
-			scope_exit();
 		}
 	}
 
@@ -227,9 +233,10 @@ void stmt_resolve(Stmt *s){
  * Perform typechecking on the stmt struct ensuring compatibility for all stmts
  * @param 	s 		ptr to stmt struct to typecheck  
  */
-void stmt_typecheck(Stmt *s){
-	if (!s) return;
+bool stmt_typecheck(Stmt *s){
+	if (!s) return false;
 	Type *t;
+	bool res = false;
 	switch(s->kind){
 		case STMT_DECL:
 			decl_typecheck(s->decl);
@@ -247,8 +254,7 @@ void stmt_typecheck(Stmt *s){
 				b_ctx.typechecker_errors++;
 			}
 			type_destroy(t);
-			stmt_typecheck(s->body);
-			stmt_typecheck(s->else_body);
+			res = stmt_typecheck(s->body) && stmt_typecheck(s->else_body);
 			break;
 		case STMT_FOR:
 			t = expr_typecheck(s->init_expr);
@@ -263,7 +269,7 @@ void stmt_typecheck(Stmt *s){
 				b_ctx.typechecker_errors++;
 			}
 			type_destroy(t);
-			stmt_typecheck(s->body);
+			res = stmt_typecheck(s->body);
 			break;
 		case STMT_PRINT:
 			t = expr_typecheck(s->expr);
@@ -281,10 +287,12 @@ void stmt_typecheck(Stmt *s){
 				b_ctx.typechecker_errors++;
 			}
 			type_destroy(t);
+			res = true;
 			break;
 		case STMT_BLOCK:
-			stmt_typecheck(s->body);
+			res = stmt_typecheck(s->body);
 			break;
 	}
-	stmt_typecheck(s->next);
+	return res || stmt_typecheck(s->next);
+	return res;
 }
