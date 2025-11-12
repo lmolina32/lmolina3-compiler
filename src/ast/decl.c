@@ -217,6 +217,7 @@ void decl_typecheck(Decl *d){
     if (d->type->kind != TYPE_FUNCTION){
         if (d->value){
             t = expr_typecheck(d->value);
+
             // Case 1a: types don't match throw errors
             if (t && t->kind != d->type->kind){
                 fprintf(stderr, "typechecker error: Cannot assign value of type");
@@ -245,6 +246,7 @@ void decl_typecheck(Decl *d){
                 }
 
             }
+
             // case 1d: array size initializer must be constant 
             if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
                 if (d->type->arr_len && d->type->arr_len->kind != EXPR_INT_LIT){

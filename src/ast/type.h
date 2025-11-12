@@ -44,7 +44,7 @@ struct Type {
 
 /* Functions */
 
-Type	     *type_create(type_t kind, Type *subtype, Param_list *params, Expr * arr_len);
+Type	     *type_create(type_t kind, Type *subtype, Param_list *params, Expr *arr_len);
 void		  type_destroy(Type *t);
 void          type_print(Type *t, FILE *stream);
 Type         *type_copy(Type *t);

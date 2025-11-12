@@ -641,7 +641,6 @@ static Type *expr_typecheck_equality_op(Expr *e, Type *lt, Type *rt){
 		b_ctx.typechecker_errors++;
 	} 
 	expr_destroy(dummy_e);
-	dummy_e = NULL;
 	return type_create(TYPE_BOOLEAN, 0, 0, 0);
 }
 
@@ -860,6 +859,7 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 				fprintf(stderr, ")\n");
 				b_ctx.typechecker_errors++;
 			}
+			type_destroy(init_t);
 		// case 3: left side is nested brace (EXPR_BRACES)
 		} else {
 			curr_lvls++;	
@@ -976,7 +976,7 @@ Type *expr_typecheck(Expr *e){
 			break;
 		case EXPR_OR:					//  logical or ||
 		case EXPR_AND:					//  logical and  &&
-			return expr_typecheck_logical_binary_op(e, lt, rt);
+			result = expr_typecheck_logical_binary_op(e, lt, rt);
 			break;
 		case EXPR_NOT:					//  logical not !
 			result = expr_typecheck_logical_not(e, lt);

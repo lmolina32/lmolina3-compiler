@@ -113,7 +113,6 @@ void type_print(Type *t, FILE *stream){
 Type* type_copy(Type *t){
     if (!t) return NULL;
     Type *new_t = type_create(t->kind, type_copy(t->subtype), param_list_copy(t->params), expr_copy(t->arr_len));
-	new_t->arr_len = expr_copy(t->arr_len);
 	return new_t;
 }
 
