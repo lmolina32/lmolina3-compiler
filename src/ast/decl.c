@@ -133,6 +133,10 @@ void decl_resolve(Decl *d){
             d->symbol = sym;
         } else{
             d->owner = 1;
+            // Case 1b: if array decl with init braces pass symbol to it 
+            if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && d->value && d->value->kind == EXPR_BRACES){
+                d->value->symbol = d->symbol;
+            }
             scope_bind(d->name, d->symbol);    
         }
     // case 2: Function Declaration (Prototypes or Definitions)
@@ -150,8 +154,6 @@ void decl_resolve(Decl *d){
             // Case 2a: New definition (not prototype) AND existing symbol is a prototype
             } else if (!is_prototype && sym_is_prototype){
                 sym->func_decl = 0;     // function has been initialized 
-                //d->symbol->prototype_def = sym;
-                //sym->func_init = d->symbol;
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
             // Case 2b: New definition AND existing symbol is already a definition
@@ -163,19 +165,11 @@ void decl_resolve(Decl *d){
             // Case 2c: New prototype AND existing symbol is already defined
             } else if (is_prototype && !sym_is_prototype){
                 fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
-                // Case 2c-1: Prototype and definition defined -> pass on prototype for typechecking 
-                // if (sym->prototype_def){
-                //     d->symbol->prototype_def = sym->prototype_def;
-                // // Case 2c-2: Definition only defined -> pass on def symbol for typechecking 
-                // } else {
-                //     d->symbol->prototype_def = sym->func_init;
-                // }
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
             // Case 2d: New prototype AND existing symbol is also a prototype
             } else if (is_prototype && sym_is_prototype){ 
                 fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
-                // d->symbol->prototype_def = sym;
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
             }
@@ -218,6 +212,7 @@ void decl_typecheck(Decl *d){
     }
 
     Type *t = NULL;
+    bool res = false;
     // Case 1: typecheck variable declarations 
     if (d->type->kind != TYPE_FUNCTION){
         if (d->value){
@@ -230,6 +225,34 @@ void decl_typecheck(Decl *d){
                 type_print(d->type, stderr);
                 fprintf(stderr, ".\n");
                 b_ctx.typechecker_errors++;
+            }
+
+            // Case 1b: Global variable is not a constant value (e.g not Literal)
+            if (d->symbol->kind == SYMBOL_GLOBAL){
+                if (!expr_is_literal(d->value->kind)){
+                    fprintf(stderr, "typechecker error: Global variable '%s' must be initialized with a constant value, (",d->name);
+                    expr_print(d->value, stderr);
+                    fprintf(stderr, ") is not constant.\n");
+                    b_ctx.typechecker_errors++;
+                }
+            }
+
+            // Case 1c: Local array is initialized with '{}', which are not allowed
+            if (d->symbol->kind == SYMBOL_LOCAL){
+                if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && d->value->kind == EXPR_BRACES){
+                    fprintf(stderr, "typechecker error: Local variable '%s' cannot have an array initializer '{}'\n", d->name);
+                    b_ctx.typechecker_errors++;
+                }
+
+            }
+            // case 1d: array size initializer must be constant 
+            if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
+                if (d->type->arr_len && d->type->arr_len->kind != EXPR_INT_LIT){
+                   fprintf(stderr, "typechecker error: Array size must be constant 'integer literal', non-constant expression (");
+                   expr_print(d->type->arr_len, stderr);
+                   fprintf(stderr, ") used.\n");
+                   b_ctx.typechecker_errors++; 
+                }
             }
             type_destroy(t);
         }
@@ -246,9 +269,9 @@ void decl_typecheck(Decl *d){
         // Case 2b: functions returns don't match 
         if (d->type->kind != d->symbol->type->kind){
             fprintf(stderr, "typechecker error: Function return type mismatch.\n");
-            fprintf(stderr, "  Declared: ");
+            fprintf(stderr, "\tDeclared:\n\t\t");
             type_print(d->symbol->type, stderr);
-            fprintf(stderr, "\n  Actual:   ");
+            fprintf(stderr, "\n\tActual:\n\t\t");
             type_print(d->type, stderr);
             fprintf(stderr, "\n");
             b_ctx.typechecker_errors++;
@@ -257,15 +280,31 @@ void decl_typecheck(Decl *d){
         // Case 2c: functions parameters don't match 
         if (!param_list_equals(d->type->params, d->symbol->type->params)){
             fprintf(stderr, "typechecker error: Parameter list mismatch for function '%s'.\n", d->name);
-            fprintf(stderr, "  Declared parameters: ");
+            fprintf(stderr, "\tDeclared parameters:\n\t\t");
             param_list_print(d->symbol->type->params, stderr);
-            fprintf(stderr, "\n  Defined parameters:   ");
+            fprintf(stderr, "\n\tDefined parameters:\n\t\t");
             param_list_print(d->type->params, stderr);
             fprintf(stderr, "\n");
             b_ctx.typechecker_errors++;    
         }
 
-        stmt_typecheck(d->code);
+        // Case 2d: function params cannot be of type auto or void or functions
+        if (!param_list_valid_type(d->type->params)){
+            fprintf(stderr, "typechecker error: Invalid type for parameters in function '%s'\n", d->name);
+            fprintf(stderr, "\tDeclared Parameters: \n\t\t");
+            param_list_print(d->type->params, stderr);
+            fprintf(stderr,"\n\tParameters cannot be of type 'void' or 'auto'\n");
+            b_ctx.typechecker_errors++;
+        }
+
+        // Case 2e: check if function has a return if non-void
+        if (d->code){
+            res = stmt_typecheck(d->code);
+            if (!res && d->type->subtype->kind != TYPE_VOID){
+                fprintf(stderr, "typechecker error: control reaches end of non-void function '%s'\n", d->name);
+                b_ctx.typechecker_errors++;
+            }
+        }
     }
     decl_typecheck(d->next);
 }
