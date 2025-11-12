@@ -30,5 +30,6 @@ void 			 param_list_print(Param_list *a, FILE *stream);
 Param_list      *param_list_copy(Param_list *a);
 void             param_list_resolve(Param_list *a);
 bool			 param_list_equals(Param_list *a, Param_list *b);
+bool			 param_list_valid_type(Param_list *a);
 
 #endif

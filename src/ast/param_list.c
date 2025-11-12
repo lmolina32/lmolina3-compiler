@@ -114,8 +114,23 @@ bool param_list_equals(Param_list *a, Param_list *b){
 	// NOTE: might not need to compare names
 	if (!a && !b) return true;
 	if (!a || !b) return false;
-	//if (!streq(a->name, b->name)) return false;
 	if (!type_equals(a->type, b->type)) return false;
 	if (!param_list_equals(a->next, b->next)) return false;
+	return true;
+}
+
+/**
+ * Parameters can be of any type except void or auto per the spec. Ensure valid type for each param
+ * @param 	a 		ptr to struct a which types will be checked
+ */
+bool param_list_valid_type(Param_list *a){
+	if (!a) return true;
+	if (!a->type){
+		fprintf(stderr, "Param %s is not assigned a type\n", a->name);
+		return false;
+		b_ctx.typechecker_errors++;
+	}
+	if (a->type->kind == TYPE_VOID || a->type->kind == TYPE_AUTO || a->type->kind == TYPE_FUNCTION) return false;
+	if (!param_list_valid_type(a->next)) return false;
 	return true;
 }
