@@ -230,7 +230,6 @@ bool typecheck(const char *file_name){
     bool exit_code = true;
     if (resolve(file_name, false)){
         decl_typecheck(root);
-        printf("%d", b_ctx.typechecker_errors);
         exit_code = b_ctx.typechecker_errors != 0 ? false : true;
     } else {
         fprintf(stderr, "Resolver Error\n");
