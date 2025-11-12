@@ -75,7 +75,7 @@ void type_print(Type *t, FILE *stream){
 			if (t->arr_len) {
 				fprintf(stream," array [");
 				expr_print(t->arr_len, stdout);
-				putchar(']');
+				fprintf(stream, "]");
 			} else {
 				fprintf(stream," array []");
 			}

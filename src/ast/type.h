@@ -33,7 +33,7 @@ struct Type {
 	Param_list *params;		// arg list for data types 
 	Type *subtype;			// subtypes for functions and arrays 
 	Expr *arr_len;			// get array len 
-
+	Type *orig_type; 		// original type 
 };
 
 /* Macros */
