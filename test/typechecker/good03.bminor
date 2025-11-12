@@ -1,0 +1,39 @@
+// test if function reaches non-void 
+main: function void() = {
+    if (true){
+        print 10;
+    } else {
+        print 10;
+    }
+}
+
+main0: function integer () = {
+    x: integer = 5;
+    y: integer = 5;
+    print x, y;
+    return x + y;
+}
+
+main1: function integer () = {
+    x: integer = 5;
+    y: integer = 5;
+    print x, y;
+    return x + y;
+}
+
+main2: function integer () = {
+    for (;;){
+        return 5;
+    }
+}
+
+main3: function integer () = {
+    for (;;){
+        if (true) {
+            return 10;
+        } else {
+            print 10;
+        }
+    }
+    return 10;
+}

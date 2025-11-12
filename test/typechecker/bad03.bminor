@@ -1,0 +1,13 @@
+
+my_sqrt: function void (a: integer);
+my_sqrtt: function void ();
+main: function void () = {
+    my_sqrt(10.0, 'c');
+    my_sqrt(10, 10);
+    my_sqrt();
+    a: boolean;
+    b: integer;
+    my_sqrt(10, a < b, a >= b);
+    my_sqrt(a < b);
+    my_sqrtt(a >= b);
+}

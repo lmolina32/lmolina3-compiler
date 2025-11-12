@@ -7,6 +7,7 @@ func: function integer (a: integer, d: double) = {
     c: integer = 5 / 10.0;
     d: integer = 5 % 10.0;
     g: integer = 5 ^ 10.0;
+    nnnnn: integer = '5' ^ 10.0;
     u: string = "c";
     u++;
     u--;

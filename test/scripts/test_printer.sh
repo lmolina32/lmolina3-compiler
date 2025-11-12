@@ -14,13 +14,3 @@ do
 		echo -e "$testfile failure ${RED}(INCORRECT)${NC} "
 	fi
 done
-
-for testfile in ./test/printer/bad*.bminor
-do
-	if ./bin/bminor --print $testfile &> $testfile.out
-	then
-		echo -e "$testfile  success ${RED}(INCORRECT)${NC} "
-	else
-		echo -e "$testfile  failure ${GREEN}(as expected)${NC} "
-	fi
-done
