@@ -80,7 +80,6 @@ void param_list_print(Param_list *a, FILE *stream){
 Param_list* param_list_copy(Param_list *a){
     if (!a) return NULL;
     Param_list *p = param_list_create(a->name, type_copy(a->type), param_list_copy(a->next));
-	p->symbol = symbol_copy(a->symbol);
 	return p;
 }
 

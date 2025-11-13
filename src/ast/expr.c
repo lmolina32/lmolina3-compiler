@@ -454,7 +454,7 @@ Expr* expr_copy(Expr *e){
 	new_e->literal_value = e->literal_value;
 	new_e->double_literal_value = e->double_literal_value;
 	new_e->string_literal = e->string_literal ? safe_strdup(e->string_literal) : NULL;
-	new_e->symbol = symbol_copy(e->symbol);
+	//new_e->symbol = symbol_copy(e->symbol);
 	return new_e;
 }
 
@@ -559,7 +559,32 @@ static Type *expr_typecheck_unary_numeric_op(Expr *e, Type *lt){
  */
 static Type *expr_typecheck_assignment(Expr *e, Type *lt, Type *rt){
 	Expr *dummy_e = expr_create(e->kind, 0, 0);
-	if (!type_equals(lt, rt)){
+	// case 1: both assignments are auto, can't infer type
+	if (lt->kind == TYPE_AUTO && rt->kind == TYPE_AUTO){
+		fprintf(stderr, "typechecker error: Cannot infer operand types for operator '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "': both operands are 'auto'\n");
+		b_ctx.typechecker_errors++;
+	// case 2: left child is auto, assign right type to left child
+	} else if (lt->kind == TYPE_AUTO && rt) { 
+		lt->kind = rt->kind;
+		// case 2a: child is array -> traverse array type and set base type to rt
+		if (lt->symbol->type->kind == TYPE_ARRAY || lt->symbol->type->kind == TYPE_CARRAY){
+			Type *arr_type = lt->symbol->type;
+			// get array type (e.g array [5] integer -> arr_type = ptr to integer)
+			while (arr_type->kind == TYPE_ARRAY || arr_type->kind == TYPE_CARRAY){
+				arr_type = arr_type->subtype;
+			}
+			arr_type->kind = rt->kind;
+		// case 2b: child is just auto, set the type 
+		} else {
+			lt->symbol->type->kind = rt->kind;
+		}
+		fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", lt->symbol->name);
+		type_print(rt, stdout);
+		fprintf(stdout, " )\n");
+	// case 3: the types don't match -> throw error
+	} else if (!type_equals(lt, rt)){
 		fprintf(stderr, "typechecker error: Invalid operand type for '");
 		expr_print(dummy_e, stderr);
 		fprintf(stderr, "' operator. Got");
@@ -701,6 +726,13 @@ static Type *expr_typecheck_function(Expr *e, Type *lt, Type *rt){
         type_print(lt, stderr);
         fprintf(stderr, " which is not a function.\n");
         b_ctx.typechecker_errors++;
+		Type *arg_type = NULL;
+		Expr *args = e->right;
+		while (args){
+			arg_type = expr_typecheck(args->left);
+			type_destroy(arg_type);
+			args = args->right;
+		}
 		return type_create(TYPE_VOID, 0, 0, 0);
 	}
 
@@ -790,7 +822,9 @@ static Type *expr_typecheck_array_index(Type *lt, Type *rt){
 			fprintf(stderr, ".\n");
 			b_ctx.typechecker_errors++;
 		}
-		return type_copy(lt->subtype);
+		Type *res = type_copy(lt->subtype);
+		res->symbol = lt->symbol;	
+		return res;
 	} else {
 		fprintf(stderr, "typechecker error: Cannot index value of type");
 		type_print(lt, stderr);
@@ -834,7 +868,7 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 	int levels = 0;
 	Type *arr_type = t;
 	// get array type (e.g array [5] integer -> arr_type = ptr to integer)
-	while (arr_type->kind == TYPE_ARRAY){
+	while (arr_type->kind == TYPE_ARRAY || arr_type->kind == TYPE_CARRAY){
 		arr_type = arr_type->subtype;
 		levels++;
 	}
@@ -850,8 +884,14 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 		// case 2: left side is literal expression
 		} else if (e->left->kind != EXPR_BRACES){
 			init_t = expr_typecheck(e->left);
-			// case 2a: Initialize type does not match array type 
-			if (!type_equals(init_t, arr_type)){
+			// case 2b: Initialize type is auto, set new type if valid
+			if (arr_type->kind == TYPE_AUTO && init_t && init_t->kind != TYPE_AUTO){
+				arr_type->kind = init_t->kind;
+				fprintf(stdout, "typechecker resolved: ( auto ) in array '%s' set to type (", symbol->name);
+				type_print(init_t, stdout);
+				fprintf(stdout, " )\n");
+			// case 2b: Initialize type does not match array type 
+			} else if (!type_equals(init_t, arr_type)){
 				fprintf(stderr, "typechecker error: Array '%s' type mismatch expected (", symbol->name);
 				type_print(arr_type, stderr);
 				fprintf(stderr, ") but got (");
@@ -1021,6 +1061,7 @@ Type *expr_typecheck(Expr *e){
 			break;
 		case EXPR_IDENT:				//  identifier    my_function 
 			result = type_copy(e->symbol->type);
+			result->symbol = e->symbol;
 			break;
 		default:
 			fprintf(stderr, "Invalid Expression type\n");

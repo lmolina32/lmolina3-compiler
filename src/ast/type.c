@@ -141,9 +141,6 @@ bool type_equals(Type *a,  Type *b){
  */
 bool type_valid_return(Type *a){
 	if (!a) return false;
-	if (a->kind != TYPE_FUNCTION) return false;
-	if (!a->subtype) return false;
-	type_t return_type = a->subtype->kind;
-	if (return_type == TYPE_FUNCTION || return_type == TYPE_ARRAY || return_type == TYPE_CARRAY) return false;
+	if (a->kind == TYPE_FUNCTION || a->kind == TYPE_ARRAY || a->kind == TYPE_CARRAY) return false;
 	return true;
 }

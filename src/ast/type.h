@@ -34,13 +34,14 @@ struct Type {
 	Type *subtype;			// subtypes for functions and arrays 
 	Expr *arr_len;			// get array len 
 	Type *orig_type; 		// original type 
+	Symbol *symbol;			// symbol associated with type
 };
 
 /* Macros */
 
 #define ILLEGAL_KIND_EQUALITY(t) \
     ((t) == TYPE_VOID || (t) == TYPE_FUNCTION || \
-     (t) == TYPE_ARRAY || (t) == TYPE_CARRAY)
+     (t) == TYPE_ARRAY || (t) == TYPE_CARRAY || (t) == TYPE_AUTO)
 
 /* Functions */
 

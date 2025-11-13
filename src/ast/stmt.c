@@ -278,12 +278,33 @@ bool stmt_typecheck(Stmt *s){
 		case STMT_RETURN:
 			t = expr_typecheck(s->expr);
 			if (!t) t = type_create(TYPE_VOID, 0, 0, 0);
-			if (t->kind != s->func_sym->type->subtype->kind){
-				fprintf(stderr, "typechecker error: Return type mismatch. Expected");
+			Type *func_return_type = s->func_sym->type->subtype;
+			// Case 1: return type not set
+			if (func_return_type->kind == TYPE_AUTO){
+				// Case 1a: empty return (return;) set return type to void 
+				if (!t){
+					func_return_type->kind = TYPE_VOID;
+					fprintf(stdout, "typechecker resolved: return type for function '%s' set to ( void )\n", s->func_sym->name);
+				// Case 1b: retuning non valid return type 
+				} else if (!type_valid_return(t)){
+					fprintf(stderr, "typechecker error: Invalid return type got (");
+					type_print(t, stderr);
+					fprintf(stderr, " ) but expected either (integer, double, string, char, boolean, or nothing)\n");
+					b_ctx.typechecker_errors++;
+				// Case 1c: return type valid set return type
+				} else {
+					func_return_type->kind = t->kind;	
+					fprintf(stdout, "typechecker resolved: return type for function '%s' set to (", s->func_sym->name);
+					type_print(t, stdout);
+					fprintf(stdout, " )\n");
+				}
+			// Case 2: return type set, check if equals
+			} else if (t->kind != func_return_type->kind){
+				fprintf(stderr, "typechecker error: Return type mismatch. Expected (");
 				type_print(s->func_sym->type->subtype, stderr);
-				fprintf(stderr, ", but got");
+				fprintf(stderr, " ), but got (");
 				type_print(t, stderr);
-				fprintf(stderr, ".\n");
+				fprintf(stderr, " ).\n");
 				b_ctx.typechecker_errors++;
 			}
 			type_destroy(t);
@@ -293,6 +314,5 @@ bool stmt_typecheck(Stmt *s){
 			res = stmt_typecheck(s->body);
 			break;
 	}
-	return res || stmt_typecheck(s->next);
-	return res;
+	return stmt_typecheck(s->next) || res;
 }

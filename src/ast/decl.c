@@ -97,6 +97,7 @@ Decl *decl_copy(Decl *d){
     if (!d) return NULL;
     Decl *new_d = decl_create(d->name, type_copy(d->type), expr_copy(d->value), stmt_copy(d->code), decl_copy(d->next));
     new_d->symbol = symbol_copy(d->symbol);
+    new_d->owner = 1;
     return new_d;
 }
 
@@ -121,6 +122,7 @@ void decl_resolve(Decl *d){
     int is_prototype = d->symbol->func_decl; 
     // case 1: Non function declarations (integers, Arrays, ...) 
     if (d->type->kind != TYPE_FUNCTION){
+        expr_resolve(d->type->arr_len);
         if (sym) {
             // Error: Redeclaration or Variable/Function name collision
             if (sym->type->kind == TYPE_FUNCTION){
@@ -217,6 +219,19 @@ void decl_typecheck(Decl *d){
     if (d->type->kind != TYPE_FUNCTION){
         if (d->value){
             t = expr_typecheck(d->value);
+            // Case 1a-1: decl is auto, assign value returned
+            if (d->type->kind == TYPE_AUTO){
+                if (t->kind == TYPE_VOID){
+                    fprintf(stderr, "typechecker error: Declaration '%s' cannot infer type of ( void )\n", d->name);
+                    b_ctx.typechecker_errors++;
+                } else {
+                    fprintf(stdout, "typechecker resolved: '%s' type set to (", d->name);
+                    type_print(t, stdout);
+                    fprintf(stdout, " )\n");
+                    d->type->kind = t->kind;
+                    d->symbol->type->kind = t->kind;
+                }
+            }
 
             // Case 1a: types don't match throw errors
             if (t && t->kind != d->type->kind){
@@ -244,26 +259,33 @@ void decl_typecheck(Decl *d){
                     fprintf(stderr, "typechecker error: Local variable '%s' cannot have an array initializer '{}'\n", d->name);
                     b_ctx.typechecker_errors++;
                 }
-
             }
 
-            // case 1d: array size initializer must be constant 
-            if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
-                if (d->type->arr_len && d->type->arr_len->kind != EXPR_INT_LIT){
-                   fprintf(stderr, "typechecker error: Array size must be constant 'integer literal', non-constant expression (");
-                   expr_print(d->type->arr_len, stderr);
-                   fprintf(stderr, ") used.\n");
-                   b_ctx.typechecker_errors++; 
-                }
-            }
+            
             type_destroy(t);
+        }
+        // case 2: array size initializer must be constant 
+        if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
+            if (d->type->arr_len && d->type->arr_len->kind != EXPR_INT_LIT){
+                fprintf(stderr, "typechecker error: Array size must be constant 'integer literal', non-constant expression (");
+                expr_print(d->type->arr_len, stderr);
+                fprintf(stderr, ") used.\n");
+                b_ctx.typechecker_errors++; 
+            }
         }
     // Case 2: typecheck function declarations (definitions & prototypes)
     } else {
+        // Case 2a-1: return type auto was set to new return type in previous typecheck
+        if (d->type->subtype->kind == TYPE_AUTO && d->symbol->type->subtype->kind != TYPE_AUTO){
+            d->type->subtype->kind = d->symbol->type->subtype->kind;
+            fprintf(stdout, "typechecker resolved: return type for function '%s' set to (", d->name);
+            type_print(d->symbol->type->subtype, stdout);
+            fprintf(stdout, " )\n");
+        }
         // Case 2a: check if function returns valid type (handled by parser)
-        if (!type_valid_return(d->type)){
+        if (!type_valid_return(d->type->subtype)){
             fprintf(stderr, "typechecker error: Cannot assign");
-            type_print(t->subtype, stderr);
+            type_print(d->type->subtype, stderr);
             fprintf(stderr, " as function return type\n");
             b_ctx.typechecker_errors++;
         }
@@ -305,6 +327,13 @@ void decl_typecheck(Decl *d){
             if (!res && d->type->subtype->kind != TYPE_VOID){
                 fprintf(stderr, "typechecker error: control reaches end of non-void function '%s'\n", d->name);
                 b_ctx.typechecker_errors++;
+            }
+            // return type auto was set in stmt_typecheck, update decl
+            if (d->type->subtype->kind == TYPE_AUTO && d->symbol->type->subtype->kind != TYPE_AUTO){
+                d->type->subtype->kind = d->symbol->type->subtype->kind;
+                fprintf(stdout, "typechecker resolved: return type for function '%s' set to (", d->name);
+                type_print(d->symbol->type->subtype, stdout);
+                fprintf(stdout, " )\n");
             }
         }
     }
