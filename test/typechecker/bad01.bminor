@@ -1,5 +1,3 @@
-a: integer = 5;
-
 func: function integer (a: integer, d: double) = {
     x: integer = 5 + 10.0;
     a: integer = 5 - 10.0;

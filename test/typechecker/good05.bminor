@@ -1,0 +1,9 @@
+// autos 
+
+my_sqrt: function auto (d: double) = {
+    return d ^ 0.5;
+}
+
+main: function void () = {
+    d: auto = my_sqrt(10.0);
+}

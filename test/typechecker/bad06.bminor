@@ -1,0 +1,16 @@
+// auto don't work 
+
+my_sqrt: function auto (d: double);
+
+main: function void () = {
+    x: double = my_sqrt(10.0);
+    b: auto;
+    if (b) {
+        print "true";
+    }
+    return;
+}
+
+my_sqrt: function auto (d: double)= {
+    return d ^ 0.5;
+}

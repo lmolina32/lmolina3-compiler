@@ -1,0 +1,25 @@
+// test autos 
+
+main: function void () = {
+    x: auto = 5;
+    d: auto = 5.0;
+    c: auto = 'c';
+    b: auto = true;
+    s: auto = "string";
+
+    if (b){
+        print "true";
+    }
+    if (x == 5){
+        print "yes";
+    }
+    if (d == 5.0){
+        print "yes";
+    }
+    if (c == 'c'){
+        print "yes";
+    }
+    if (s == "string"){
+        print "yes";
+    }
+}

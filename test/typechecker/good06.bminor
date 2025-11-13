@@ -1,0 +1,5 @@
+arr: array [] array [] auto = {{1, 2}, {1, 2}};
+arrr: array [2] array [2] auto = {{1.0, 2.0}, {1.0, 2.0}};
+arrrr: array [2] array [2] auto = {{'c', 'c'}, {'s', 's'}};
+arrrrr: array [2] array [2] auto = {{true, false}, {false, true}};
+arrrrrr: array [2] array [2] auto = {{"true", "false"}, {"false", "true"}};

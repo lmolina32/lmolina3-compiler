@@ -1,0 +1,5 @@
+main: function void () = {
+    x: auto;
+    y: auto;
+    x = y = 5;
+}

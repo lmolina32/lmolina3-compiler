@@ -37,3 +37,7 @@ main3: function integer () = {
     }
     return 10;
 }
+
+main4: function void () = {
+    return;
+}
