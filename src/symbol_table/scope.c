@@ -1,5 +1,6 @@
 /* scope.c: scope function definitions */
 
+#include "bminor_context.h"
 #include "hash_table.h"
 #include "scope.h"
 #include "symbol.h"
@@ -13,7 +14,6 @@
 Symbol_stack stack = {
     .top = 0,
     .size = 0,
-    .status = 0,
 };
 
 /* functions */
@@ -69,7 +69,7 @@ void scope_bind( const char *name, Symbol *sym ){
 
     if (!hash_table_insert(stack.top->hashmap, name, (void *)sym)){
         fprintf(stderr, "scope_bind: hash table insert failed for %s\n", name);
-        stack.status = 1;
+        b_ctx.resolver_errors += 1;
         exit(1);
     }
 }

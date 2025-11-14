@@ -32,6 +32,7 @@ INCLUDES=		-Isrc/main \
 
 OBJECTS=		build/bminor.o \
 				build/bminor_functions.o \
+				build/bminor_context.o \
 				build/encoder.o \
 				build/tokens_to_string.o \
 				build/scanner.o \
@@ -132,22 +133,28 @@ test-scanner: $(BMINOR)
 	@./test/scripts/test_scanner.sh
 
 test-parser: $(BMINOR) 
-	@echo "Testing parser"
+	@echo "Testing Parser"
 	@echo "---------------------------------------"
 	@chmod +x ./test/scripts/test_parser.sh
 	@./test/scripts/test_parser.sh
 	
 test-printer: $(BMINOR) 
-	@echo "Testing printer"
+	@echo "Testing Printer"
 	@echo "---------------------------------------"
 	@chmod +x ./test/scripts/test_printer.sh
 	@./test/scripts/test_printer.sh
 
 test-resolver: $(BMINOR) 
-	@echo "Testing resolver"
+	@echo "Testing Resolver"
 	@echo "---------------------------------------"
 	@chmod +x ./test/scripts/test_resolver.sh
 	@./test/scripts/test_resolver.sh
+
+test-typechecker: $(BMINOR) 
+	@echo "Testing Typechecker"
+	@echo "---------------------------------------"
+	@chmod +x ./test/scripts/test_typechecker.sh
+	@./test/scripts/test_typechecker.sh
 
 test-book: $(BMINOR)
 	@chmod +x ./test/scripts/run_book_tests.sh

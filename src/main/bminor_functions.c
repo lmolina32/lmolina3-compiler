@@ -1,6 +1,7 @@
 /* bminor_functions.c: functions for main stages of compiler */
 
 #include "bminor_functions.h"
+#include "bminor_context.h"
 #include "encoder.h"
 #include "tokens_to_string.h"
 #include "token.h"
@@ -199,9 +200,10 @@ bool pretty_print(const char *file_name){
 /**
  * Reads in file, parses File then does name resolution for all decls, stmts, and exprs 
  * @param   file_name       name of file to open 
+ * @param   cleanup         cleanup after calling resolve
  * @return  True if valid parse and able to resolve,  otherwise false 
  **/
-bool resolve(const char *file_name){
+bool resolve(const char *file_name, bool cleanup){
     if (!setup_compiler(file_name)) return false;
 
     bool exit_code = true;
@@ -209,14 +211,32 @@ bool resolve(const char *file_name){
         scope_enter(); 
         decl_resolve(root);
         scope_exit();
-        exit_code = stack.status ? false : true;
+        exit_code = b_ctx.resolver_errors != 0 ? false : true;
     } else {
         fprintf(stderr, "Parse Error\n");
+        exit_code = false;
+    }
+
+    cleanup_compiler(cleanup);
+    return exit_code;
+}
+
+/**
+ * Resolves program and computes typechecking for each expression ensuring compatibility 
+ * @param   file_name       Bminor source file to typecheck
+ * @return  true if valid types for each expression, otherwise false
+ */
+bool typecheck(const char *file_name){
+    bool exit_code = true;
+    if (resolve(file_name, false)){
+        decl_typecheck(root);
+        exit_code = b_ctx.typechecker_errors != 0 ? false : true;
+    } else {
+        fprintf(stderr, "Resolver Error\n");
         exit_code = false;
     }
 
     cleanup_compiler(true);
     return exit_code;
 }
-
 

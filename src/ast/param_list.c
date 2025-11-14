@@ -1,5 +1,6 @@
 /* param_list.c: param_list structure functions */
 
+#include "bminor_context.h"
 #include "decl.h"
 #include "expr.h"
 #include "param_list.h"
@@ -11,6 +12,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 /* Functions */
 
@@ -56,17 +58,17 @@ void param_list_destroy(Param_list *a){
  * Prints a parameter list to stdout.
  * @param a The parameter list to print
  **/
-void param_list_print(Param_list *a){
+void param_list_print(Param_list *a, FILE *stream){
 	if (!a) return;
 
-	printf(" %s:", a->name);
-	type_print(a->type);
+	fprintf(stream, " %s:", a->name);
+	type_print(a->type, stream);
 
 	if (a->next) {
-		putchar(',');
-		param_list_print(a->next);
+		fprintf(stderr, ",");
+		param_list_print(a->next, stream);
 	} else {
-		putchar(' ');
+		fprintf(stderr, " ");
 	}
 }
 
@@ -78,7 +80,6 @@ void param_list_print(Param_list *a){
 Param_list* param_list_copy(Param_list *a){
     if (!a) return NULL;
     Param_list *p = param_list_create(a->name, type_copy(a->type), param_list_copy(a->next));
-	p->symbol = symbol_copy(a->symbol);
 	return p;
 }
 
@@ -93,10 +94,42 @@ void param_list_resolve(Param_list *a){
     
     if (scope_lookup_current(a->name)){
         fprintf(stderr, "resolver error: Redeclaring the same parameter Identifier %s\n", a->name);
-        stack.status = 1;
+		b_ctx.resolver_errors += 1;
     } else {
         scope_bind(a->name, a->symbol);    
     }
 
     param_list_resolve(a->next);
+}
+
+/**
+ * Compares two param_list structures and ensures that they are equal to each other 
+ * @param 	a		ptr to struct a that will be compared to b
+ * @param 	b 		ptr to struct b that will be compared to a
+ * @return  true if param_lists are equal, otherwise false
+ */
+bool param_list_equals(Param_list *a, Param_list *b){
+	// NOTE: might have to add symbols to be compared 
+	// NOTE: might not need to compare names
+	if (!a && !b) return true;
+	if (!a || !b) return false;
+	if (!type_equals(a->type, b->type)) return false;
+	if (!param_list_equals(a->next, b->next)) return false;
+	return true;
+}
+
+/**
+ * Parameters can be of any type except void or auto per the spec. Ensure valid type for each param
+ * @param 	a 		ptr to struct a which types will be checked
+ */
+bool param_list_valid_type(Param_list *a){
+	if (!a) return true;
+	if (!a->type){
+		fprintf(stderr, "Param %s is not assigned a type\n", a->name);
+		return false;
+		b_ctx.typechecker_errors++;
+	}
+	if (a->type->kind == TYPE_VOID || a->type->kind == TYPE_AUTO || a->type->kind == TYPE_FUNCTION) return false;
+	if (!param_list_valid_type(a->next)) return false;
+	return true;
 }

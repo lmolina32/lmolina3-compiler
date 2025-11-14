@@ -45,7 +45,7 @@ void symbol_destroy(Symbol *s){
         free(s->name);
         s->name = NULL;
     }
-
+    
     free(s);
 }
 

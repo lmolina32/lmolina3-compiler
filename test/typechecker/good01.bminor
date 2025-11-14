@@ -1,0 +1,7 @@
+
+arr: array [5] integer = {1, 2, 3, 4, 5};
+x: integer = 5;
+
+main: function void (argc: integer, argv: carray[] string) = {
+    arr: array [5] integer;
+}

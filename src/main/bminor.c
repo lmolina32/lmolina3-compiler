@@ -39,8 +39,10 @@ int main(int argc, const char *argv[]){
     } else if (streq(command, "--print")){
         status = pretty_print(filename);
     } else if (streq(command, "--resolve")){
-        status = resolve(filename);
-    } else { 
+        status = resolve(filename, true);
+    } else if (streq(command, "--typecheck")){
+        status = typecheck(filename);
+    }else { 
         fprintf(stderr, "Failed: Unknown command '%s'\n", command);
         usage(argv[0]);
     }

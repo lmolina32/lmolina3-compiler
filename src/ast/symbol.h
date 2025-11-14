@@ -4,6 +4,7 @@
 #define SYMBOL_H
 
 #include <stdio.h> 
+#include <stdbool.h>
 
 /* Forward Declaration */
 
@@ -27,7 +28,6 @@ struct Symbol {
 	int which;					// The positional location when the Decl was defined
 	int func_decl;				// Prototype flag: 1-> Prototype, 0-> Not Prototype 
 	Symbol *prototype_def;		// Prototype definition symbol struct 
-	Symbol *func_init;			// Function initialization symbols struct 
 };
 
 

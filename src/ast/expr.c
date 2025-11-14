@@ -1,5 +1,6 @@
 /* expr.c: expr structure functions */
 
+#include "bminor_context.h"
 #include "decl.h"
 #include "expr.h"
 #include "param_list.h"
@@ -239,26 +240,26 @@ int expr_need_parens(Expr *parent, Expr *child, int is_left){
  * @param child		ptr to child of parent (left or right)
  * @param is_left	integer: 1 if left child, 0 if right child 
  */
-void expr_print_with_context(Expr *parent, Expr *child, int is_left){
+void expr_print_with_context(Expr *parent, Expr *child, int is_left, FILE *stream){
 	if (!child) return; 
 
 	if (child->kind == EXPR_GROUPS){
 		Expr *expr_unwrapped = expr_unwrap_groups(child);
 
 		if (parent && expr_need_parens(parent, expr_unwrapped, is_left)){
-			putchar('(');
-			expr_print(expr_unwrapped);
-			putchar(')');
+			fprintf(stderr,"(");
+			expr_print(expr_unwrapped, stream);
+			fprintf(stderr,")");
 		} else {
-			expr_print(expr_unwrapped);
+			expr_print(expr_unwrapped, stream);
 		}
 	} else {
 		if (parent && expr_need_parens(parent, child, is_left)){
-			putchar('(');
-			expr_print(child);
-			putchar(')');
+			fprintf(stderr,"(");
+			expr_print(child, stream);
+			fprintf(stderr,")");
 		} else {
-			expr_print(child);
+			expr_print(child, stream);
 		}
 	}
 }
@@ -267,172 +268,172 @@ void expr_print_with_context(Expr *parent, Expr *child, int is_left){
  * Prints an expression tree to stdout.
  * @param   e        The expression to print
  **/
-void expr_print(Expr *e){
+void expr_print(Expr *e, FILE *stream){
 	if (!e) return; 
 	char es[BUFSIZ] = {0};
 
 	switch (e->kind){
 		case EXPR_ADD:					//	addition +
-			expr_print_with_context(e, e->left, 1);
-			putchar('+');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "+");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_SUB:					//	subtraction -
-			expr_print_with_context(e, e->left, 1);
-			putchar('-');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "-");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_MUL:					//	multiplication *
-			expr_print_with_context(e, e->left, 1);
-			putchar('*');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "*");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_DIV:					//  division  /
-			expr_print_with_context(e, e->left, 1);
-			putchar('/');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "/");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_ASSIGN:				// 	assignment =  
-			expr_print_with_context(e, e->left, 1);
-			putchar(' ');
-			putchar('=');
-			putchar(' ');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, " ");
+			fprintf(stream, "=");
+			fprintf(stream, " ");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_OR:					//  logical or ||
-			expr_print_with_context(e, e->left, 1);
-			putchar('|');
-			putchar('|');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "|");
+			fprintf(stream, "|");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_AND:					//  logical and  &&
-			expr_print_with_context(e, e->left, 1);
-			putchar('&');
-			putchar('&');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "&");
+			fprintf(stream, "&");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_EQ:					//  comparison equal  ==
-			expr_print_with_context(e, e->left, 1);
-			putchar('=');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "=");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_NOT_EQ:				//  comparison not equal  !=
-			expr_print_with_context(e, e->left, 1);
-			putchar('!');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "!");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_LT:					//  comparison less than  <
-			expr_print_with_context(e, e->left, 1);
-			putchar('<');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "<");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_LTE:					//  comparison less than or equal  <=
-			expr_print_with_context(e, e->left, 1);
-			putchar('<');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "<");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_GT:					//  comparison greater than > 
-			expr_print_with_context(e, e->left, 1);
-			putchar('>');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, ">");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_GTE:					//  comparison greater than or equal >=
-			expr_print_with_context(e, e->left, 1);
-			putchar('>');
-			putchar('=');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, ">");
+			fprintf(stream, "=");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_REM:					//  remainder %
-			expr_print_with_context(e, e->left, 1);
-			putchar('%');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "%%");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_EXPO:					//  exponentiation ^  
-			expr_print_with_context(e, e->left, 1);
-			putchar('^');
-			expr_print_with_context(e, e->right, 0);
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "^");
+			expr_print_with_context(e, e->right, 0, stream);
 			break;
 		case EXPR_NOT:					//  logical not !
-			putchar('!');
-			expr_print_with_context(e, e->left, 1);
+			fprintf(stream, "!");
+			expr_print_with_context(e, e->left, 1, stream);
 			break;
 		case EXPR_NEGATION:			    //  negation  -
-			putchar('-');
-			expr_print_with_context(e, e->left, 1);
+			fprintf(stream, " -");
+			expr_print_with_context(e, e->left, 1, stream);
 			break;
 		case EXPR_ARR_LEN:			    //  array len #
-			putchar('#');
-			expr_print_with_context(e, e->left, 1);
+			fprintf(stream, "#");
+			expr_print_with_context(e, e->left, 1, stream);
 			break;
 		case EXPR_INCREMENT:			//  increment ++ 
-			expr_print_with_context(e, e->left, 1);
-			putchar('+');
-			putchar('+');
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "+");
+			fprintf(stream, "+");
 			break;
 		case EXPR_DECREMENT:			//  decrement -- 
-			expr_print_with_context(e, e->left, 1);
-			putchar('-');
-			putchar('-');
+			expr_print_with_context(e, e->left, 1, stream);
+			fprintf(stream, "-");
+			fprintf(stream, "-");
 			break;
 		case EXPR_GROUPS:				//  grouping ()
-			expr_print(expr_unwrap_groups(e));
+			expr_print(expr_unwrap_groups(e), stream);
 			break;
 		case EXPR_FUNC:					//  function call f()
-			expr_print(e->left);
-			putchar('(');
-			expr_print(e->right);
-			putchar(')');
+			expr_print(e->left, stream);
+			fprintf(stream, "(");
+			expr_print(e->right, stream);
+			fprintf(stream, ")");
 			break;
 		case EXPR_ARGS:					//  function arguments a, b, c, d 
-			expr_print(e->left);
+			expr_print(e->left, stream);
 			if (e->right && e->right->kind == EXPR_ARGS){
-				putchar(',');
-				expr_print(e->right);
+				fprintf(stream, ",");
+				expr_print(e->right, stream);
 			}
 			break;
 		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
-			expr_print(e->left);
-			putchar('[');
-			expr_print(e->right);
-			putchar(']');
+			expr_print(e->left, stream);
+			fprintf(stream, "[");
+			expr_print(e->right, stream);
+			fprintf(stream, "]");
 			break;
 		case EXPR_BRACES:				//  braces {}
-			putchar('{');
-			expr_print(e->right);
-			putchar('}');	
+			fprintf(stream, "{");
+			expr_print(e->right, stream);
+			fprintf(stream, "}");	
 			break;
 		case EXPR_INT_LIT:				//  integer literal 21321 
-			printf("%d", e->literal_value);
+			fprintf(stream, "%d", e->literal_value);
 			break;
 		case EXPR_HEX_LIT:				//  hexadecimal literal 0x2123
-			printf("%d", e->literal_value);
+			fprintf(stream, "%d", e->literal_value);
 			break;
 		case EXPR_BIN_LIT:				//  binary literal 0b1010
-			printf("%d", e->literal_value);
+			fprintf(stream, "%d", e->literal_value);
 			break;
 		case EXPR_DOUBLE_LIT:			//  double literal 123131 
-			printf("%lf", e->double_literal_value);
+			fprintf(stream, "%lf", e->double_literal_value);
 			break;
 		case EXPR_DOUBLE_SCIENTIFIC_LIT://  double scientific literal 6e10 
-			printf("%lf", e->double_literal_value);
+			fprintf(stream, "%lf", e->double_literal_value);
 			break;
 		case EXPR_CHAR_LIT: 			//  char literal 'a'
 			string_encode(e->string_literal, es);
 			chomp_quotes(es);
-			printf("'%s'", es+1);
+			fprintf(stream, "'%s'", es+1);
 			break;
 		case EXPR_STR_LIT:				//  string literal "hello"
 			string_encode(e->string_literal, es);
-			printf("%s", es);
+			fprintf(stream, "%s", es);
 			break;
 		case EXPR_BOOL_LIT:				//  boolean literal 'true' 'false'
-			printf("%s", e->literal_value ? "true" : "false");
+			fprintf(stream, "%s", e->literal_value ? "true" : "false");
 			break;
 		case EXPR_IDENT:				//  identifier    my_function 
-			printf("%s", e->name);
+			fprintf(stream, "%s", e->name);
 			break;
 		default:						//  if not defined identifier then error 
 			fprintf(stderr, "Invalid Expression type\n");
@@ -444,7 +445,7 @@ void expr_print(Expr *e){
 /**
  * Crete a deep copy of the expression structure 
  * @param   e       Expression structure to create deep copy of 
- * @return  ptr to expression struct or NULL if unsuccesful
+ * @return  ptr to expression struct or NULL if unsuccessful
  **/
 Expr* expr_copy(Expr *e){
     if (!e) return NULL;
@@ -453,7 +454,7 @@ Expr* expr_copy(Expr *e){
 	new_e->literal_value = e->literal_value;
 	new_e->double_literal_value = e->double_literal_value;
 	new_e->string_literal = e->string_literal ? safe_strdup(e->string_literal) : NULL;
-	new_e->symbol = symbol_copy(e->symbol);
+	//new_e->symbol = symbol_copy(e->symbol);
 	return new_e;
 }
 
@@ -473,10 +474,677 @@ void expr_resolve(Expr *e){
             }
         } else {
             printf("resolver error: %s is not defined\n", e->name);
-            stack.status = 1;
+            b_ctx.resolver_errors += 1;
         }
     } else {
         expr_resolve(e->left);
         expr_resolve(e->right);
     }
+}
+
+/**
+ * Check if both operand types are numeric types (integer or double).
+ * @param   lt      left-hand operand type
+ * @param   rt      right-hand operand type
+ * @return  true if both numeric and same numeric kind, otherwise false
+ */
+static bool expr_valid_numeric_op(Type *lt, Type *rt){
+	return (lt->kind == TYPE_INTEGER && rt->kind == TYPE_INTEGER) ||
+		   (lt->kind == TYPE_DOUBLE && rt->kind == TYPE_DOUBLE);
+}
+
+/**
+ * Check if type structure is numeric type (integer, double)
+ * @param 	t		ptr to type structure to check numeric type 
+ * @return	true if numeric type, otherwise false. 
+ */
+static bool expr_is_numeric_type(Type *t){
+	if (!t) return false;
+	return t->kind == TYPE_INTEGER || t->kind == TYPE_DOUBLE;
+}
+
+/**
+ * Typecheck arithmetic operators (+, -, *, /, %, ^) for numeric operands.
+ * @param   e       expression node representing operator
+ * @param   lt      left-hand operand type
+ * @param   rt      right-hand operand type
+ * @return  resulting numeric type, or integer type on error
+ */
+static Type *expr_typecheck_arithmetic_op(Expr *e, Type *lt, Type *rt){
+	// expects both to be integers or both to be doubles 
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	bool valid = expr_valid_numeric_op(lt, rt);
+
+	if (!valid){
+		fprintf(stderr, "typechecker error: Invalid operand types for '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "' operator. Got");
+		type_print(lt, stderr);
+		fprintf(stderr, " and");
+		type_print(rt, stderr);
+		fprintf(stderr, " but expected either (integer, integer) or (double, double).\n");
+		b_ctx.typechecker_errors++;
+	}
+	expr_destroy(dummy_e);
+	return type_create(valid ? lt->kind : TYPE_INTEGER, 0, 0, 0);
+}
+
+/**
+ * Typecheck unary numeric operators (++, --, -) for numeric operand.
+ * @param   e       expression node representing operator
+ * @param   lt      operand type
+ * @return  resulting numeric type, or integer type on error
+ */
+static Type *expr_typecheck_unary_numeric_op(Expr *e, Type *lt){
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	bool valid = expr_is_numeric_type(lt);
+
+	if (!valid){
+		fprintf(stderr, "typechecker error: Invalid operand type for '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "' operator. Got");
+		type_print(lt, stderr);
+		fprintf(stderr, " but expected either (integer) or (double).\n");
+		b_ctx.typechecker_errors++;
+	}
+	expr_destroy(dummy_e);
+	return type_create(valid ? lt->kind : TYPE_INTEGER, 0, 0, 0);
+}
+
+/**
+ * Typecheck assignment operator and ensure left and right types match.
+ * @param   e       expression node representing assignment
+ * @param   lt      left-hand operand (lvalue) type
+ * @param   rt      right-hand operand type
+ * @return  type of left-hand operand
+ */
+static Type *expr_typecheck_assignment(Expr *e, Type *lt, Type *rt){
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	// case 1: both assignments are auto, can't infer type
+	if (lt->kind == TYPE_AUTO && rt->kind == TYPE_AUTO){
+		fprintf(stderr, "typechecker error: Cannot infer operand types for operator '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "': both operands are 'auto'\n");
+		b_ctx.typechecker_errors++;
+	// case 2: left child is auto, assign right type to left child
+	} else if (lt->kind == TYPE_AUTO && rt) { 
+		lt->kind = rt->kind;
+		// case 2a: child is array -> traverse array type and set base type to rt
+		if (lt->symbol->type->kind == TYPE_ARRAY || lt->symbol->type->kind == TYPE_CARRAY){
+			Type *arr_type = lt->symbol->type;
+			// get array type (e.g array [5] integer -> arr_type = ptr to integer)
+			while (arr_type->kind == TYPE_ARRAY || arr_type->kind == TYPE_CARRAY){
+				arr_type = arr_type->subtype;
+			}
+			arr_type->kind = rt->kind;
+		// case 2b: child is just auto, set the type 
+		} else {
+			lt->symbol->type->kind = rt->kind;
+		}
+		fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", lt->symbol->name);
+		type_print(rt, stdout);
+		fprintf(stdout, " )\n");
+	// case 3: the types don't match -> throw error
+	} else if (!type_equals(lt, rt)){
+		fprintf(stderr, "typechecker error: Invalid operand type for '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "' operator. Got");
+		type_print(lt, stderr);
+		fprintf(stderr, " and");
+		type_print(rt, stderr);
+		fprintf(stderr, " but expected (");
+		type_print(lt, stderr);
+		fprintf(stderr, ",");
+		type_print(lt, stderr);
+		fprintf(stderr,").\n");
+		b_ctx.typechecker_errors++;
+	}
+	expr_destroy(dummy_e);
+	return type_create(lt->kind, 0, 0, 0);
+}
+
+/**
+ * Typecheck logical binary operators (||, &&) requiring boolean operands.
+ * @param   e       expression node representing logical operator
+ * @param   lt      left-hand operand type
+ * @param   rt      right-hand operand type
+ * @return  boolean type
+ */
+static Type *expr_typecheck_logical_binary_op(Expr *e, Type *lt, Type *rt){
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	if (lt->kind != TYPE_BOOLEAN || rt->kind != TYPE_BOOLEAN){
+		fprintf(stderr, "typechecker error: Invalid operand types for '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "' operator. Got");
+		type_print(lt, stderr);
+		fprintf(stderr, " and");
+		type_print(rt, stderr);
+		fprintf(stderr, " but expected (boolean).\n");
+		b_ctx.typechecker_errors++;
+	}
+	expr_destroy(dummy_e);
+	return type_create(TYPE_BOOLEAN, 0, 0, 0);
+}
+
+/**
+ * Typecheck logical NOT operator (!) requiring boolean operand.
+ * @param   e       expression node representing logical NOT
+ * @param   lt      operand type
+ * @return  boolean type
+ */
+static Type *expr_typecheck_logical_not(Expr *e, Type *lt){
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	if (lt->kind != TYPE_BOOLEAN){
+		fprintf(stderr, "typechecker error: Invalid operand type for '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "' operator. Got");
+		type_print(lt, stderr);
+		fprintf(stderr, " but expected (boolean).\n");
+		b_ctx.typechecker_errors++;
+	}
+	expr_destroy(dummy_e);
+	return type_create(TYPE_BOOLEAN, 0, 0, 0);
+}
+
+/**
+ * Typecheck equality operators (==, !=) ensuring valid and matching types.
+ * @param   e       expression node representing equality operator
+ * @param   lt      left-hand operand type
+ * @param   rt      right-hand operand type
+ * @return  boolean type
+ */
+static Type *expr_typecheck_equality_op(Expr *e, Type *lt, Type *rt){
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	if (ILLEGAL_KIND_EQUALITY(lt->kind) || ILLEGAL_KIND_EQUALITY(rt->kind) ||
+		(lt->kind != rt->kind)){
+		fprintf(stderr, "type error: invalid types for equality operator '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "'. Left is '");
+		type_print(lt, stderr);
+		fprintf(stderr,"', right is '");
+		type_print(rt, stderr);
+		fprintf(stderr, "'. Equality requires matching types and cannot be applied to void, array, or function types.\n");
+		b_ctx.typechecker_errors++;
+	} 
+	expr_destroy(dummy_e);
+	return type_create(TYPE_BOOLEAN, 0, 0, 0);
+}
+
+/**
+ * Typecheck comparison operators (<, <=, >, >=) for numeric operands.
+ * @param   e       expression node representing comparison operator
+ * @param   lt      left-hand operand type
+ * @param   rt      right-hand operand type
+ * @return  boolean type
+ */
+static Type *expr_typecheck_comparison_op(Expr *e, Type *lt, Type *rt){
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	bool valid = expr_valid_numeric_op(lt, rt);
+	if (!valid){
+		fprintf(stderr, "typechecker error: Invalid operand types for '");
+		expr_print(dummy_e, stderr);
+		fprintf(stderr, "' operator. Got");
+		type_print(lt, stderr);
+		fprintf(stderr, " and");
+		type_print(rt, stderr);
+		fprintf(stderr, ". Expected either (integer, integer) or (double, double).\n");
+		b_ctx.typechecker_errors++;
+	}
+	expr_destroy(dummy_e);
+	return type_create(TYPE_BOOLEAN, 0, 0, 0);
+}
+
+/**
+ * Typecheck array length operator (#), requiring array operand.
+ * @param   e       expression node representing length operator
+ * @param   lt      operand type
+ * @return  integer type
+ */
+static Type *expr_typecheck_array_length(Expr *e, Type *lt){
+	Expr *dummy_e = expr_create(e->kind, 0, 0);
+	if (lt->kind != TYPE_ARRAY){
+		fprintf(stderr, "typechecker error: '#' operator requires an array, but got");
+		type_print(lt, stderr);
+		fprintf(stderr, ".\n");
+		b_ctx.typechecker_errors++;
+	}
+	expr_destroy(dummy_e);
+	return type_create(TYPE_INTEGER, 0, 0, 0);
+}
+
+/**
+ * Typecheck a function-call expression.
+ * @param  e   The function-call expression node.
+ * @param  lt  The type of the function expression (left side of call).
+ * @param  rt  The type of the argument list expression (right side of call).
+ * @return  A newly allocated Type representing the function's return type.
+ *          Returns TYPE_VOID if a type error is detected.
+ */
+static Type *expr_typecheck_function(Expr *e, Type *lt, Type *rt){
+	// Case 1: Calling function on non-function type
+	if (lt->kind != TYPE_FUNCTION){
+		fprintf(stderr, "typechecker error: Attempted to call a value of type");
+        type_print(lt, stderr);
+        fprintf(stderr, " which is not a function.\n");
+        b_ctx.typechecker_errors++;
+		Type *arg_type = NULL;
+		Expr *args = e->right;
+		while (args){
+			arg_type = expr_typecheck(args->left);
+			type_destroy(arg_type);
+			args = args->right;
+		}
+		return type_create(TYPE_VOID, 0, 0, 0);
+	}
+
+	Symbol *func_def = e->left->symbol;
+	Param_list *params = func_def->type->params;
+	// Case 2: Passing parameters to function with no parameters 
+	Type *arg_type;
+	Expr *args = e->right;
+	if (!params && rt){
+		fprintf(stderr, "typechecker error: Function '%s' takes no parameters, but arguments were provided.\n", func_def->name);
+        b_ctx.typechecker_errors++;
+		while (args){
+			arg_type = expr_typecheck(args->left);
+			type_destroy(arg_type);
+			args = args->right;
+		}
+		return type_create(func_def->type->subtype->kind, 0, 0, 0);
+	}
+
+	arg_type = NULL;
+	args = e->right;
+	// Case 3: Check parameters pass match function definition  
+	int count = 0;
+	while (params && args){
+		arg_type = expr_typecheck(args->left);
+		// Case 3a: params don't match
+		if (!type_equals(params->type, arg_type)){
+			fprintf(stderr, "typechecker error: Argument type mismatch in call to '%s'.", func_def->name);
+			fprintf(stderr, "\n\tFunction params\n\t\t");
+			param_list_print(func_def->type->params, stderr);
+			fprintf(stderr, "\n\tExpected for argument %d:\n\t\t", count);
+			fprintf(stderr, " %s:", params->name);
+            type_print(params->type, stderr);
+            fprintf(stderr, "\n\tPassed in for argument %d:\n\t\t", count);
+            type_print(arg_type, stderr);
+            fprintf(stderr, "\n");
+            b_ctx.typechecker_errors++;
+		}
+		count++;
+		type_destroy(arg_type);
+		params = params->next;
+		args = args->right;
+	}
+
+	// Case 4a: Function has more Params than arguments passed
+	if (params && !args){
+		fprintf(stderr, "typechecker error: Too few arguments in call to '%s'.", func_def->name);
+		fprintf(stderr, "\n\tFunction params\n\t\t");
+		param_list_print(func_def->type->params, stderr);
+		fprintf(stderr, "\n\tNext Expected Param:\n\t\t");
+		fprintf(stderr, " %s:", params->name);
+		type_print(params->type, stderr);
+		fprintf(stderr, "\n");
+		b_ctx.typechecker_errors++;
+	}
+
+	// Case 4b: Function has more arguments than params in function
+	if (!params && args){
+		fprintf(stderr, "typechecker error: Too many arguments in call to '%s'.\n", func_def->name);
+		fprintf(stderr, "\tExpected Function params\n\t\t");
+		param_list_print(func_def->type->params, stderr);
+		fprintf(stderr, "\n");
+        b_ctx.typechecker_errors++;
+		arg_type = NULL;
+		args = e->right;
+		while (args){
+			arg_type = expr_typecheck(args->left);
+			type_destroy(arg_type);
+			args = args->right;
+		}
+	}
+	
+	return type_create(func_def->type->subtype->kind, 0, 0, 0);
+}
+
+/**
+ * Typecheck array indexing; left operand must be array and index integer.
+ * @param   lt      array or carray type to index
+ * @param   rt      index expression type
+ * @return  copy of array element type, or input type on error
+ */
+static Type *expr_typecheck_array_index(Type *lt, Type *rt){
+	// Case 1: Array index called on array 
+	if (lt->kind == TYPE_ARRAY || lt->kind == TYPE_CARRAY){
+		// Case 1a: Array idx is not integer throw error
+		if (rt->kind != TYPE_INTEGER){
+			fprintf(stderr, "typechecker error: Array index must be of type integer, but got");
+			type_print(rt, stderr);
+			fprintf(stderr, ".\n");
+			b_ctx.typechecker_errors++;
+		}
+		Type *res = type_copy(lt->subtype);
+		res->symbol = lt->symbol;	
+		return res;
+	// Case 2: tried to index on non-array type
+	} else {
+		fprintf(stderr, "typechecker error: Cannot index value of type");
+		type_print(lt, stderr);
+		fprintf(stderr, ". Only arrays support indexing.\n");
+		b_ctx.typechecker_errors++;
+		return type_copy(lt);
+	}	
+}
+
+/**
+ * Typecheck EXPR_BRACES iterating through all the EXPR_ARGS and typechecking the literals
+ * @param 	e		ptr to first EXPR_ARG to iterate over
+ */
+static void expr_typecheck_non_array_nested_braces(Expr *e){
+	Type *t = NULL;
+	while (e && e->kind == EXPR_ARGS){
+		// case 1a: left side is literal expression
+		if (e->left && e->left->kind != EXPR_BRACES){
+			t = expr_typecheck(e->left);
+			type_destroy(t);
+		// case 2a: left side is nested brace
+		} else {
+			expr_typecheck_non_array_nested_braces(e->left);
+		}
+		e = e->right;
+	}
+}
+
+/**
+ * Infer the array type of an auto array 
+ * @param 	e	ptr to EXPR_ARG to infer type 
+ */
+static Type *expr_typecheck_infer_auto_array(Expr *e){
+	int count = 0;
+	Type *element = NULL;
+	Type *init = NULL;
+	bool nested = false;
+	while (e && e->kind == EXPR_ARGS){
+		// case 1: nested braces traverse down if subtype hasn't been found 
+		if (e->left->kind == EXPR_BRACES){
+			nested = true;
+			if (!element){
+				element = expr_typecheck_infer_auto_array(e->left->right);
+			}
+		// case 2: expression, typecheck expression and assign if subtype hasn't been done 
+		} else {
+			if (!element){
+				init = expr_typecheck(e->left);
+				if (init){
+					element = type_copy(init);
+				}
+				type_destroy(init);
+			}
+		}
+		count++;
+		e = e->right;
+	}
+	
+	// Set return array 
+	if (nested || element){
+		Type *array = type_create(TYPE_ARRAY, element, 0, 0);
+		array->arr_len = expr_create_integer_literal(count);
+		return array;
+	}
+	return NULL;
+}
+
+/** typecheck EXPR_ARG with the array type passed in ensuring correct length and number of braces
+ * @param 	e	ptr to EXPR_ARG to iterate over and typecheck
+ * @param 	t	ptr to Array type
+ */
+static void expr_typecheck_nested_braces(Expr *e, Type *t){
+	Symbol *symbol = e->symbol;
+	int count = 0;
+	// get count if array has count (e.g array [5] integer -> count = 5)
+	if (t->arr_len){
+		count = t->arr_len->literal_value;
+	}
+
+	int levels = 0;
+	Type *arr_type = t;
+	// get array type (e.g array [5] integer -> arr_type = ptr to integer)
+	while (arr_type->kind == TYPE_ARRAY || arr_type->kind == TYPE_CARRAY){
+		arr_type = arr_type->subtype;
+		levels++;
+	}
+
+	int curr_count = 0;
+	int curr_lvls = 0;
+	Type *init_t = NULL;
+	while (e && e->kind == EXPR_ARGS){
+		// case 1: left side is identifier -> cannot assign non-constant values in init
+		if (e->left->kind == EXPR_IDENT){
+			fprintf(stderr, "typechecker error: Array '%s' cannot be initialized with non-constant values (%s)\n", symbol->name, e->left->name);
+			b_ctx.typechecker_errors++;
+		// case 2: left side is literal expression
+		} else if (e->left->kind != EXPR_BRACES){
+			init_t = expr_typecheck(e->left);
+			// case 2b: Initialize type is auto, set new type if valid
+			if (arr_type->kind == TYPE_AUTO && init_t && (init_t->kind != TYPE_AUTO || init_t->kind != TYPE_FUNCTION)){
+				arr_type->kind = init_t->kind;
+				fprintf(stdout, "typechecker resolved: ( auto ) in array '%s' set to type (", symbol->name);
+				type_print(init_t, stdout);
+				fprintf(stdout, " )\n");
+			// case 2b: Initialize type does not match array type 
+			} else if (!type_equals(init_t, arr_type)){
+				fprintf(stderr, "typechecker error: Array '%s' type mismatch expected (", symbol->name);
+				type_print(arr_type, stderr);
+				fprintf(stderr, ") but got (");
+				type_print(init_t, stderr);
+				fprintf(stderr, ")\n");
+				b_ctx.typechecker_errors++;
+			// case 2c: Expected higher dimension array but got literal throw error
+			} else if (curr_lvls){
+				fprintf(stderr, "typechecker error: Array '%s' uses non-initializer for array type\n", symbol->name);
+				b_ctx.typechecker_errors++;
+			}
+			
+			type_destroy(init_t);
+		// case 3: left side is nested brace (EXPR_BRACES)
+		} else {
+			curr_lvls++;	
+			// case 3a: Array Type has higher Dimension, typecheck the nested braces
+			e->left->right->symbol = symbol;
+			if (t->subtype){
+				t->subtype->orig_type = t->orig_type;
+				expr_typecheck_nested_braces(e->left->right, t->subtype);
+			// case 3b: Braces Initialized to higher dimension then declared -> expr typecheck the rest of the expressions
+			} else {
+				Type *new_t = type_create(arr_type->kind, 0, 0, expr_create_integer_literal(1));
+				new_t->orig_type = t->orig_type;
+				expr_typecheck_nested_braces(e->left->right, new_t);
+				type_destroy(new_t);
+			}
+		}
+		e = e->right;
+		curr_count++;
+	}
+
+	// Case 1: Number of elements in the array exceeds the amount allocated
+	if (count && count < curr_count){
+		fprintf(stderr, "typechecker error: Array '%s' has too many initializers for array [%d] (expected %d, got %d)\n", symbol->name, count, count, curr_count);
+		b_ctx.typechecker_errors++;
+	// Case 2: Number of elements in the array is short the amount allocated
+	} else if (count && count > curr_count){
+		fprintf(stderr, "typechecker error: Array '%s' not enough initializers for array [%d] (expected %d, got %d)\n", symbol->name, count, count, curr_count);
+		b_ctx.typechecker_errors++;
+	// Case 3: Number of elements is not defined, define it;
+	} else if (!count && t && !t->arr_len) {
+		t->arr_len = expr_create_integer_literal(curr_count);
+		fprintf(stderr, "typechecker error: Array length was not set. '%s' length set to %d\n", symbol->name, curr_count);
+		fprintf(stderr, "\tFull type:\n\t\t");
+		type_print(symbol->type, stderr);
+		fprintf(stderr, "\n");
+		b_ctx.typechecker_errors++;
+	}
+}
+
+/**
+ * Typecheck array braces, ensure they maintain all type safety
+ * @param 	e		Expression structure of EXPR_BRACES
+ * @return	ptr to Type Structure of the array type, otherwise 1D array of integers 
+ */
+static Type *expr_typecheck_braces(Expr *e){
+	Symbol *arr_sym = e->symbol;
+	// case 1: braces init is not assigned to array, typecheck initializers;
+	if (!e->symbol){
+		expr_typecheck_non_array_nested_braces(e->right);
+		return expr_typecheck_infer_auto_array(e->right);
+	}
+	
+	// case 2: braces init is assigned to auto 
+	e->right->symbol = arr_sym;
+	if (e->symbol->type->kind == TYPE_AUTO){
+		Type *inferred_arr = expr_typecheck_infer_auto_array(e->right);
+		expr_typecheck_nested_braces(e->right, inferred_arr);
+		return inferred_arr;
+	}
+	type_print(arr_sym->type, stdout);
+	// case 3: braces init is assigned to array, typecheck initializers + size
+	arr_sym->type->orig_type = arr_sym->type;
+	expr_typecheck_nested_braces(e->right, arr_sym->type);
+	return type_copy(arr_sym->type);
+}
+
+/**
+ * Return type associated with a literal expression kind.
+ * @param   kind    literal expression kind
+ * @return  type structure for literal, or NULL if not a literal
+ */
+static Type *expr_typecheck_literal(expr_t Kind){
+	switch (Kind){
+		case EXPR_INT_LIT:				//  integer literal 21321 
+		case EXPR_HEX_LIT:				//  hexadecimal literal 0x2123
+		case EXPR_BIN_LIT:				//  binary literal 0b1010
+			return type_create(TYPE_INTEGER, 0, 0, 0);
+		case EXPR_DOUBLE_LIT:			//  double literal 123131 
+		case EXPR_DOUBLE_SCIENTIFIC_LIT://  double scientific literal 6e10 
+			return type_create(TYPE_DOUBLE, 0, 0, 0);
+		case EXPR_CHAR_LIT: 			//  char literal 'a'
+			return type_create(TYPE_CHARACTER, 0, 0, 0);
+		case EXPR_STR_LIT:				//  string literal "hello"
+			return type_create(TYPE_STRING, 0, 0, 0);
+		case EXPR_BOOL_LIT:				//  boolean literal 'true' 'false'
+			return type_create(TYPE_BOOLEAN, 0, 0, 0);
+		default:
+			return NULL;
+	}
+}
+
+/**
+ * Perform semantic type checking on an expression tree node.
+ * @param 	e 		 Pointer to the expression node to typecheck.
+ * @return  A newly allocated `struct type *` representing the expression’s
+ *         resulting type. Caller takes ownership and must free it with
+ *         `type_delete()`. Never returns NULL (TYPE_ERROR on failure).
+ */
+Type *expr_typecheck(Expr *e){
+	if (!e) return NULL;
+
+	Type *lt = expr_typecheck(e->left);
+	Type *rt = expr_typecheck(e->right);
+
+	Type *result = NULL;
+	switch (e->kind){
+		case EXPR_ADD:					//	addition +
+		case EXPR_SUB:					//	subtraction -
+		case EXPR_MUL:					//	multiplication *
+		case EXPR_DIV:					//  division  /
+		case EXPR_REM:					//  remainder %
+		case EXPR_EXPO:					//  exponentiation ^  
+			result = expr_typecheck_arithmetic_op(e, lt, rt);
+			break;
+		case EXPR_INCREMENT:			//  increment ++ 
+		case EXPR_DECREMENT:			//  decrement -- 
+		case EXPR_NEGATION:			    //  negation  -
+			result = expr_typecheck_unary_numeric_op(e, lt);
+			break;
+		case EXPR_ASSIGN:				// 	assignment =  
+			result = expr_typecheck_assignment(e, lt, rt);
+			break;
+		case EXPR_OR:					//  logical or ||
+		case EXPR_AND:					//  logical and  &&
+			result = expr_typecheck_logical_binary_op(e, lt, rt);
+			break;
+		case EXPR_NOT:					//  logical not !
+			result = expr_typecheck_logical_not(e, lt);
+			break;
+		case EXPR_EQ:					//  comparison equal  ==
+		case EXPR_NOT_EQ:				//  comparison not equal  !=
+			result = expr_typecheck_equality_op(e, lt, rt);
+			break;
+		case EXPR_LT:					//  comparison less than  <
+		case EXPR_LTE:					//  comparison less than or equal  <=
+		case EXPR_GT:					//  comparison greater than > 
+		case EXPR_GTE:					//  comparison greater than or equal >=
+			result = expr_typecheck_comparison_op(e, lt, rt);
+			break;
+		case EXPR_ARR_LEN:			    //  array len #
+			result = expr_typecheck_array_length(e, lt);
+			break;
+		case EXPR_GROUPS:				//  grouping ()
+			result = type_copy(lt);
+			break;
+		case EXPR_FUNC:					//  function call f()
+			result = expr_typecheck_function(e, lt, rt);
+			break;
+		case EXPR_ARGS:					//  function arguments a, b, c, d 
+			result = type_copy(lt);
+			break;
+		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
+			result = expr_typecheck_array_index(lt, rt);
+			break;
+		case EXPR_BRACES:				//  braces {}
+			result = expr_typecheck_braces(e);
+			break;
+		case EXPR_INT_LIT:				//  integer literal 21321 
+		case EXPR_HEX_LIT:				//  hexadecimal literal 0x2123
+		case EXPR_BIN_LIT:				//  binary literal 0b1010
+		case EXPR_DOUBLE_LIT:			//  double literal 123131 
+		case EXPR_DOUBLE_SCIENTIFIC_LIT://  double scientific literal 6e10 
+		case EXPR_CHAR_LIT: 			//  char literal 'a'
+		case EXPR_STR_LIT:				//  string literal "hello"
+		case EXPR_BOOL_LIT:				//  boolean literal 'true' 'false'
+			result = expr_typecheck_literal(e->kind);
+			break;
+		case EXPR_IDENT:				//  identifier    my_function 
+			result = type_copy(e->symbol->type);
+			result->symbol = e->symbol;
+			break;
+		default:
+			fprintf(stderr, "Invalid Expression type\n");
+			exit(1);
+	}
+
+	type_destroy(lt);
+	type_destroy(rt);
+
+	return result;
+}
+
+/**
+ * Checks if an expression type is a literal or brace expression.
+ * @param 	type 		The expression type to check
+ * @return 	true if the expression is a literal (integer, hex, binary, double,
+ *         double scientific, char, string, boolean) or braces expression,
+ *         false otherwise
+ */
+bool expr_is_literal(expr_t type) {
+    return type == EXPR_INT_LIT ||
+           type == EXPR_HEX_LIT ||
+           type == EXPR_BIN_LIT ||
+           type == EXPR_DOUBLE_LIT ||
+           type == EXPR_DOUBLE_SCIENTIFIC_LIT ||
+           type == EXPR_CHAR_LIT ||
+           type == EXPR_STR_LIT ||
+           type == EXPR_BOOL_LIT ||
+           type == EXPR_BRACES;
 }

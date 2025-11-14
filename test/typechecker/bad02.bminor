@@ -1,0 +1,33 @@
+my_func: function integer () = {
+    a: array[5] integer = {1, 2, 3, 4, 5};
+    if(a==a){
+        print "hello";
+    }
+    if (my_func != my_func){
+        print "hello";
+    }
+
+    x: string = "hello";
+    b: char = 'c';
+    if (x < b){
+        print "h";
+    }
+    if (x <= b){
+        print "h";
+    }
+    if (x >= b){
+        print "h";
+    }
+    if (x > b){
+        print "h";
+    }
+    if (10 > 5){
+        print x ;
+    }
+    arrrr: array [5] integer = {1, 2, 3, 4, 5};
+    xxx: integer = # arrrr;
+    abbbbb: integer = # xxx;
+    print a[10.0];
+    print xxx[10.0];
+    return 1;
+}

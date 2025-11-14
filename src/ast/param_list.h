@@ -4,6 +4,7 @@
 #define PARAM_LIST_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 /* Forward Declaration */
 
@@ -25,8 +26,10 @@ struct Param_list {
 
 Param_list	    *param_list_create(const char *name, Type *type, Param_list *next);
 void			 param_list_destroy(Param_list *a);
-void 			 param_list_print(Param_list *a);
+void 			 param_list_print(Param_list *a, FILE *stream);
 Param_list      *param_list_copy(Param_list *a);
 void             param_list_resolve(Param_list *a);
+bool			 param_list_equals(Param_list *a, Param_list *b);
+bool			 param_list_valid_type(Param_list *a);
 
 #endif

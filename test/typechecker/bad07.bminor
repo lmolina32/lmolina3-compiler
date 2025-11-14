@@ -1,0 +1,5 @@
+main: function void () = {
+    arr: array [5] array [5] auto;
+    arr[0][0] = 1.0;
+    arr[0][1] = 1;
+}

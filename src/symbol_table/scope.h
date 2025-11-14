@@ -25,7 +25,6 @@ typedef struct Symbol_stack Symbol_stack;
 struct Symbol_stack {
     Symbol_node *top;
     int size; 
-    int status; 
 };
 
 /* Global Variables */
