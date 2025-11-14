@@ -74,7 +74,7 @@ void type_print(Type *t, FILE *stream){
 		case TYPE_ARRAY:
 			if (t->arr_len) {
 				fprintf(stream," array [");
-				expr_print(t->arr_len, stdout);
+				expr_print(t->arr_len, stream);
 				fprintf(stream, "]");
 			} else {
 				fprintf(stream," array []");
@@ -83,7 +83,7 @@ void type_print(Type *t, FILE *stream){
 		case TYPE_CARRAY:
 			if (t->arr_len) {
 				fprintf(stream," carray [");
-				expr_print(t->arr_len, stdout);
+				expr_print(t->arr_len, stream);
 				fprintf(stream, "]");
 			} else {
 				fprintf(stream," carray []");

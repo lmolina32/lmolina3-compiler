@@ -499,6 +499,7 @@ static bool expr_valid_numeric_op(Type *lt, Type *rt){
  * @return	true if numeric type, otherwise false. 
  */
 static bool expr_is_numeric_type(Type *t){
+	if (!t) return false;
 	return t->kind == TYPE_INTEGER || t->kind == TYPE_DOUBLE;
 }
 
@@ -815,7 +816,9 @@ static Type *expr_typecheck_function(Expr *e, Type *lt, Type *rt){
  * @return  copy of array element type, or input type on error
  */
 static Type *expr_typecheck_array_index(Type *lt, Type *rt){
+	// Case 1: Array index called on array 
 	if (lt->kind == TYPE_ARRAY || lt->kind == TYPE_CARRAY){
+		// Case 1a: Array idx is not integer throw error
 		if (rt->kind != TYPE_INTEGER){
 			fprintf(stderr, "typechecker error: Array index must be of type integer, but got");
 			type_print(rt, stderr);
@@ -825,6 +828,7 @@ static Type *expr_typecheck_array_index(Type *lt, Type *rt){
 		Type *res = type_copy(lt->subtype);
 		res->symbol = lt->symbol;	
 		return res;
+	// Case 2: tried to index on non-array type
 	} else {
 		fprintf(stderr, "typechecker error: Cannot index value of type");
 		type_print(lt, stderr);
@@ -843,14 +847,53 @@ static void expr_typecheck_non_array_nested_braces(Expr *e){
 	while (e && e->kind == EXPR_ARGS){
 		// case 1a: left side is literal expression
 		if (e->left && e->left->kind != EXPR_BRACES){
-			expr_typecheck_non_array_nested_braces(e->left);
-		// case 2a: left side is nested brace
-		} else {
 			t = expr_typecheck(e->left);
 			type_destroy(t);
+		// case 2a: left side is nested brace
+		} else {
+			expr_typecheck_non_array_nested_braces(e->left);
 		}
 		e = e->right;
 	}
+}
+
+/**
+ * Infer the array type of an auto array 
+ * @param 	e	ptr to EXPR_ARG to infer type 
+ */
+static Type *expr_typecheck_infer_auto_array(Expr *e){
+	int count = 0;
+	Type *element = NULL;
+	Type *init = NULL;
+	bool nested = false;
+	while (e && e->kind == EXPR_ARGS){
+		// case 1: nested braces traverse down if subtype hasn't been found 
+		if (e->left->kind == EXPR_BRACES){
+			nested = true;
+			if (!element){
+				element = expr_typecheck_infer_auto_array(e->left->right);
+			}
+		// case 2: expression, typecheck expression and assign if subtype hasn't been done 
+		} else {
+			if (!element){
+				init = expr_typecheck(e->left);
+				if (init){
+					element = type_copy(init);
+				}
+				type_destroy(init);
+			}
+		}
+		count++;
+		e = e->right;
+	}
+	
+	// Set return array 
+	if (nested || element){
+		Type *array = type_create(TYPE_ARRAY, element, 0, 0);
+		array->arr_len = expr_create_integer_literal(count);
+		return array;
+	}
+	return NULL;
 }
 
 /** typecheck EXPR_ARG with the array type passed in ensuring correct length and number of braces
@@ -885,7 +928,7 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 		} else if (e->left->kind != EXPR_BRACES){
 			init_t = expr_typecheck(e->left);
 			// case 2b: Initialize type is auto, set new type if valid
-			if (arr_type->kind == TYPE_AUTO && init_t && init_t->kind != TYPE_AUTO){
+			if (arr_type->kind == TYPE_AUTO && init_t && (init_t->kind != TYPE_AUTO || init_t->kind != TYPE_FUNCTION)){
 				arr_type->kind = init_t->kind;
 				fprintf(stdout, "typechecker resolved: ( auto ) in array '%s' set to type (", symbol->name);
 				type_print(init_t, stdout);
@@ -898,7 +941,12 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 				type_print(init_t, stderr);
 				fprintf(stderr, ")\n");
 				b_ctx.typechecker_errors++;
+			// case 2c: Expected higher dimension array but got literal throw error
+			} else if (curr_lvls){
+				fprintf(stderr, "typechecker error: Array '%s' uses non-initializer for array type\n", symbol->name);
+				b_ctx.typechecker_errors++;
 			}
+			
 			type_destroy(init_t);
 		// case 3: left side is nested brace (EXPR_BRACES)
 		} else {
@@ -910,7 +958,7 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 				expr_typecheck_nested_braces(e->left->right, t->subtype);
 			// case 3b: Braces Initialized to higher dimension then declared -> expr typecheck the rest of the expressions
 			} else {
-				Type *new_t = type_create(TYPE_INTEGER, 0, 0, 0);
+				Type *new_t = type_create(arr_type->kind, 0, 0, expr_create_integer_literal(1));
 				new_t->orig_type = t->orig_type;
 				expr_typecheck_nested_braces(e->left->right, new_t);
 				type_destroy(new_t);
@@ -931,10 +979,11 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 	// Case 3: Number of elements is not defined, define it;
 	} else if (!count && t && !t->arr_len) {
 		t->arr_len = expr_create_integer_literal(curr_count);
-		fprintf(stdout, "typechecker resolved: Array '%s' set to length %d\n", symbol->name, curr_count);
-		fprintf(stdout, "\tFull type:\n\t\t");
-		type_print(symbol->type, stdout);
-		fprintf(stdout, "\n");
+		fprintf(stderr, "typechecker error: Array length was not set. '%s' length set to %d\n", symbol->name, curr_count);
+		fprintf(stderr, "\tFull type:\n\t\t");
+		type_print(symbol->type, stderr);
+		fprintf(stderr, "\n");
+		b_ctx.typechecker_errors++;
 	}
 }
 
@@ -948,11 +997,18 @@ static Type *expr_typecheck_braces(Expr *e){
 	// case 1: braces init is not assigned to array, typecheck initializers;
 	if (!e->symbol){
 		expr_typecheck_non_array_nested_braces(e->right);
-		return type_create(TYPE_ARRAY, type_create(TYPE_INTEGER, 0, 0, 0), 0, 0);
+		return expr_typecheck_infer_auto_array(e->right);
 	}
 	
-	// case 2: braces init is assigned to array, typecheck initializers + size
+	// case 2: braces init is assigned to auto 
 	e->right->symbol = arr_sym;
+	if (e->symbol->type->kind == TYPE_AUTO){
+		Type *inferred_arr = expr_typecheck_infer_auto_array(e->right);
+		expr_typecheck_nested_braces(e->right, inferred_arr);
+		return inferred_arr;
+	}
+	type_print(arr_sym->type, stdout);
+	// case 3: braces init is assigned to array, typecheck initializers + size
 	arr_sym->type->orig_type = arr_sym->type;
 	expr_typecheck_nested_braces(e->right, arr_sym->type);
 	return type_copy(arr_sym->type);

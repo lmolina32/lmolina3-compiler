@@ -237,6 +237,7 @@ bool stmt_typecheck(Stmt *s){
 	if (!s) return false;
 	Type *t;
 	bool res = false;
+	Expr *e = NULL;
 	switch(s->kind){
 		case STMT_DECL:
 			decl_typecheck(s->decl);
@@ -272,8 +273,18 @@ bool stmt_typecheck(Stmt *s){
 			res = stmt_typecheck(s->body);
 			break;
 		case STMT_PRINT:
-			t = expr_typecheck(s->expr);
-			type_destroy(t);
+			e = s->expr;
+			while (e){
+				t = expr_typecheck(e->left);
+				if (t && (t->kind == TYPE_VOID || t->kind == TYPE_FUNCTION || t->kind == TYPE_AUTO)){
+					fprintf(stderr, "Typechecker error: Cannot print type (");
+					type_print(t, stderr);
+					fprintf(stderr, ")\n");
+					b_ctx.typechecker_errors++;
+				}
+				type_destroy(t);
+				e = e->right;
+			}
 			break;
 		case STMT_RETURN:
 			t = expr_typecheck(s->expr);
@@ -286,7 +297,7 @@ bool stmt_typecheck(Stmt *s){
 					func_return_type->kind = TYPE_VOID;
 					fprintf(stdout, "typechecker resolved: return type for function '%s' set to ( void )\n", s->func_sym->name);
 				// Case 1b: retuning non valid return type 
-				} else if (!type_valid_return(t)){
+				} else if (!type_valid_return(t) || t->kind == TYPE_AUTO){
 					fprintf(stderr, "typechecker error: Invalid return type got (");
 					type_print(t, stderr);
 					fprintf(stderr, " ) but expected either (integer, double, string, char, boolean, or nothing)\n");

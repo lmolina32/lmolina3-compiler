@@ -136,7 +136,7 @@ void decl_resolve(Decl *d){
         } else{
             d->owner = 1;
             // Case 1b: if array decl with init braces pass symbol to it 
-            if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && d->value && d->value->kind == EXPR_BRACES){
+            if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY || d->type->kind == TYPE_AUTO) && d->value && d->value->kind == EXPR_BRACES){
                 d->value->symbol = d->symbol;
             }
             scope_bind(d->name, d->symbol);    
@@ -221,8 +221,11 @@ void decl_typecheck(Decl *d){
             t = expr_typecheck(d->value);
             // Case 1a-1: decl is auto, assign value returned
             if (d->type->kind == TYPE_AUTO){
-                if (t->kind == TYPE_VOID){
-                    fprintf(stderr, "typechecker error: Declaration '%s' cannot infer type of ( void )\n", d->name);
+                // case 1a-1a: typechecker returns void cannot infer the type
+                if (t->kind == TYPE_VOID || t->kind == TYPE_AUTO){
+                    fprintf(stderr, "typechecker error: Declaration '%s' cannot infer type of (", d->name);
+                    type_print(t, stderr);
+                    fprintf(stderr, " )\n");
                     b_ctx.typechecker_errors++;
                 } else {
                     fprintf(stdout, "typechecker resolved: '%s' type set to (", d->name);
@@ -266,12 +269,18 @@ void decl_typecheck(Decl *d){
         }
         // case 2: array size initializer must be constant 
         if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
+            // case 2a: array length is not integer 
             if (d->type->arr_len && d->type->arr_len->kind != EXPR_INT_LIT){
                 fprintf(stderr, "typechecker error: Array size must be constant 'integer literal', non-constant expression (");
                 expr_print(d->type->arr_len, stderr);
                 fprintf(stderr, ") used.\n");
                 b_ctx.typechecker_errors++; 
+            // case 2b: array init is less than 0 throw error
+            } else if (d->type->arr_len && d->type->arr_len->literal_value <= 0){
+                fprintf(stderr, "typechecker error: Array size must be larger than 0 for '%s'\n", d->name);
+                b_ctx.typechecker_errors++; 
             }
+            
         }
     // Case 2: typecheck function declarations (definitions & prototypes)
     } else {
