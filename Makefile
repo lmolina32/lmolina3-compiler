@@ -172,6 +172,7 @@ clean:
 
 	@echo "Removing Test Logs"
 	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out ./test/printer/*.out
+	@rm -f ./test/resolver/*.out ./test/typechecker/*.out 
 	@rm -f ./test/book_test_cases/parser/*.out ./test/book_test_cases/printer/*.out
 
 	@echo "Removing bminor"
