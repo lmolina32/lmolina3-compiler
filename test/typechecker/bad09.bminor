@@ -1,3 +1,4 @@
-main: function auto () = {
-    return main;
+main: function integer (a: integer) = {
+    return 10;
 }
+main: function auto (a: integer);

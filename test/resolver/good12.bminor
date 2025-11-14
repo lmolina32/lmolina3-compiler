@@ -1,3 +1,18 @@
+main: function void();
+main: function void();
+main: function void();
+main: function void();
+main: function void();
+main: function void();
+main: function void();
+main: function void();
+main: function void();
+main: function void();
+main: function void();
 main: function void () = {
     main();
 }
+
+my: function integer (a: integer);
+my: function integer (b: integer);
+my: function integer (c: integer);
