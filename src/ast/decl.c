@@ -101,6 +101,31 @@ Decl *decl_copy(Decl *d){
     return new_d;
 }
 
+/* Perform typechecking for functions */
+static void decl_typecheck_functions(Decl *d){
+    // Case 2a: functions returns don't match 
+    if (!type_equals(d->type->subtype,d->symbol->type->subtype)){
+        fprintf(stderr, "Resolver error: Function return type mismatch.\n");
+        fprintf(stderr, "\tExpected:\n\t\t");
+        type_print(d->symbol->type, stderr);
+        fprintf(stderr, "\n\tActual:\n\t\t");
+        type_print(d->type, stderr);
+        fprintf(stderr, "\n");
+        b_ctx.typechecker_errors++;
+    }
+
+    // Case 2b: functions parameters don't match 
+    if (!param_list_equals(d->type->params, d->symbol->type->params)){
+        fprintf(stderr, "Resolver error: Parameter list mismatch for function '%s'.\n", d->name);
+        fprintf(stderr, "\tExpected parameters:\n\t\t");
+        param_list_print(d->symbol->type->params, stderr);
+        fprintf(stderr, "\n\tDefined parameters:\n\t\t");
+        param_list_print(d->type->params, stderr);
+        fprintf(stderr, "\n");
+        b_ctx.typechecker_errors++;    
+    }
+}
+
 /**
  * Performs name resolution for declarations
  * @param   d       Declaration structure to perform name resolution
@@ -126,9 +151,9 @@ void decl_resolve(Decl *d){
         if (sym) {
             // Error: Redeclaration or Variable/Function name collision
             if (sym->type->kind == TYPE_FUNCTION){
-                fprintf(stderr, "resolver error: Declaring Identifier with function name '%s'\n", d->name);
+                fprintf(stderr, "Resolver error: Declaring Identifier with function name '%s'\n", d->name);
             } else{
-                fprintf(stderr, "resolver error: Redeclaring an Identifier '%s' in the same scope\n", d->name);
+                fprintf(stderr, "Resolver error: Redeclaring an Identifier '%s' in the same scope\n", d->name);
             }
             b_ctx.resolver_errors += 1;
             symbol_destroy(d->symbol);
@@ -149,7 +174,7 @@ void decl_resolve(Decl *d){
 
             // Error: Function name conflicts with non-function symbol
             if (sym->type->kind != TYPE_FUNCTION){
-                fprintf(stderr, "resolver error: Reusing Identifier '%s' for function name\n", d->name);
+                fprintf(stderr, "Resolver error: Reusing Identifier '%s' for function name\n", d->name);
                 b_ctx.resolver_errors += 1;
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
@@ -158,22 +183,26 @@ void decl_resolve(Decl *d){
                 sym->func_decl = 0;     // function has been initialized 
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
+                decl_typecheck_functions(d);
             // Case 2b: New definition AND existing symbol is already a definition
             } else if (!is_prototype && !sym_is_prototype){
-                fprintf(stderr, "resolver error: redefinition of '%s'\n", d->name);
+                fprintf(stderr, "Resolver error: redefinition of '%s'\n", d->name);
                 b_ctx.resolver_errors += 1;
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
+                decl_typecheck_functions(d);
             // Case 2c: New prototype AND existing symbol is already defined
             } else if (is_prototype && !sym_is_prototype){
                 fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
+                decl_typecheck_functions(d);
             // Case 2d: New prototype AND existing symbol is also a prototype
             } else if (is_prototype && sym_is_prototype){ 
                 fprintf(stderr, "Resolver Warning: '%s' prototype already defined, using the first declaration as reference\n", d->name);
                 symbol_destroy(d->symbol);
                 d->symbol = sym;
+                decl_typecheck_functions(d);
             }
         } else{
             d->owner = 1;
@@ -263,7 +292,6 @@ void decl_typecheck(Decl *d){
                     b_ctx.typechecker_errors++;
                 }
             }
-
             
             type_destroy(t);
         }
@@ -284,14 +312,15 @@ void decl_typecheck(Decl *d){
         }
     // Case 2: typecheck function declarations (definitions & prototypes)
     } else {
-        // Case 2a-1: return type auto was set to new return type in previous typecheck
+        // Case 2a: return type auto was set to new return type in previous typecheck
         if (d->type->subtype->kind == TYPE_AUTO && d->symbol->type->subtype->kind != TYPE_AUTO){
             d->type->subtype->kind = d->symbol->type->subtype->kind;
             fprintf(stdout, "typechecker resolved: return type for function '%s' set to (", d->name);
             type_print(d->symbol->type->subtype, stdout);
             fprintf(stdout, " )\n");
         }
-        // Case 2a: check if function returns valid type (handled by parser)
+
+         // Case 2b: check if function returns valid type (handled by parser)
         if (!type_valid_return(d->type->subtype)){
             fprintf(stderr, "typechecker error: Cannot assign");
             type_print(d->type->subtype, stderr);
@@ -299,29 +328,7 @@ void decl_typecheck(Decl *d){
             b_ctx.typechecker_errors++;
         }
 
-        // Case 2b: functions returns don't match 
-        if (d->type->kind != d->symbol->type->kind){
-            fprintf(stderr, "typechecker error: Function return type mismatch.\n");
-            fprintf(stderr, "\tDeclared:\n\t\t");
-            type_print(d->symbol->type, stderr);
-            fprintf(stderr, "\n\tActual:\n\t\t");
-            type_print(d->type, stderr);
-            fprintf(stderr, "\n");
-            b_ctx.typechecker_errors++;
-        }
-
-        // Case 2c: functions parameters don't match 
-        if (!param_list_equals(d->type->params, d->symbol->type->params)){
-            fprintf(stderr, "typechecker error: Parameter list mismatch for function '%s'.\n", d->name);
-            fprintf(stderr, "\tDeclared parameters:\n\t\t");
-            param_list_print(d->symbol->type->params, stderr);
-            fprintf(stderr, "\n\tDefined parameters:\n\t\t");
-            param_list_print(d->type->params, stderr);
-            fprintf(stderr, "\n");
-            b_ctx.typechecker_errors++;    
-        }
-
-        // Case 2d: function params cannot be of type auto or void or functions
+        // Case 2c: function params cannot be of type auto or void or functions (handled by parser)
         if (!param_list_valid_type(d->type->params)){
             fprintf(stderr, "typechecker error: Invalid type for parameters in function '%s'\n", d->name);
             fprintf(stderr, "\tDeclared Parameters: \n\t\t");
@@ -330,7 +337,7 @@ void decl_typecheck(Decl *d){
             b_ctx.typechecker_errors++;
         }
 
-        // Case 2e: check if function has a return if non-void
+        // Case 2d: check if function has a return if non-void
         if (d->code){
             res = stmt_typecheck(d->code);
             if (!res && d->type->subtype->kind != TYPE_VOID){
