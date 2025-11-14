@@ -1,5 +1,12 @@
-arr: array [] array [] auto = {{1, 2}, {1, 2}};
 arrr: array [2] array [2] auto = {{1.0, 2.0}, {1.0, 2.0}};
 arrrr: array [2] array [2] auto = {{'c', 'c'}, {'s', 's'}};
 arrrrr: array [2] array [2] auto = {{true, false}, {false, true}};
 arrrrrr: array [2] array [2] auto = {{"true", "false"}, {"false", "true"}};
+crr: carray [5] auto = {1.0, 5.0, 7.0, 8.0, 8e-7};
+crrr: carray [2] carray [2] auto = {{'c', 'c'}, {'s', 's'}};
+crrrr: carray[2] array [2] carray [2] auto = {{{1, 1}, {1, 1}}, {{1, 1}, {1, 1}}};
+i: auto = {{"true", "false"}, {"false", "true"}};
+ii: auto = {1.0, 5.0, 7.0, 8.0, 8e-7};
+iii: auto = {{'c', 'c'}, {'s', 's'}};
+IIII: auto = {{{1, 1}, {1, 1}}, {{1, 1}, {1, 1}}};
+

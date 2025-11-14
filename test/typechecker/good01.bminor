@@ -1,7 +1,6 @@
 
 arr: array [5] integer = {1, 2, 3, 4, 5};
 x: integer = 5;
-should: array [] array [] integer = {{1, 2}, {1, 2}, {1, 2}, {1, 2}};
 
 main: function void (argc: integer, argv: carray[] string) = {
     arr: array [5] integer;
