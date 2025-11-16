@@ -104,15 +104,39 @@ bminor/
 - what was easy was to set up all the functions initially like `expr_create, decl_create` etc. Additionally, it was relatively easy to set up the bison semantic actions for most of the rules. For most of the printing it was pretty straight forward initially with the printing for all of the different structures in the AST.
 - The hardest part initially was getting the `parser.bison` to run. I rewrote the header files to use `typedef` for all the structs and for some reason `parser.bison` was not reading in the structures correctly. The issue was fixed but it took a while to get it to work with forward declarations and forcing the header files to be in the `parser.bison` file with `%code requires`. Additionally, the precedence printing was extremely confusing and hard to figure out. I iterated through several different ideas and fell back to the original idea of walking down the groups and determining precedence. The tricky part was figuring out I also had to take into account the associativity of different operators. Additionally, while pretty printing I ran into issues on my semantic actions which were tricky to figure out, locate and then fix. Additionally, I had issues with getting the correct tokens from `yytext` but the issue was easy to fix once I found the correct stack overflow page that talked about the issue.
 
-## Resolver 
-### Structure 
-- `src/symbol_table` was created which is where the `scope.c` and `hash_table.c` live. 
+## Resolver
 
-### Notes 
-- which count resets from params and locals as discussed in class. We discussed in class that for params you enter a scope and then when you enter the function body you enter a new scope as well. This means the params which count starts at 0 and the local which count starts at 0. But, in the function body you do not reset the which count when entering a new scope for if-else or for loops. 
-- For bminor you can have several function prototypes with the same name. The types are not checked so at this stage you can have functions with the same name returning different types and having different parameters ( this will be handled in the type checker). But, you cannot have multiple function definitions so once you init a function with braces you will get a resolver error for using the same function name and initializing it with braces and stmt block. 
+### Structure
 
-### Development of code 
-- No AI was used for creating the code. 
-- What was easy was initially create all the scope functions and walking the tree to create the name resolution. I thought it was pretty straight forward to figure out how to push things onto the symbol table when to enter and leave scopes and when to name resolve. 
-- The hard part began when I started dealing with the which for locals and params. This took me a while to figure out where and when to update the which statement. Additionally, the functions prototypes and the function declarations were though to get right. Initially I thought the resolver was super easy but dealing with these two issues were difficult to figure out and to ensure they were working together. 
+- `src/symbol_table` was created which is where the `scope.c` and `hash_table.c` live.
+
+### Notes
+
+- which count resets from params and locals as discussed in class. We discussed in class that for params you enter a scope and then when you enter the function body you enter a new scope as well. This means the params which count starts at 0 and the local which count starts at 0. But, in the function body you do not reset the which count when entering a new scope for if-else or for loops.
+- For bminor you can have several function prototypes with the same name. The types are not checked so at this stage you can have functions with the same name returning different types and having different parameters ( this will be handled in the type checker). But, you cannot have multiple function definitions so once you init a function with braces you will get a resolver error for using the same function name and initializing it with braces and stmt block.
+
+### Development of code
+
+- No AI was used for creating the code.
+- What was easy was initially create all the scope functions and walking the tree to create the name resolution. I thought it was pretty straight forward to figure out how to push things onto the symbol table when to enter and leave scopes and when to name resolve.
+- The hard part began when I started dealing with the which for locals and params. This took me a while to figure out where and when to update the which statement. Additionally, the functions prototypes and the function declarations were though to get right. Initially I thought the resolver was super easy but dealing with these two issues were difficult to figure out and to ensure they were working together.
+
+## Typechecker
+
+### notes
+
+- Most of the typechecking rules came form chapter 7 pages 106 and 107. It was expanded since the compiler for 2025 has more types than the book originally had.
+- For oddities that should be covered
+  - Functions that return arrays or other functions. -> this is covered in the parse as I did not allow it in my grammar per the spec
+  - Functions as parameters to other functions. -> this is covered in the parser as I did not allow it in my grammar per the spec
+  - Arrays of functions -> this is caught by typechecking if passing in just the name, if doing a function call (e.g f()) it will fail in the parser
+  - Non-constant initializers for global variables. -> this is done with typechecking
+  - Array initializers for local variables. -> this is done with typechecking
+- Lastly you cannot define function with auto as a argument as said in the spec.
+
+### Development of code
+
+- Used AI to think of corner cases of auto and different expressions
+  - prompt: When building a compiler for a toy language that employs carrays, arrays, boolean, integer, string, char and auto what are corner cases that you must considered when performing typechecking? What are the different common practices when handling these type of checks and how should one format the error messages to be clear and concise?
+- The typechecker is easy if you have the right idea down. Having the book cover some of the cases and what we did in class gave me a good starting point in writing the typechecker. Other than that the easiest part was writing the code when you know what you needed to test and what edge cases you needed to cover. I also thought that the general structure was easy to come up with since this is the third deliverable where we traverse the AST, so I had no questions there. Lastly, building the general structure (e.g switch cases for STMTS and EXPRS, decl functions and non-functions) was pretty clear and easy to set up.
+- the hardest part of the typechecker was all the different cases you had to consider when building it. It was hard to think of the cases to begin with but a lot of code overlapped especially in the expr_typecheck. But it became more tricky and harder to handle and think of different corner cases for when you introduce auto. I think this was the trickiest part of the typechecker and coming up with different cases for all the different operators, functions, decls and statements.
