@@ -1,0 +1,9 @@
+global_arr: array [5] integer = {1, 2, 3, 4, 5};
+
+main: function integer () = {
+    local_arr: array [3] boolean;
+    idx: integer = 2;
+    local_arr[idx] = true;
+    len: integer = #local_arr;
+    return 0;
+}
