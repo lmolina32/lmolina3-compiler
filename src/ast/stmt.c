@@ -232,6 +232,7 @@ void stmt_resolve(Stmt *s){
 /**
  * Perform typechecking on the stmt struct ensuring compatibility for all stmts
  * @param 	s 		ptr to stmt struct to typecheck  
+ * @return 	true if valid return from function at each control flow, otherwise false 
  */
 bool stmt_typecheck(Stmt *s){
 	if (!s) return false;
@@ -248,7 +249,7 @@ bool stmt_typecheck(Stmt *s){
 			break;
 		case STMT_IF_ELSE:
 			t = expr_typecheck(s->expr);
-			if (t->kind != TYPE_BOOLEAN || !t) {
+			if (!t || t->kind != TYPE_BOOLEAN) {
 				fprintf(stderr, "typechecker error: Condition in 'if' statement must be of type boolean, but got");
 				type_print(t, stderr);
 				fprintf(stderr, ".\n");
@@ -292,12 +293,8 @@ bool stmt_typecheck(Stmt *s){
 			Type *func_return_type = s->func_sym->type->subtype;
 			// Case 1: return type not set
 			if (func_return_type->kind == TYPE_AUTO){
-				// Case 1a: empty return (return;) set return type to void 
-				if (!t){
-					func_return_type->kind = TYPE_VOID;
-					fprintf(stdout, "typechecker resolved: return type for function '%s' set to ( void )\n", s->func_sym->name);
 				// Case 1b: retuning non valid return type 
-				} else if (!type_valid_return(t) || t->kind == TYPE_AUTO){
+				if (!type_valid_return(t) || t->kind == TYPE_AUTO){
 					fprintf(stderr, "typechecker error: Invalid return type got (");
 					type_print(t, stderr);
 					fprintf(stderr, " ) but expected either (integer, double, string, char, boolean, or nothing)\n");

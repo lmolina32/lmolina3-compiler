@@ -30,7 +30,7 @@ const char *sym_to_str[SYMBOL_LEN] = {
 Symbol* symbol_create(symbol_t kind, Type *type, const char *name){
     Symbol *symbol = safe_calloc(sizeof(Symbol), 1);
     symbol->kind = kind;
-    symbol->type = type;
+    symbol->type = type_copy(type);
     symbol->name = safe_strdup(name);
     return symbol;
 }
@@ -44,6 +44,10 @@ void symbol_destroy(Symbol *s){
     if (s->name) {
         free(s->name);
         s->name = NULL;
+    }
+    if (s->type){
+        type_destroy(s->type);
+        s->type = NULL;
     }
     
     free(s);

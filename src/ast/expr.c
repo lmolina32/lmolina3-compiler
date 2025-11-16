@@ -454,7 +454,6 @@ Expr* expr_copy(Expr *e){
 	new_e->literal_value = e->literal_value;
 	new_e->double_literal_value = e->double_literal_value;
 	new_e->string_literal = e->string_literal ? safe_strdup(e->string_literal) : NULL;
-	//new_e->symbol = symbol_copy(e->symbol);
 	return new_e;
 }
 
@@ -560,16 +559,24 @@ static Type *expr_typecheck_unary_numeric_op(Expr *e, Type *lt){
  */
 static Type *expr_typecheck_assignment(Expr *e, Type *lt, Type *rt){
 	Expr *dummy_e = expr_create(e->kind, 0, 0);
-	// case 1: both assignments are auto, can't infer type
-	if (lt->kind == TYPE_AUTO && rt->kind == TYPE_AUTO){
+	// case 1: check left side is identifier or index 
+    if (e->left->kind != EXPR_IDENT && e->left->kind != EXPR_INDEX) {
+        fprintf(stderr, "typechecker error: Cannot assign to non-lvalue (");
+        expr_print(e->left, stderr);
+        fprintf(stderr, ")\n");
+        b_ctx.typechecker_errors++;
+        expr_destroy(dummy_e);
+        return type_create(TYPE_INTEGER, 0, 0, 0);
+	// case 2: both assignments are auto, can't infer type
+    } else if (lt->kind == TYPE_AUTO && rt->kind == TYPE_AUTO){
 		fprintf(stderr, "typechecker error: Cannot infer operand types for operator '");
 		expr_print(dummy_e, stderr);
 		fprintf(stderr, "': both operands are 'auto'\n");
 		b_ctx.typechecker_errors++;
-	// case 2: left child is auto, assign right type to left child
+	// case 3: left child is auto, assign right type to left child
 	} else if (lt->kind == TYPE_AUTO && rt) { 
 		lt->kind = rt->kind;
-		// case 2a: child is array -> traverse array type and set base type to rt
+		// case 3a: child is array -> traverse array type and set base type to rt
 		if (lt->symbol->type->kind == TYPE_ARRAY || lt->symbol->type->kind == TYPE_CARRAY){
 			Type *arr_type = lt->symbol->type;
 			// get array type (e.g array [5] integer -> arr_type = ptr to integer)
@@ -577,14 +584,15 @@ static Type *expr_typecheck_assignment(Expr *e, Type *lt, Type *rt){
 				arr_type = arr_type->subtype;
 			}
 			arr_type->kind = rt->kind;
-		// case 2b: child is just auto, set the type 
+		// case 3b: child is just auto, set the type
 		} else {
-			lt->symbol->type->kind = rt->kind;
+			type_destroy(lt->symbol->type);
+			lt->symbol->type = type_copy(rt);
 		}
 		fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", lt->symbol->name);
 		type_print(rt, stdout);
 		fprintf(stdout, " )\n");
-	// case 3: the types don't match -> throw error
+	// case 4: the types don't match -> throw error
 	} else if (!type_equals(lt, rt)){
 		fprintf(stderr, "typechecker error: Invalid operand type for '");
 		expr_print(dummy_e, stderr);
@@ -928,11 +936,19 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 		} else if (e->left->kind != EXPR_BRACES){
 			init_t = expr_typecheck(e->left);
 			// case 2b: Initialize type is auto, set new type if valid
-			if (arr_type->kind == TYPE_AUTO && init_t && (init_t->kind != TYPE_AUTO || init_t->kind != TYPE_FUNCTION)){
-				arr_type->kind = init_t->kind;
-				fprintf(stdout, "typechecker resolved: ( auto ) in array '%s' set to type (", symbol->name);
-				type_print(init_t, stdout);
-				fprintf(stdout, " )\n");
+			if (arr_type->kind == TYPE_AUTO && init_t){
+				if (init_t->kind == TYPE_AUTO || init_t->kind == TYPE_FUNCTION || init_t->kind == TYPE_VOID || init_t->kind == TYPE_ARRAY || init_t->kind == TYPE_CARRAY){
+					fprintf(stderr, "typechecker error: Cannot infer array element type from (");
+					type_print(init_t, stderr);
+					fprintf(stderr, " )\n");
+					b_ctx.typechecker_errors++;
+				} else {
+					arr_type->kind = init_t->kind;
+					fprintf(stdout, "typechecker resolved: ( auto ) in array '%s' set to type (", symbol->name);
+					type_print(init_t, stdout);
+					fprintf(stdout, " )\n");
+				}
+			
 			// case 2b: Initialize type does not match array type 
 			} else if (!type_equals(init_t, arr_type)){
 				fprintf(stderr, "typechecker error: Array '%s' type mismatch expected (", symbol->name);
@@ -1007,7 +1023,6 @@ static Type *expr_typecheck_braces(Expr *e){
 		expr_typecheck_nested_braces(e->right, inferred_arr);
 		return inferred_arr;
 	}
-	type_print(arr_sym->type, stdout);
 	// case 3: braces init is assigned to array, typecheck initializers + size
 	arr_sym->type->orig_type = arr_sym->type;
 	expr_typecheck_nested_braces(e->right, arr_sym->type);
