@@ -3,7 +3,7 @@ arr: array [5] auto = {1, 1010 , 10, 10, 10};
 main: function void () = {
     xx: integer = -10;
     arr[-xx] = 10;
-    x: auto;
-    y: auto;
+    x: auto = 5;
+    y: auto = 5;
     x = y = 5;
 }

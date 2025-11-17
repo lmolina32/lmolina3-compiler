@@ -320,9 +320,12 @@ static void decl_typecheck_non_functions(Decl *d) {
                 fprintf(stderr, "typechecker error: Array size must be larger than 0 for '%s'\n", d->name);
                 b_ctx.typechecker_errors++; 
             }
-            
         }
         t = t->subtype;
+    }
+    if (d->type->kind == TYPE_AUTO && !d->value){
+        fprintf(stderr, "typechecker error: Declarations with type ( auto ) must be initialized with a value, %s is not initialized\n", d->name);
+        b_ctx.typechecker_errors++; 
     }
 }
 
