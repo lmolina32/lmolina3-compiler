@@ -306,19 +306,35 @@ static void decl_typecheck_non_functions(Decl *d) {
         type_destroy(t);
     }
     t = d->type;
+    bool scope_lvl = d->symbol->kind == SYMBOL_GLOBAL ? true : false;
     // iterate through the array types to ensure they are literals 
     while (t){
-        if ((t->kind == TYPE_ARRAY || t->kind == TYPE_CARRAY)){
-            // case 2a: array length is not integer 
-            if (t->arr_len && t->arr_len->kind != EXPR_INT_LIT){
-                fprintf(stderr, "typechecker error: Array size must be constant 'integer literal', non-constant expression (");
-                expr_print(t->arr_len, stderr);
-                fprintf(stderr, ") used.\n");
-                b_ctx.typechecker_errors++; 
-            // case 2b: array init is less than 0 throw error
-            } else if (t->arr_len && t->arr_len->literal_value <= 0){
-                fprintf(stderr, "typechecker error: Array size must be larger than 0 for '%s'\n", d->name);
-                b_ctx.typechecker_errors++; 
+        // global scope type cases 
+        if (scope_lvl){
+            if ((t->kind == TYPE_ARRAY || t->kind == TYPE_CARRAY)){
+                // case 2a: array length is not integer 
+                if (t->arr_len && t->arr_len->kind != EXPR_INT_LIT){
+                    fprintf(stderr, "typechecker error: Array size must be constant 'integer literal', non-constant expression (");
+                    expr_print(t->arr_len, stderr);
+                    fprintf(stderr, ") used.\n");
+                    b_ctx.typechecker_errors++; 
+                // case 2b: array init is less than 0 throw error
+                } else if (t->arr_len && t->arr_len->literal_value <= 0){
+                    fprintf(stderr, "typechecker error: Array size must be larger than 0 for '%s'\n", d->name);
+                    b_ctx.typechecker_errors++; 
+                }
+            }
+        // local scope type cases 
+        } else {
+            // Case 3: check arr_len is of type integer 
+            if ((t->kind == TYPE_ARRAY || t->kind == TYPE_CARRAY)){
+                t = expr_typecheck(t->arr_len);
+                if (!t || t->kind != TYPE_INTEGER){
+                    fprintf(stderr, "typechecker error: Array '%s' must have array size of type integer not of type (", d->name);
+                    type_print(t, stderr);
+                    fprintf(stderr, " )\n");
+                    b_ctx.typechecker_errors++; 
+                }
             }
         }
         t = t->subtype;
