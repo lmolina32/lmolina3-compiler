@@ -31,9 +31,11 @@ The compiler supports multiple modes of operation:
 # Print parsed source file (pretty printing)
 ./bin/bminor --print <filename.bminor>
 
-# Resolve parsed source file (name resolution) 
+# Resolve parsed source file (name resolution)
 ./bin/bminor --resolve <filename.bminor>
 
+# Typecheck resolved source file (type checking)
+./bin/bminor --typecheck <filename.bminor>
 ```
 
 ### Exit Codes
@@ -46,19 +48,20 @@ The compiler supports multiple modes of operation:
 Run the test suites to verify compiler functionality:
 
 ```bash
-make test-all        # Run all tests (not book test cases)
-make test-encode     # Test string encoding
-make test-scanner    # Test lexical analysis
-make test-parser     # Test syntax analysis
-make test-printer    # Test pretty printing
-make test-resolver   # Test name resolution  
-make test-book       # Run book test cases
+make test-all         # Run all tests (not book test cases)
+make test-encode      # Test string encoding
+make test-scanner     # Test lexical analysis
+make test-parser      # Test syntax analysis
+make test-printer     # Test pretty printing
+make test-resolver    # Test name resolution
+make test-typechecker # Test type checking
+make test-book        # Run book test cases
 ```
 
 Test cases are organized in `test/` by compiler phase, with both valid (`good*.bminor`) and invalid (`bad*.bminor`) test programs.
 
 - Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`, `test/printer`, `test/resolver`
-- Book test cases: `test/book_test_cases/parser`
+- Book test cases: `test/book_test_cases/parser`, `test/book_test_cases/printer`, `test/book_test_cases/typecheck`
 
 ## Project Structure
 
@@ -71,7 +74,7 @@ bminor/
 │   ├── ast/            # Abstract Syntax Tree definitions
 │   ├── encoder/        # String literal encoding
 │   ├── library/        # Runtime library
-│   ├── symbol_table/   # Symbol table and scope functions  
+│   ├── symbol_table/   # Symbol table and scope functions
 │   └── utils/          # Utility functions used by compiler
 ├── test/               # Test cases organized by phase
 │   └── scripts/        # Individual test scripts for each phase
