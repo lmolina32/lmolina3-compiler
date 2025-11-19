@@ -1,6 +1,8 @@
 global_arr: array [5] integer = {1, 2, 3, 4, 5};
 
 main: function integer () = {
+    arr: array [5 + 5] integer;
+    b: auto = global_arr;
     local_arr: array [3] boolean;
     idx: integer = 2;
     local_arr[idx] = true;
