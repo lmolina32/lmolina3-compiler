@@ -174,7 +174,10 @@ clean:
 	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out ./test/printer/*.out
 	@rm -f ./test/resolver/*.out ./test/typechecker/*.out 
 	@rm -f ./test/book_test_cases/parser/*.out ./test/book_test_cases/printer/*.out
+	@rm -f ./test/book_test_cases/typecheck/*.out
 
 	@echo "Removing bminor"
 	@rm -f $(BMINOR) $(OLD_BMINOR)
 
+# phony 
+.PHONY: clean dirs all test test-all test-encode test-scanner test-parser test-printer test-resolver test-typechecker test-book
