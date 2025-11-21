@@ -1,5 +1,6 @@
 // should pass
 factorial: function integer (n: integer) = {
+    a: auto;
     if (n <= 1) {
         return 1;
     } else {
