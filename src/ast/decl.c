@@ -339,10 +339,6 @@ static void decl_typecheck_non_functions(Decl *d) {
         }
         t = t->subtype;
     }
-    if (d->type->kind == TYPE_AUTO && !d->value){
-        fprintf(stderr, "typechecker error: Declarations with type ( auto ) must be initialized with a value, %s is not initialized\n", d->name);
-        b_ctx.typechecker_errors++; 
-    }
 }
 
 /**
@@ -377,8 +373,7 @@ static void decl_typecheck_functions(Decl *d){
     if (d->code){
         res = stmt_typecheck(d->code);
         if (!res && d->type->subtype->kind != TYPE_VOID){
-            fprintf(stderr, "typechecker error: control reaches end of non-void function '%s'\n", d->name);
-            b_ctx.typechecker_errors++;
+            fprintf(stdout, "typechecker warning: control reaches end of non-void function '%s'\n", d->name);
         }
         // return type auto was set in stmt_typecheck, update decl
         if (d->type->subtype->kind == TYPE_AUTO && d->symbol->type->subtype->kind != TYPE_AUTO){

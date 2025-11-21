@@ -767,8 +767,24 @@ static Type *expr_typecheck_function(Expr *e, Type *lt, Type *rt){
 	int count = 0;
 	while (params && args){
 		arg_type = expr_typecheck(args->left);
-		// Case 3a: params don't match
-		if (!type_equals(params->type, arg_type)){
+		// Case 3a: arg_type is auto, resolve
+		if (arg_type->kind == TYPE_AUTO && arg_type){
+			if (arg_type->symbol->type->kind == TYPE_ARRAY || arg_type->symbol->type->kind == TYPE_CARRAY){
+				Type *base_type = arg_type->symbol->type;
+				while (base_type && base_type->subtype && base_type->subtype->subtype){
+					base_type = base_type->subtype;
+				}
+				type_destroy(base_type->subtype);
+				base_type->subtype = type_copy(params->type);
+			} else {
+				type_destroy(arg_type->symbol->type);
+				arg_type->symbol->type = type_copy(params->type);
+			}
+			fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", arg_type->symbol->name);
+			type_print(arg_type->symbol->type , stdout);
+			fprintf(stdout, " )\n");
+		// Case 3b: params don't match
+		} else if (!type_equals(params->type, arg_type)){
 			fprintf(stderr, "typechecker error: Argument type mismatch in call to '%s'.", func_def->name);
 			fprintf(stderr, "\n\tFunction params\n\t\t");
 			param_list_print(func_def->type->params, stderr);
@@ -995,11 +1011,10 @@ static void expr_typecheck_nested_braces(Expr *e, Type *t){
 	// Case 3: Number of elements is not defined, define it;
 	} else if (!count && t && !t->arr_len) {
 		t->arr_len = expr_create_integer_literal(curr_count);
-		fprintf(stderr, "typechecker error: Array length was not set. '%s' length set to %d\n", symbol->name, curr_count);
-		fprintf(stderr, "\tFull type:\n\t\t");
-		type_print(symbol->type, stderr);
-		fprintf(stderr, "\n");
-		b_ctx.typechecker_errors++;
+		fprintf(stdout, "typechecker resolved: Array '%s' set to length %d\n", symbol->name, curr_count);
+		fprintf(stdout, "\tFull type:\n\t\t");
+		type_print(symbol->type, stdout);
+		fprintf(stdout, "\n");
 	}
 }
 
@@ -1113,6 +1128,7 @@ Type *expr_typecheck(Expr *e){
 			break;
 		case EXPR_ARGS:					//  function arguments a, b, c, d 
 			result = type_copy(lt);
+			result->symbol = lt->symbol;
 			break;
 		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
 			result = expr_typecheck_array_index(lt, rt);
