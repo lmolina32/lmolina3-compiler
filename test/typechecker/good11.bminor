@@ -1,9 +1,12 @@
 my_sqrt: function void (a: integer, b:integer);
 main: function integer () = {
-    arr: array [5] auto;
+    arr: array [5] integer;
     arrr: array [5] array[5] array[5] array[5] auto;
-    a: auto;
-    b: auto;
-    my_sqrt(arr[0], arrr[0][0][0][0]);
+    x: array [5] array[5] integer;
+    arrr[0][0][0] = x;
     return 1;
+}
+
+my_func: function auto () = {
+    a: auto;
 }
