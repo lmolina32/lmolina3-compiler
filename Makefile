@@ -120,8 +120,8 @@ test-all: $(BMINOR)
 	@chmod +x ./test/scripts/*.sh
 	@./test/scripts/run_all_tests.sh
 
-test-encode: $(BMINOR) 
-	@echo "Testing Encode"
+test-encoder: $(BMINOR) 
+	@echo "Testing Encoder"
 	@echo "---------------------------------------"
 	@chmod +x ./test/scripts/test_encode.sh
 	@./test/scripts/test_encode.sh
@@ -179,5 +179,18 @@ clean:
 	@echo "Removing bminor"
 	@rm -f $(BMINOR) $(OLD_BMINOR)
 
+help:
+	@echo "Available targets:"
+	@echo "  all               - Build bminor compiler"
+	@echo "  test              - Run all tests"
+	@echo "  test-encoder      - Run encoder tests"
+	@echo "  test-scanner      - Run scanner tests"
+	@echo "  test-parser       - Run parser tests"
+	@echo "  test-resolver     - Run resolver tests"
+	@echo "  test-typechecker  - Run typechecker tests"
+	@echo "  test-book         - Run book tests"
+	@echo "  clean             - Remove build artifacts"
+	
+
 # phony 
-.PHONY: clean dirs all test test-all test-encode test-scanner test-parser test-printer test-resolver test-typechecker test-book
+.PHONY: clean dirs all test test-all test-encode test-scanner test-parser test-printer test-resolver test-typechecker test-book help
