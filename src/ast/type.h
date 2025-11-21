@@ -50,6 +50,7 @@ void		  type_destroy(Type *t);
 void          type_print(Type *t, FILE *stream);
 Type         *type_copy(Type *t);
 bool 		  type_equals(Type *a,  Type *b);
+bool		  type_arrays_equals(Type *a, Type *b);
 bool		  type_valid_return(Type *a);
 
 #endif

@@ -328,13 +328,15 @@ static void decl_typecheck_non_functions(Decl *d) {
         } else {
             // Case 3: check arr_len is of type integer 
             if ((t->kind == TYPE_ARRAY || t->kind == TYPE_CARRAY)){
-                t = expr_typecheck(t->arr_len);
-                if (!t || t->kind != TYPE_INTEGER){
+                Type *dummy_t = expr_typecheck(t->arr_len);
+                if (!dummy_t || dummy_t->kind != TYPE_INTEGER){
                     fprintf(stderr, "typechecker error: Array '%s' must have array size of type integer not of type (", d->name);
                     type_print(t, stderr);
                     fprintf(stderr, " )\n");
                     b_ctx.typechecker_errors++; 
                 }
+                type_destroy(dummy_t);
+                
             }
         }
         t = t->subtype;
@@ -372,6 +374,13 @@ static void decl_typecheck_functions(Decl *d){
     // Case 2d: check if function has a return if non-void
     if (d->code){
         res = stmt_typecheck(d->code);
+        // case 2d-1: reaches end of void function with auto type -> set type to auto 
+        if (!res && d->type->subtype->kind == TYPE_AUTO){
+            fprintf(stdout, "typechecker resolved: function '%s' ( auto ) return type is set to ( void )\n", d->name);
+            d->type->subtype->kind = TYPE_AUTO;
+            d->symbol->type->subtype->kind = TYPE_AUTO;
+        } 
+        // case 2d-2: reaches end of non-void function throw a warning. 
         if (!res && d->type->subtype->kind != TYPE_VOID){
             fprintf(stdout, "typechecker warning: control reaches end of non-void function '%s'\n", d->name);
         }

@@ -514,14 +514,18 @@ static Type *expr_typecheck_arithmetic_op(Expr *e, Type *lt, Type *rt){
 	Expr *dummy_e = expr_create(e->kind, 0, 0);
 	bool valid = expr_valid_numeric_op(lt, rt);
 
-	if (!valid){
+	if (!valid || ((valid && e->kind == EXPR_REM && lt->kind == TYPE_DOUBLE && rt->kind == TYPE_DOUBLE))){
 		fprintf(stderr, "typechecker error: Invalid operand types for '");
 		expr_print(dummy_e, stderr);
 		fprintf(stderr, "' operator. Got");
 		type_print(lt, stderr);
 		fprintf(stderr, " and");
 		type_print(rt, stderr);
-		fprintf(stderr, " but expected either (integer, integer) or (double, double).\n");
+		if (e->kind == EXPR_REM){
+			fprintf(stderr, " but expected either (integer, integer).\n");
+		} else {
+			fprintf(stderr, " but expected either (integer, integer) or (double, double).\n");
+		}
 		b_ctx.typechecker_errors++;
 	}
 	expr_destroy(dummy_e);
@@ -559,7 +563,51 @@ static Type *expr_typecheck_unary_numeric_op(Expr *e, Type *lt){
  */
 static Type *expr_typecheck_assignment(Expr *e, Type *lt, Type *rt){
 	Expr *dummy_e = expr_create(e->kind, 0, 0);
-	// case 1: check left side is identifier or index 
+	// case 1: check for auto subtype on the left assigned array on the right 
+	if ((lt->kind == TYPE_ARRAY && rt->kind == TYPE_ARRAY) || (lt->kind == TYPE_CARRAY || rt->kind == TYPE_CARRAY)){
+		// case 1a: check if array types are same and that left subtype is auto
+		if (type_arrays_equals(lt, rt)){
+			Type *copy_type = rt;
+			while (copy_type->subtype){
+				copy_type = copy_type->subtype;
+			}
+		
+			// case 1a-1: check if right subtype is auto 
+			if (copy_type->kind == TYPE_AUTO){
+				fprintf(stderr, "typechecker error: Cannot infer operand types for operator '");
+				expr_print(dummy_e, stderr);
+				fprintf(stderr, "': both operands base types are 'auto'\n");	
+				b_ctx.typechecker_errors++;
+			// case 1a-2: valid type assign right array to left array
+			} else {
+				copy_type = rt;
+				type_print(copy_type, stdout); printf("\n");
+				Type *base_type = lt->symbol->type;
+				Type *dummy_t = lt;
+				// get correct base of the right subtype 
+				while (dummy_t->subtype){
+					copy_type = copy_type->subtype;
+					dummy_t = dummy_t->subtype;
+				}
+				// get base type of left 
+				while (base_type && base_type->subtype && base_type->subtype->subtype){
+					base_type = base_type->subtype;
+				}
+				// assign and finish
+				type_print(copy_type, stdout); printf("\n");
+				type_destroy(base_type->subtype);
+				base_type->subtype = type_copy(copy_type);	
+				fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", lt->symbol->name);
+				type_print(rt, stdout);
+				fprintf(stdout, " )\n");
+			}
+
+			expr_destroy(dummy_e);
+			return type_create(lt->kind, 0, 0, 0);
+		}
+	}
+
+	// case 2: check left side is identifier or index 
     if (e->left->kind != EXPR_IDENT && e->left->kind != EXPR_INDEX) {
         fprintf(stderr, "typechecker error: Cannot assign to non-lvalue (");
         expr_print(e->left, stderr);
@@ -567,32 +615,35 @@ static Type *expr_typecheck_assignment(Expr *e, Type *lt, Type *rt){
         b_ctx.typechecker_errors++;
         expr_destroy(dummy_e);
         return type_create(TYPE_INTEGER, 0, 0, 0);
-	// case 2: both assignments are auto, can't infer type
+	// case 3: both assignments are auto, can't infer type
     } else if (lt->kind == TYPE_AUTO && rt->kind == TYPE_AUTO){
 		fprintf(stderr, "typechecker error: Cannot infer operand types for operator '");
 		expr_print(dummy_e, stderr);
 		fprintf(stderr, "': both operands are 'auto'\n");
 		b_ctx.typechecker_errors++;
-	// case 3: left child is auto, assign right type to left child
+	// case 4: left child is auto, assign right type to left child
 	} else if (lt->kind == TYPE_AUTO && rt) { 
-		lt->kind = rt->kind;
-		// case 3a: child is array -> traverse array type and set base type to rt
-		if (lt->symbol->type->kind == TYPE_ARRAY || lt->symbol->type->kind == TYPE_CARRAY){
-			Type *arr_type = lt->symbol->type;
-			// get array type (e.g array [5] integer -> arr_type = ptr to integer)
-			while (arr_type->kind == TYPE_ARRAY || arr_type->kind == TYPE_CARRAY){
-				arr_type = arr_type->subtype;
+		if (lt->symbol){
+			lt->kind = rt->kind;
+			// case 4a: child is array -> traverse array type and set base type to rt
+			if (lt->symbol->type->kind == TYPE_ARRAY || lt->symbol->type->kind == TYPE_CARRAY){
+				// get array type (e.g array [5] integer -> arr_type = ptr to integer)
+				Type *base_type = lt->symbol->type;
+				while (base_type && base_type->subtype && base_type->subtype->subtype){
+					base_type = base_type->subtype;
+				}
+				type_destroy(base_type->subtype);
+				base_type->subtype = type_copy(rt);
+			// case 4b: child is just auto, set the type
+			} else {
+				type_destroy(lt->symbol->type);
+				lt->symbol->type = type_copy(rt);
 			}
-			arr_type->kind = rt->kind;
-		// case 3b: child is just auto, set the type
-		} else {
-			type_destroy(lt->symbol->type);
-			lt->symbol->type = type_copy(rt);
+			fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", lt->symbol->name);
+			type_print(rt, stdout);
+			fprintf(stdout, " )\n");
 		}
-		fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", lt->symbol->name);
-		type_print(rt, stdout);
-		fprintf(stdout, " )\n");
-	// case 4: the types don't match -> throw error
+	// case 5: the types don't match -> throw error
 	} else if (!type_equals(lt, rt)){
 		fprintf(stderr, "typechecker error: Invalid operand type for '");
 		expr_print(dummy_e, stderr);
@@ -769,20 +820,8 @@ static Type *expr_typecheck_function(Expr *e, Type *lt, Type *rt){
 		arg_type = expr_typecheck(args->left);
 		// Case 3a: arg_type is auto, resolve
 		if (arg_type->kind == TYPE_AUTO && arg_type){
-			if (arg_type->symbol->type->kind == TYPE_ARRAY || arg_type->symbol->type->kind == TYPE_CARRAY){
-				Type *base_type = arg_type->symbol->type;
-				while (base_type && base_type->subtype && base_type->subtype->subtype){
-					base_type = base_type->subtype;
-				}
-				type_destroy(base_type->subtype);
-				base_type->subtype = type_copy(params->type);
-			} else {
-				type_destroy(arg_type->symbol->type);
-				arg_type->symbol->type = type_copy(params->type);
-			}
-			fprintf(stdout, "typechecker resolved: Variable '%s' type set to (", arg_type->symbol->name);
-			type_print(arg_type->symbol->type , stdout);
-			fprintf(stdout, " )\n");
+			fprintf(stderr, "typechecker error: Cannot infer auto type from function parameters.\n");
+            b_ctx.typechecker_errors++;
 		// Case 3b: params don't match
 		} else if (!type_equals(params->type, arg_type)){
 			fprintf(stderr, "typechecker error: Argument type mismatch in call to '%s'.", func_def->name);

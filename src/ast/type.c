@@ -124,7 +124,6 @@ Type* type_copy(Type *t){
  * @return  true if both type structs are equal, otherwise false
  */
 bool type_equals(Type *a,  Type *b){
-	// NOTE: might need to compare expr_arr 
 	if (!a && !b) return true;
 	if (!a || !b) return false;
 	if (a->kind != b->kind) return false;
@@ -133,6 +132,30 @@ bool type_equals(Type *a,  Type *b){
 	return true;
 }
 
+/**
+ * Compares two type structures and ensures they are both equal to each other. 
+ * @param	a	ptr to struct to compare another type struct with 
+ * @param	b   ptr to struct to compare another type strcut with 
+ * @return  true if both type structs are equal, otherwise false
+ */
+bool type_arrays_equals(Type *a, Type *b){
+	if (!a && !b) return true;
+	if (!a || !b) return false;
+	while (a && b){
+		if (a->kind == b->kind){
+			a = a->subtype;
+			b = b->subtype;
+		} else {
+			if (a->kind == TYPE_AUTO && (b->kind != TYPE_ARRAY || b->kind != TYPE_CARRAY)){
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
+	if (a || b) return false;
+	return true;
+}
 
 /**
  * Compares Type structure to see if it is has a valid return type 
