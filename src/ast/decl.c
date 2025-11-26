@@ -417,3 +417,13 @@ void decl_typecheck(Decl *d){
     }
     decl_typecheck(d->next);
 }
+
+
+/**
+ * Perform code generation on the decl structure and output to file 
+ * @param   d       decl structure to perform code generation 
+ * @param   f       file pointer to output code generation 
+ */
+void decl_codegen(Decl *d, FILE *f){
+    if (!d || !f) return;
+}

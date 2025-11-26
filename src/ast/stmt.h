@@ -44,5 +44,6 @@ void 		stmt_print(Stmt *s, int indent);
 Stmt	   *stmt_copy(Stmt *s);
 void        stmt_resolve(Stmt *s);
 bool 	    stmt_typecheck(Stmt *s);
+void		stmt_codegen(Stmt *s, FILE *f);
 
 #endif

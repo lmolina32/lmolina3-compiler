@@ -34,6 +34,7 @@ void 	 decl_print(Decl *d, int indent);
 Decl	*decl_copy(Decl *d);
 void     decl_resolve(Decl *d);
 void 	 decl_typecheck(Decl *d);
+void 	 decl_codegen(Decl *d, FILE *f);
 
 #endif
 

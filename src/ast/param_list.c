@@ -65,10 +65,10 @@ void param_list_print(Param_list *a, FILE *stream){
 	type_print(a->type, stream);
 
 	if (a->next) {
-		fprintf(stderr, ",");
+		fprintf(stream, ",");
 		param_list_print(a->next, stream);
 	} else {
-		fprintf(stderr, " ");
+		fprintf(stream, " ");
 	}
 }
 

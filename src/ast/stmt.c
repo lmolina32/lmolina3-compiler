@@ -324,3 +324,12 @@ bool stmt_typecheck(Stmt *s){
 	}
 	return stmt_typecheck(s->next) || res;
 }
+
+/**
+ * Perform code generation on stmt structure 
+ * @param 	s 		Stmt structure to perform code generation 
+ * @param	f		File to write code generation to 
+ */
+void stmt_codegen(Stmt *s, FILE *f){
+	if (!s || !f) return;
+}

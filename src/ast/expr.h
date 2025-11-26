@@ -82,6 +82,7 @@ Expr   *expr_copy(Expr *e);
 void    expr_resolve(Expr *e);
 Type   *expr_typecheck(Expr *e);
 bool	expr_is_literal(expr_t type);
+void	expr_codegen(Expr *e, FILE *f);
 
 
 #endif

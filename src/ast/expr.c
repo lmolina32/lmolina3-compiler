@@ -247,17 +247,17 @@ void expr_print_with_context(Expr *parent, Expr *child, int is_left, FILE *strea
 		Expr *expr_unwrapped = expr_unwrap_groups(child);
 
 		if (parent && expr_need_parens(parent, expr_unwrapped, is_left)){
-			fprintf(stderr,"(");
+			fprintf(stream,"(");
 			expr_print(expr_unwrapped, stream);
-			fprintf(stderr,")");
+			fprintf(stream,")");
 		} else {
 			expr_print(expr_unwrapped, stream);
 		}
 	} else {
 		if (parent && expr_need_parens(parent, child, is_left)){
-			fprintf(stderr,"(");
+			fprintf(stream,"(");
 			expr_print(child, stream);
-			fprintf(stderr,")");
+			fprintf(stream,")");
 		} else {
 			expr_print(child, stream);
 		}
@@ -1217,4 +1217,13 @@ bool expr_is_literal(expr_t type) {
            type == EXPR_STR_LIT ||
            type == EXPR_BOOL_LIT ||
            type == EXPR_BRACES;
+}
+
+/**
+ * Perform code generation on expr structure
+ * @param 	e		expr structure to perform code generation 
+ * @param 	f		file pointer to output code generation 
+ */
+void expr_codegen(Expr *e, FILE *f){
+	if (!e || !f) return;
 }

@@ -10,6 +10,10 @@
 
 typedef struct Type Type;
 
+/* Macros */
+
+#define 	MAX_NAME 256
+
 /* Structure */
 
 typedef enum {
@@ -38,5 +42,6 @@ extern const char *sym_to_str[SYMBOL_LEN];
 Symbol 	   *symbol_create(symbol_t kind, Type *type, const char *name);
 void		symbol_destroy(Symbol *s);
 Symbol     *symbol_copy(Symbol *s);
+const char *symbol_codegen(Symbol *s);
 
 #endif
