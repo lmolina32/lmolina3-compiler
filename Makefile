@@ -16,6 +16,7 @@ HEADERS=		$(wildcard src/main/*.h) \
 				$(wildcard src/parser/*.h) \
 				$(wildcard src/ast/*.h) \
 				$(wildcard src/symbol_table/*.h) \
+				$(wildcard src/codegen/*.h) \
 				$(wildcard src/library/*.h) \
 				$(wildcard src/utils/*.h) \
 				$(wildcard build/*.h) 
@@ -26,6 +27,7 @@ INCLUDES=		-Isrc/main \
 				-Isrc/parser \
 				-Isrc/ast \
 				-Isrc/symbol_table \
+				-Isrc/codegen \
 				-Isrc/library \
 				-Isrc/utils \
 				-Ibuild
@@ -44,6 +46,8 @@ OBJECTS=		build/bminor.o \
 				build/type.o \
 				build/symbol.o \
 				build/scope.o \
+				build/label.o \
+				build/scratch.o \
 				build/hash_table.o 
 
 BMINOR=			bin/bminor 
@@ -102,17 +106,22 @@ build/parser.c build/token.h: src/parser/parser.bison
 	@echo "Generating $@"
 	@$(YACC) -v --defines=build/token.h --output=build/parser.c $<
 
-# compile scanner 
+# Compile scanner 
 build/scanner.o: build/scanner.c build/token.h
 	@echo "Compiling $@"
 	@$(CC) $(INCLUDES) -c -o $@ $< -lfl 
 
-# compile parser 
+# Compile parser 
 build/parser.o: build/parser.c build/token.h $(HEADERS)
 	@echo "Compiling $@"
 	@$(CC) $(INCLUDES) -c -o $@ $<
 
-# testing 
+# Compile Codegen
+build/%.o: src/codegen/%.c $(HEADERS)
+	@echo "Compiling $@"
+	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+
+# Testing 
 
 test:	test-all
 
@@ -161,7 +170,7 @@ test-book: $(BMINOR)
 	@chmod +x ./test/book_test_cases/scripts/*.sh
 	@./test/scripts/run_book_tests.sh
 
-# clean 
+# Clean 
 
 clean:
 	@echo "Removing Objects"
