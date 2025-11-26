@@ -10,6 +10,7 @@ typedef struct Context Context;
 struct Context {
     int resolver_errors;
     int typechecker_errors;
+    int codegen_errors;
 };
 
 extern Context b_ctx;

@@ -25,9 +25,16 @@ int main(int argc, const char *argv[]){
         usage(argv[0]);
         return EXIT_FAILURE;
     }
+    
+    if (streq(argv[1], "--codegen") && argc != 4){
+        fprintf(stderr, "Failed not enough command line arguments\n");
+        usage(argv[0]);
+        return EXIT_FAILURE;
+    }
 
     const char *command = argv[argind++];
     const char *filename = argv[argind++];
+    const char *output_file = NULL;
 
     // parse commands
     if (streq(command, "--encode")){
@@ -41,7 +48,10 @@ int main(int argc, const char *argv[]){
     } else if (streq(command, "--resolve")){
         status = resolve(filename, true);
     } else if (streq(command, "--typecheck")){
-        status = typecheck(filename);
+        status = typecheck(filename, true);
+    } else if (streq(command, "--typecheck")){
+        output_file = argv[argind++]; 
+        status = codegen(filename, output_file);
     }else { 
         fprintf(stderr, "Failed: Unknown command '%s'\n", command);
         usage(argv[0]);
