@@ -28,7 +28,7 @@ void scope_enter(){
     Symbol_node *node = safe_calloc(sizeof(Symbol_node), 1);
     node->hashmap = h;
     node->next = curr;
-    if (stack.size > 3) { // globals + params layer + 1st local scope -> all other nested calls add them 
+    if (stack.size > 2) { // globals + params layer + 1st local scope -> all other nested calls add them 
         node->local = curr->local;
     }
     stack.top = node;
@@ -41,7 +41,7 @@ void scope_exit(){
     Symbol_node *curr = stack.top;
     stack.top = curr->next;
     stack.size -= 1;
-    if (stack.top && stack.size > 3){ // global + params + 1st layer scope 
+    if (stack.top && stack.size > 2){ // global + params + 1st layer scope 
         stack.top->local = curr->local;
     }
     hash_table_delete(curr->hashmap);
