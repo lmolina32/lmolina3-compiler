@@ -1,0 +1,5 @@
+main: function integer (a: integer, b: char, c: boolean, d: double) = {
+   aa: integer;
+   aa = 5 + 5;
+   return aa; 
+}

@@ -8,7 +8,7 @@ NORMAL=$(tput sgr0)
 echo -e "${BOLD}Running All Book Tests${NORMAL}"
 echo ""
 
-for test in parser printer typecheck; do
+for test in parser printer typecheck codegen; do
     echo -e "${BOLD}${test^} Book Tests${NORMAL} "           
     echo "------------------"
     ./test/book_test_cases/scripts/test_${test}.sh

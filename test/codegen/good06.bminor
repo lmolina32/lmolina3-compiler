@@ -1,0 +1,5 @@
+main: function integer () = {
+    a: integer = 20;
+    b: integer = 13;
+    return a / b;
+}

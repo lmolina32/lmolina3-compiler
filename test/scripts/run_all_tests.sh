@@ -8,7 +8,7 @@ NORMAL=$(tput sgr0)
 echo -e "${BOLD}Running All Tests${NORMAL}"
 echo ""
 
-for test in encode scanner parser printer resolver typechecker; do
+for test in encode scanner parser printer resolver typechecker codegen; do
     echo -e "${BOLD}${test^} Tests${NORMAL} "
     echo "------------------"
     ./test/scripts/test_${test}.sh
