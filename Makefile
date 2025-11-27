@@ -165,6 +165,12 @@ test-typechecker: $(BMINOR)
 	@chmod +x ./test/scripts/test_typechecker.sh
 	@./test/scripts/test_typechecker.sh
 
+test-codegen: $(BMINOR) 
+	@echo "Testing Codegen"
+	@echo "---------------------------------------"
+	@chmod +x ./test/scripts/test_codegen.sh
+	@./test/scripts/test_codegen.sh
+
 test-book: $(BMINOR)
 	@chmod +x ./test/scripts/run_book_tests.sh
 	@chmod +x ./test/book_test_cases/scripts/*.sh
@@ -181,9 +187,12 @@ clean:
 
 	@echo "Removing Test Logs"
 	@rm -f ./test/encode/*.out ./test/scanner/*.out ./test/parser/*.out ./test/printer/*.out
-	@rm -f ./test/resolver/*.out ./test/typechecker/*.out 
+	@rm -f ./test/resolver/*.out ./test/typechecker/*.out ./test/codegen/*.out
+	@rm -f ./test/codegen/*.s
 	@rm -f ./test/book_test_cases/parser/*.out ./test/book_test_cases/printer/*.out
-	@rm -f ./test/book_test_cases/typecheck/*.out
+	@rm -f ./test/book_test_cases/typecheck/*.out ./test/book_test_cases/codegen/*.out
+	@rm -f ./test/book_test_cases/codegen/*.s
+	@rm -f ./*.s
 
 	@echo "Removing bminor"
 	@rm -f $(BMINOR) $(OLD_BMINOR)
