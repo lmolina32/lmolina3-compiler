@@ -62,6 +62,8 @@ struct Expr {
 	double double_literal_value;	// double lit val (double & double scientific)
 	char *string_literal;			// string literal 
 	Symbol *symbol;					// include const, vars, and funcs 
+	int reg;						// scratch register associated with expr
+	const char *label;						// label associated with expression 
 };
 
 /* Functions */
