@@ -49,7 +49,7 @@ int main(int argc, const char *argv[]){
         status = resolve(filename, true);
     } else if (streq(command, "--typecheck")){
         status = typecheck(filename, true);
-    } else if (streq(command, "--typecheck")){
+    } else if (streq(command, "--codegen")){
         output_file = argv[argind++]; 
         status = codegen(filename, output_file);
     }else { 
