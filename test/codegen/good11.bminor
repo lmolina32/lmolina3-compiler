@@ -1,0 +1,5 @@
+main: function boolean () = {
+    b: boolean = false || true ;
+    c: boolean = b && b;
+    return c && !(false);
+}

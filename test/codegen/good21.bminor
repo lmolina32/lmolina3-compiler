@@ -1,0 +1,15 @@
+s: string = "hello";
+b: string = "hello2";
+
+
+main: function void () = {
+    print s, b, "\n";
+    s: string = "hello";
+    b: string = "hello1";
+    print s, b, "\n";
+    b = "hell";
+    print b, "\n";
+
+    b = "ehll";
+    print b, "\n";
+}

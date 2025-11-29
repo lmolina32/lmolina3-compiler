@@ -23,3 +23,5 @@ b2: char;
 b3: string;
 b4: boolean;
 b5: double;
+
+main: function void () = {}

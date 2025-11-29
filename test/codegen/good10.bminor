@@ -1,0 +1,7 @@
+add_val: function integer (a: integer) = {
+    return a + a;
+}
+
+main: function integer () = {
+    return add_val(5);
+}

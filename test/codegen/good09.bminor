@@ -1,0 +1,5 @@
+arr: array [5] integer = {1, 2, 3, 4, 5};
+
+main: function integer () = {
+    return #arr;
+}
