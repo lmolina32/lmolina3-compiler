@@ -14,6 +14,9 @@ typedef struct Symbol Symbol;
 
 /* Structure */
 
+extern const char *int_args[6]; 
+extern const char *double_args[8]; 
+
 typedef struct Decl Decl;
 
 struct Decl {
@@ -23,7 +26,8 @@ struct Decl {
 	Stmt *code; 		// code associated with decl (funcs)
 	Symbol *symbol;     // include constants, vars, and funcs 
 	Decl *next;			// next decl (ptr)
-	int owner;
+	int owner;			// flag for whose owner of the symbol 
+	int local;			// count of local params 
 };
 
 /* Functions */

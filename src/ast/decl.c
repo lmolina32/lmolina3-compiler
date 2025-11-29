@@ -1,6 +1,7 @@
 /* decl.c: decl structure functions */
 
 #include "bminor_context.h"
+#include "encoder.h"
 #include "decl.h"
 #include "expr.h"
 #include "param_list.h"
@@ -9,10 +10,17 @@
 #include "type.h"
 #include "scope.h"
 #include "utils.h"
+#include "label.h"
+#include "scratch.h"
+#include "str_lit.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
+/* Globals */
+const char *int_args[6] = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+const char *double_args[8] = {"%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7"};
 
 /* Functions */
 
@@ -218,7 +226,9 @@ static void decl_resolve_functions(Decl *d, Symbol *sym){
         scope_enter();
         d->code->func_sym = sym;
         stmt_resolve(d->code);
+        d->local = scope_lookup_which();
         scope_exit();
+        d->local -= scope_lookup_which();
         scope_exit();
     }
 }
@@ -426,4 +436,230 @@ void decl_typecheck(Decl *d){
  */
 void decl_codegen(Decl *d, FILE *f){
     if (!d || !f) return;
+    // case 1: code generation on function 
+    if (d->type->kind == TYPE_FUNCTION){
+        Param_list *params = d->type->params;
+        int count = 0;
+        while (params){
+            params = params->next;
+            count++;
+        }
+        // case 1a: function with too many arguments (more than 6) -> failure not implemented 
+        if (count > 6){
+            fprintf(stderr, "codegen error: Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", d->name);
+            fprintf(f, "codegen error: Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", d->name);
+            exit(EXIT_FAILURE);
+        }
+
+        // case 1b: function return type never resolved -> failure cannot implement
+        if (d->type->subtype->kind == TYPE_AUTO){
+            fprintf(stderr, "codegen error: Auto type never resolved\n");
+            fprintf(f, "codegen error: Auto type never resolved\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if (d->code){
+            if (!b_ctx.text_flag) {
+                b_ctx.data_flag = false;
+                b_ctx.text_flag = true;
+                fprintf(f, ".text\n");
+            }
+            fprintf(f, ".global %s\n"
+                        "%s:\n", d->name, d->name);
+            // save stack ptr 
+            fprintf(f, "\tPUSHQ %%rbp\n"
+                       "\tMOVQ  %%rsp, %%rbp\n\n");
+
+            // save arguments 
+            int int_count = 0;
+            int double_count = 0;
+            params = d->type->params;
+            while (params){
+                if (params->type->kind == TYPE_DOUBLE){
+                    fprintf(f, "\tSUBQ $16, %%rsp\n"
+                               "\tMOVDQU %s, (%%rsp)\n", double_args[int_count++]);
+                } else {
+                    fprintf(f, "\tPUSHQ %s\n", int_args[double_count++]);
+                }
+                params = params->next;
+            }
+            
+            // create space for locals 
+            fprintf(f, "\n\tSUBQ  $%d, %%rsp\n\n", d->local*8);
+            // save callee-saved registers
+            fprintf(f, "\tPUSHQ %%rbx\n"
+                       "\tPUSHQ %%r12\n"
+                       "\tPUSHQ %%r13\n"
+                       "\tPUSHQ %%r14\n"
+                       "\tPUSHQ %%r15\n\n");
+
+            stmt_codegen(d->code, f);
+
+            fprintf(f, ".%s_epilogue:\n", d->name);
+            // restore stack 
+            fprintf(f, "\tPOPQ %%r15\n"
+                       "\tPOPQ %%r14\n"
+                       "\tPOPQ %%r13\n"
+                       "\tPOPQ %%r12\n"
+                       "\tPOPQ %%rbx\n\n");
+
+            // restore stack pointer, recover base pointer, and return call
+            fprintf(f, "\tMOVQ %%rbp, %%rsp\n"
+                       "\tPOPQ %%rbp\n"
+                       "\tRET\n");
+        }
+
+
+    // case 2: code generation on variable declarations
+    } else {
+        // case 2a: declaration is a multi-dimensional array -> failure not implemented 
+        if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && 
+            (d->type->subtype->kind == TYPE_ARRAY || d->type->subtype->kind == TYPE_CARRAY)){
+            fprintf(stderr, "codegen error: Multi-dimensional arrays are not implemented\n");
+            fprintf(f, "codegen error: Multi-dimensional arrays are not implemented\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // case 2b: local declaration is an array -> failure not implemented 
+        if (d->symbol->kind == SYMBOL_LOCAL && (d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
+            fprintf(stderr, "codegen error: Arrays at local scope are not implemented\n");
+            fprintf(f, "codegen error: Arrays at local scope are not implemented\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // case 2c: auto never resolved -> failure cannot implement 
+        if (d->type->kind == TYPE_AUTO || ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && (d->type->subtype->kind == TYPE_AUTO))){
+            fprintf(stderr, "codegen error: Auto type never resolved\n");
+            fprintf(f, "codegen error: Auto type never resolved\n");
+            exit(EXIT_FAILURE);
+        }
+
+        symbol_t sym_type = d->symbol->kind;
+        //char es[BUFSIZ] = {0};
+        Expr *dummy_e = NULL;
+        type_t subtype = 0;
+        if (sym_type == SYMBOL_GLOBAL && !b_ctx.data_flag){
+            b_ctx.data_flag = true;
+            b_ctx.text_flag = false;
+            fprintf(f, ".data\n");
+        }
+        switch (d->type->kind){
+            // TODO: add for non local variables 
+            case TYPE_BOOLEAN:
+            case TYPE_INTEGER:
+            case TYPE_CHARACTER:
+                if (sym_type == SYMBOL_GLOBAL){
+                    fprintf(f, "%s:\n\t.quad %d\n", d->name, d->value ? d->value->literal_value : 0);
+                } else {
+                    if (d->value){
+                        expr_codegen(d->value, f);
+                        fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
+                        scratch_free(d->value->reg);
+                    } else {
+                        fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
+                    }
+                }
+				break;
+            case TYPE_DOUBLE:
+                if (sym_type == SYMBOL_GLOBAL){
+                    fprintf(f, "%s:\n\t.double %lf\n", d->name, d->value ? d->value->double_literal_value : 0.0);
+                } else {
+                    if (d->value){
+                        expr_codegen(d->value, f);
+                        fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
+                        scratch_free(d->value->reg);
+                    } else {
+                        fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
+                    }
+                }
+				break;
+            case TYPE_STRING:
+                // if (sym_type == SYMBOL_GLOBAL){
+			    //     string_encode(d->value ? d->value->string_literal : "\0", es);
+                //     fprintf(f, "%s:\n\t.string %s\n", d->name, es);
+                // } else {
+                //     if (d->value){
+                //         expr_codegen(d->value, f);
+                //         fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
+                //         scratch_free(d->value->reg);
+                //     } else {
+                //         fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
+                //     }
+                // }
+                if (sym_type == SYMBOL_GLOBAL){
+                    if (d->value){
+                        if (d->value->kind == EXPR_IDENT){
+                            d->symbol->str_lit = d->value->symbol->str_lit;
+                        } else {
+                            int label = string_label_create();
+                            d->symbol->str_lit = string_alloc(d->symbol,  d->value->string_literal, string_label_name(label));
+                        }
+                    } else {
+                        int label = string_label_create();
+                        d->symbol->str_lit = string_alloc(d->symbol, "", string_label_name(label));
+                    }
+                } else {
+                    if (d->value){
+                        if (!d->symbol->str_lit){
+                            if (d->value->kind == EXPR_IDENT){
+                                d->symbol->str_lit = d->value->symbol->str_lit;
+                            } else {
+                                int label = string_label_create();
+                                d->symbol->str_lit = string_alloc(d->symbol,  d->value->string_literal, string_label_name(label));
+                            }
+                        }
+                        d->value->symbol = d->symbol;
+                        expr_codegen(d->value, f);
+                        fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
+                        scratch_free(d->value->reg);
+                    } else {
+                        if (!d->symbol->str_lit){
+                            int label = string_label_create();
+                            d->symbol->str_lit = string_alloc(d->symbol, "", string_label_name(label));
+                        }
+                        fprintf(f, "\tMOVQ $%s, %s\n", d->symbol->str_lit->label, symbol_codegen(d->symbol));
+                    }
+                }
+				break;
+            case TYPE_ARRAY:
+            case TYPE_CARRAY:
+                // TODO: add array of strings
+                if (sym_type == SYMBOL_GLOBAL){
+                    subtype = d->type->subtype->kind;
+                    fprintf(f, "%s:\n\t.%s", d->name, subtype == TYPE_DOUBLE ? "double" : "quad");
+                    // case 2c-1: array is initialized, walk the ast for values 
+                    if (d->value){
+                        dummy_e = d->value->right; 
+                        if (d->type->subtype->kind == TYPE_DOUBLE){
+                            fprintf(f, " %lf", dummy_e->left->double_literal_value);
+                        } else {
+                            fprintf(f, " %d", dummy_e->left->literal_value);
+                        }
+                        dummy_e = dummy_e->right;
+                        while (dummy_e){
+                            if (d->type->subtype->kind == TYPE_DOUBLE){
+                                fprintf(f, ", %lf", dummy_e->left->double_literal_value);
+                            } else {
+                                fprintf(f, ", %d", dummy_e->left->literal_value);
+                            }
+                            dummy_e = dummy_e->right;
+                        }
+                        fprintf(f, "\n");
+                    // case 2c-2: array is not initialized, set all values to 0;
+                    } else {
+                        fprintf(f, " %s", subtype == TYPE_DOUBLE ? "0.0": "0");
+                        for (int i = 1; i < d->type->arr_len->literal_value; i++){
+                            fprintf(f, ", %s", subtype == TYPE_DOUBLE ? "0.0": "0");
+                        }
+                        fprintf(f, "\n");
+                    }
+                }
+				break;
+            default:
+                fprintf(stderr, "codegen error: Invalid type in variable declaration\n");
+                exit(EXIT_FAILURE);
+                break;
+        }
+    }
+    decl_codegen(d->next, f);
 }
