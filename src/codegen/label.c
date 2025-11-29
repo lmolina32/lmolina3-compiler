@@ -1,12 +1,14 @@
 /* label.h: create labels for codegen */
 
 #include "label.h"
+#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 /* Globals */
 static int label_count = 0;
+static int string_count = 0;
 
 /* Functions */
 
@@ -26,5 +28,24 @@ int label_create(){
 const char *label_name(int label){
     static char name[MAX_NAME] = {0};
     sprintf(name, ".L%d", label);
+    return name;
+}
+
+/**
+ * Increates string label global count and returns the number 
+ * @return  integer corresponding to the current label number 
+ */
+int string_label_create(){
+    return string_count++;
+}
+
+/**
+ * Takes in string label number, then creates and returns the name of the label 
+ * @param   label       Integer for the specified label to create 
+ * @return  static string corresponding to the label created 
+ */
+const char *string_label_name(int label){
+    static char name[MAX_NAME] = {0};
+    sprintf(name, "str%d", label);
     return name;
 }

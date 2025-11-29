@@ -5,12 +5,11 @@
 
 #include <stdio.h>
 
-/* Globals */
-#define     MAX_NAME 1<<8
-
 /* Functions */
 
 int         label_create();
 const char *label_name(int label);
+int         string_label_create();
+const char *string_label_name(int label);
 
 #endif 
