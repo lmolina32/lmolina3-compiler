@@ -48,6 +48,7 @@ OBJECTS=		build/bminor.o \
 				build/scope.o \
 				build/label.o \
 				build/scratch.o \
+				build/str_lit.o \
 				build/hash_table.o 
 
 BMINOR=			bin/bminor 
@@ -191,7 +192,7 @@ clean:
 	@rm -f ./test/codegen/*.s
 	@rm -f ./test/book_test_cases/parser/*.out ./test/book_test_cases/printer/*.out
 	@rm -f ./test/book_test_cases/typecheck/*.out ./test/book_test_cases/codegen/*.out
-	@rm -f ./test/book_test_cases/codegen/*.s
+	@rm -f ./test/book_test_cases/codegen/*.s ./test/book_test_cases/codegen/*.o
 	@rm -f ./*.s
 
 	@echo "Removing bminor"
