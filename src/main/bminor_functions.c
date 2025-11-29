@@ -12,6 +12,7 @@
 #include "symbol.h"
 #include "type.h"
 #include "scope.h"
+#include "str_lit.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -257,7 +258,10 @@ bool codegen(const char *file_name, const char *file_output){
         FILE *output = safe_fopen(file_output, "w");
         if (!output) return false; 
         decl_codegen(root, output);
+        string_print(output);
+
         exit_code = b_ctx.codegen_errors != 0 ? false : true;
+        fclose(output);
     } else {
         fprintf(stderr, "Typechecker Error\n");
         exit_code = false;
