@@ -74,11 +74,11 @@ Symbol* symbol_copy(Symbol *s){
 const char *symbol_codegen(Symbol *s){
     static char name[MAX_NAME] = {0};
     switch (s->kind){
-		case SYMBOL_LOCAL:
+		case SYMBOL_GLOBAL:
             sprintf(name, s->name);
             return name;
 		case SYMBOL_PARAM:
-		case SYMBOL_GLOBAL:
+		case SYMBOL_LOCAL:
             sprintf(name, "-%d(%%rbp)", 8 * (1 + s->which));
             return name;
         default:

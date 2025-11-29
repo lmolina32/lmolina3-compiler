@@ -9,10 +9,7 @@
 /* Forward Declaration */
 
 typedef struct Type Type;
-
-/* Macros */
-
-#define 	MAX_NAME 256
+typedef struct String_lit String_lit;
 
 /* Structure */
 
@@ -32,6 +29,7 @@ struct Symbol {
 	int which;					// The positional location when the Decl was defined
 	int func_decl;				// Prototype flag: 1-> Prototype, 0-> Not Prototype 
 	Symbol *prototype_def;		// Prototype definition symbol struct 
+	String_lit *str_lit;		// String node associated with symbol	
 };
 
 
