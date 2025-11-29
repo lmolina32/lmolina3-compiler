@@ -3,9 +3,12 @@
 #include "bminor_context.h"
 
 #include <stdio.h>
+#include <stdbool.h>
 
 Context b_ctx = {
     .resolver_errors = 0,
     .typechecker_errors = 0,
     .codegen_errors = 0,
+    .data_flag = false,
+    .text_flag = false,
 };
