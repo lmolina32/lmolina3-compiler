@@ -13,13 +13,13 @@
 int scratch_registers[MAX_SCRATCH_REGISTERS] = {0};
 
 static const char *register_names[MAX_SCRATCH_REGISTERS] = {
-    "%%rbx",
-    "%%r10",
-    "%%r11",
-    "%%r12",
-    "%%r13",
-    "%%r14",
-    "%%r15"
+    "%rbx",
+    "%r10",
+    "%r11",
+    "%r12",
+    "%r13",
+    "%r14",
+    "%r15"
 };
 
 /* Functions */
