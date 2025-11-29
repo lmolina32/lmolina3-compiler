@@ -102,3 +102,11 @@ Symbol *scope_lookup_current( const char *name ){
     return (Symbol *)hash_table_lookup(stack.top->hashmap, name);
 }
 
+
+/**
+ * Function returns the current which value + 1
+ * @return current which value 
+ */
+int scope_lookup_which(){
+    return stack.top->local;
+}
