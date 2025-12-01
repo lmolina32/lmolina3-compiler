@@ -22,11 +22,9 @@ String_head string_ll = {
  * @param   lit     string literal 
  * @param   label   label associated with string literal 
  */
-String_lit *string_alloc(Symbol *s, const char *literal, const char *label){
+String_lit *string_alloc(const char *literal, const char *label){
     String_lit *node = safe_calloc(sizeof(String_lit), 1);
     node->label = safe_strdup(label);
-    
-    node->sym = s;
     node->literal = safe_strdup(literal);
 
     if (!string_ll.head && !string_ll.tail){

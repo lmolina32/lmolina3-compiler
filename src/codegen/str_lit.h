@@ -16,7 +16,6 @@ typedef struct String_lit String_lit;
 struct String_lit {
     char *literal;
     char *label;
-    Symbol *sym;
     String_lit *next;    
 };
 
@@ -33,7 +32,7 @@ extern String_head string_ll;
 
 /* Functions */
 
-String_lit  *string_alloc(Symbol *s, const char *literal, const char *label);
+String_lit  *string_alloc(const char *literal, const char *label);
 void         string_lit_destroy();
 void         string_print(FILE *f);
 
