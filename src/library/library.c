@@ -43,6 +43,10 @@ void print_character(char c){
 	printf("%c", c);
 }
 
+void print_carray(long arr[]){
+	printf("%p", arr);
+}
+
 void print_array_str(long arr[], long size){
 	printf("array: {\"%s\"", arr[1]);
 	for (long i = 2; i < size + 1; i++){

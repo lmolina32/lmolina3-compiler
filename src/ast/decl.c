@@ -650,7 +650,9 @@ void decl_codegen(Decl *d, FILE *f){
                 if (sym_type == SYMBOL_GLOBAL){
                     type_t subtype = d->type->subtype->kind;
                     fprintf(f, "%s:\n\t.%s", d->name, "quad");
-                    fprintf(f, " %d,",d->type->arr_len->literal_value);
+                    if (d->type->kind == TYPE_ARRAY){
+                        fprintf(f, " %d,",d->type->arr_len->literal_value);
+                    }
                     // case 2c-1: array is initialized, walk the ast for values 
                     if (d->value){
                         int label;

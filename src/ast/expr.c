@@ -1567,7 +1567,9 @@ void expr_codegen(Expr *e, FILE *f){
 			} else {
 				fprintf(f, "\tMOVQ %s, %s\n", symbol_codegen(e->left->symbol), scratch_name(e->reg));
 			}
-			fprintf(f, "\tINCQ %s\n", scratch_name(e->right->reg));
+			if (e->left->symbol->type->kind == TYPE_ARRAY){
+				fprintf(f, "\tINCQ %s\n", scratch_name(e->right->reg));
+			}
 			fprintf(f, "\tMOVQ (%s, %s, 8), %s\n", scratch_name(e->reg), scratch_name(e->right->reg), scratch_name(e->reg));
 			scratch_free(e->right->reg);
 			break;
@@ -1604,7 +1606,7 @@ void expr_codegen(Expr *e, FILE *f){
 			e->reg = scratch_alloc();
 			if (e->symbol->type->kind == TYPE_STRING && e->symbol->str_lit){
 				fprintf(f, "\tMOVQ $%s, %s\n", e->symbol->str_lit->label, scratch_name(e->reg));
-			} else if (e->symbol->type->kind == TYPE_ARRAY || e->symbol->type->kind == TYPE_CARRAY){
+			} else if (e->symbol->kind == SYMBOL_GLOBAL && (e->symbol->type->kind == TYPE_ARRAY || e->symbol->type->kind == TYPE_CARRAY)){
 				fprintf(f, "\tMOVQ $%s, %s\n", symbol_codegen(e->symbol), scratch_name(e->reg));
 			} else {
 				fprintf(f, "\tMOVQ %s, %s\n", symbol_codegen(e->symbol), scratch_name(e->reg));
