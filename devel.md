@@ -140,3 +140,24 @@ bminor/
   - prompt: When building a compiler for a toy language that employs carrays, arrays, boolean, integer, string, char and auto what are corner cases that you must considered when performing typechecking? What are the different common practices when handling these type of checks and how should one format the error messages to be clear and concise?
 - The typechecker is easy if you have the right idea down. Having the book cover some of the cases and what we did in class gave me a good starting point in writing the typechecker. Other than that the easiest part was writing the code when you know what you needed to test and what edge cases you needed to cover. I also thought that the general structure was easy to come up with since this is the third deliverable where we traverse the AST, so I had no questions there. Lastly, building the general structure (e.g switch cases for STMTS and EXPRS, decl functions and non-functions) was pretty clear and easy to set up.
 - the hardest part of the typechecker was all the different cases you had to consider when building it. It was hard to think of the cases to begin with but a lot of code overlapped especially in the expr_typecheck. But it became more tricky and harder to handle and think of different corner cases for when you introduce auto. I think this was the trickiest part of the typechecker and coming up with different cases for all the different operators, functions, decls and statements.
+
+## Code Generation
+
+### Notes
+
+- Due to the large number of X86-64 registers, you may use a simple non-spilling register allocator, and fail with an “out of registers” error on really complicated nested expressions.
+  Calls to functions with more than six arguments may fail with a “too many arguments” error.
+- Arrays at local scope and multi-dimensional arays may fail with an error of “not implemented”. (However, you must support global one-dimensional arrays (and carrays) and passing arrays (and carrays) as function arguments.)
+- Floating point types may fail code generation with an “floating point not not supported” error.
+- **All the above requirements are upheld in the code generation**
+- Note: arrays are able to be printed. Decls of Array type print out the contents since the length of the array is stored at the beginning. Carrays cannot be printed, rather what is printed is the address of the carray. This was done because there was no way of determining the size of the carray when using it in argv.
+
+### Structure
+
+- `src/codegen` was created which is where the support libraries of the code generation live. The addition not included in class is `str_lit`. This library creates a linked list of all the string literals in the program.
+
+### Development of code
+
+- No AI was used for the development of the code.
+- The parts of the code to get easy were the parts provided in class and in the book. These were easy to get started with and see how the general structure of the code generation would take place. Additionally, the simplifying of requirements greatly helped in reducing the load of building the code generation. While there was still a lot of moving pieces and thought had to be poured in to solve all the different cases. The removing of some of the features made the code generation more manageable than overwhelming. Additionally, once I got a good understand of the x86 structure and what is expected, most of expr_codegen, stmt_codegen, and decl_codegen was straight forward and easy to understand.
+- I think the hardest and most challenging parts of the code were the arrays and the strings. This is because with arrays you weren't containing the values but rather the address of the array. Then you had to know when you had to index into the array and what index represented. This took some time to figure out especially since type arrays have the length at the beginning of the address. Once arrays were figured out the last challenge was strings. I had to come up with a way to put all the string literals in the .data segment of the x86 file. This was easy to think of -> I thought just add them to a linked list as you code generate the file then add them to the .data segment. The challenging part was keeping track of all the string literals and then placing the correct labels in place of the string literals that were placed into the registers. This took time to figure out and find the most efficient way of solving this. But once I got the general idea, it was pretty simple to implement besides the common segfault.
