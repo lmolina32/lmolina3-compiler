@@ -1,6 +1,6 @@
 main: function integer () = {
-    print 10, 100, 200;
-    print true, true, false;
-    print 'c', 'a', 'd', 'c';
+    print 10, 100, 200, '\n';
+    print true, true, false, '\n';
+    print 'c', 'a', 'd', 'c', '\n';
     return 0;
 }

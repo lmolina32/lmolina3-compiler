@@ -1,0 +1,11 @@
+arr: array [5] integer = {1, 2, 3, 4, 5};
+arb: array [5] boolean = {true, true, false, false, true};
+arc: array [5] char  = {'a', 'b','c', 'd', 'e'};
+ars: array [5] string = {"hello" , "world", "my", "name", "leo"};
+
+main: function void () = {
+    print arr, '\n';
+    print arb, '\n';
+    print arc, '\n';
+    print ars, '\n';
+}

@@ -23,7 +23,8 @@ do
 		# Run the program
 		./test/codegen/good$number.out &> $testfile.program.out
 		run_status=$?
-		echo -e "\nexit status $run_status" >> $testfile.program.out
+		echo -e "\n---------------------------------------" >> $testfile.program.out 
+		echo -e "exit status $run_status" >> $testfile.program.out
 
 	else
 		echo -e "$testfile failure ${RED}(INCORRECT)${NC} "

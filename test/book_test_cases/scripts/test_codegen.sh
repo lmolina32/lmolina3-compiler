@@ -23,7 +23,8 @@ do
 		# Run the program
 		./test/book_test_cases/codegen/good$number.out &> $testfile.program.out
 		run_status=$?
-		echo -e "\nexit status $run_status" >> $testfile.program.out
+		echo -e "\n------------------------------" >> $testfile.program.out
+		echo -e "exit status $run_status" >> $testfile.program.out
 
 	else
 		echo -e "$testfile failure ${RED}(INCORRECT)${NC} "
@@ -66,7 +67,8 @@ then
 	"$OUT" &> "$BASE/bounce.bminor.program.out"
 	run_status=$?
 
-	echo -e "\nexit status $run_status" >> "$BASE/bounce.bminor.program.out"
+	echo -e "\n-----------------------" >> "$BASE/bounce.bminor.program.out"
+	echo -e "exit status $run_status" >> "$BASE/bounce.bminor.program.out"
 
 else
 	echo -e "./test/book_test_cases/codegen/bounce.bminor failure ${RED}(INCORRECT)${NC}"
@@ -87,7 +89,8 @@ then
 	# Run the program
 	./test/book_test_cases/codegen/maze.code.out &> ./test/book_test_cases/codegen/maze.bminor.program.out
 	run_status=$?
-	echo -e "\nexit status $run_status" >> ./test/book_test_cases/codegen/maze.bminor.program.out
+	echo -e "\n------------------------------" >> ./test/book_test_cases/codegen/maze.bminor.program.out
+	echo -e "exit status $run_status" >> ./test/book_test_cases/codegen/maze.bminor.program.out
 
 else
 	echo -e "./test/book_test_cases/codegen/maze.bminor failure ${RED}(INCORRECT)${NC} "
@@ -108,7 +111,8 @@ then
 	# Run the program
 	./test/book_test_cases/codegen/fibonnacci.code.out &> ./test/book_test_cases/codegen/fibonnacci.bminor.program.out
 	run_status=$?
-	echo -e "\nexit status $run_status" >> ./test/book_test_cases/codegen/fibonnacci.bminor.program.out
+	echo -e "\n------------------------" >> ./test/book_test_cases/codegen/fibonnacci.bminor.program.out
+	echo -e "exit status $run_status" >> ./test/book_test_cases/codegen/fibonnacci.bminor.program.out
 
 else
 	echo -e "./test/book_test_cases/codegen/fibonnacci.bminor failure ${RED}(INCORRECT)${NC} "
