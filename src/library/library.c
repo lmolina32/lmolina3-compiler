@@ -31,10 +31,6 @@ void print_integer(long x){
 	printf("%ld", x);
 }
 
-void print_double(double x){
-	printf("%lf", x);
-}
-
 void print_string(const char *s){
 	printf("%s", s);
 }
@@ -43,8 +39,40 @@ void print_boolean(int b){
 	printf("%s", b ? "true" : "false");
 }
 
-void print_character( char c ){
+void print_character(char c){
 	printf("%c", c);
+}
+
+void print_array_str(long arr[], long size){
+	printf("array: {\"%s\"", arr[1]);
+	for (long i = 2; i < size + 1; i++){
+		printf(", \"%s\"", arr[i]);
+	}
+	printf("} ");
+}
+
+void print_array_int(long arr[], long size){
+	printf("array: {%d", arr[1]);
+	for (long i = 2; i < size + 1; i++){
+		printf(", %d", arr[i]);
+	}
+	printf("} ");
+}
+
+void print_array_bool(long arr[], long size){
+	printf("array: {%s", arr[1] ? "true" : "false");
+	for (long i = 2; i < size + 1; i++){
+		printf(", %s", arr[i] ? "true" : "false");
+	}
+	printf("} ");
+}
+
+void print_array_char(long arr[], long size){
+	printf("array: {'%c'", arr[1]);
+	for (long i = 2; i < size + 1; i++){
+		printf(", '%c'", arr[i]);
+	}
+	printf("} ");
 }
 
 long integer_power(long x, long y){
@@ -55,4 +83,3 @@ long integer_power(long x, long y){
 	}
 	return result;
 }
-
