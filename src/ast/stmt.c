@@ -398,13 +398,31 @@ void stmt_codegen(Stmt *s, FILE *f){
 						res_e = expr_create(EXPR_FUNC, expr_create_name("print_integer"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
 						break;
 					case TYPE_DOUBLE:
-						res_e = expr_create(EXPR_FUNC, expr_create_name("print_double"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+						fprintf(stderr, "codegen error: Printing type double that is not supported\n");
+						exit(EXIT_FAILURE);
 						break;
 					case TYPE_STRING:
 						res_e = expr_create(EXPR_FUNC, expr_create_name("print_string"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
 						break;
 					case TYPE_ARRAY:
 					case TYPE_CARRAY:
+						switch (dummy_e->left->symbol->type->subtype->kind){
+							case TYPE_BOOLEAN:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_bool"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								break;
+							case TYPE_INTEGER:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_int"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								break;
+							case TYPE_CHARACTER:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_char"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								break;
+							case TYPE_STRING:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_str"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								break;
+							default:
+								break;
+						}
+						break;
 					case TYPE_VOID:
 					case TYPE_AUTO:
 					case TYPE_FUNCTION:
@@ -416,6 +434,8 @@ void stmt_codegen(Stmt *s, FILE *f){
 				scratch_free(res_e->reg);
 				dummy_e = dummy_e->right;
 				type_destroy(dummy_t);
+				res_e->right->left = NULL;
+				expr_destroy(res_e);
 			}
 			break;
 		case STMT_RETURN:
