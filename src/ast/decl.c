@@ -19,8 +19,8 @@
 #include <stdbool.h>
 
 /* Globals */
-const char *int_args[6] = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
-const char *double_args[8] = {"%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7"};
+const char *int_args[MAX_INT_ARGS] = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+const char *double_args[MAX_DOUBLE_ARGS] = {"%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7"};
 
 /* Functions */
 
@@ -441,6 +441,23 @@ void decl_codegen(Decl *d, FILE *f){
         Param_list *params = d->type->params;
         int count = 0;
         while (params){
+            type_t type_param = params->type->kind;
+            if (type_param == TYPE_DOUBLE){
+                fprintf(stderr, "codegen error: Double type not supported\n");
+                fprintf(f, "codegen error: Double type not supported\n");
+                exit(EXIT_FAILURE);
+            } else if (type_param == TYPE_ARRAY || type_param == TYPE_CARRAY){
+                type_param = params->type->subtype->kind;
+                if (type_param == TYPE_DOUBLE){
+                    fprintf(stderr, "codegen error: Double type not supported for arrays \n");
+                    fprintf(f, "codegen error: Double type not supported for arrays\n");
+                    exit(EXIT_FAILURE);
+                } else if (type_param == TYPE_ARRAY || type_param == TYPE_CARRAY){
+                    fprintf(stderr, "codegen error: Multi-dimensional arrays are not supported\n");
+                    fprintf(f, "codegen error: Multi-dimensional arrays are not supported\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
             params = params->next;
             count++;
         }
@@ -458,6 +475,11 @@ void decl_codegen(Decl *d, FILE *f){
             exit(EXIT_FAILURE);
         }
 
+        if (d->type->subtype->kind == TYPE_DOUBLE){
+            fprintf(stderr, "codegen error: Double type not supported\n");
+            fprintf(f, "codegen error: Double type not supported\n");
+            exit(EXIT_FAILURE);
+        }
         if (d->code){
             if (!b_ctx.text_flag) {
                 b_ctx.data_flag = false;
@@ -515,8 +537,8 @@ void decl_codegen(Decl *d, FILE *f){
         // case 2a: declaration is a multi-dimensional array -> failure not implemented 
         if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && 
             (d->type->subtype->kind == TYPE_ARRAY || d->type->subtype->kind == TYPE_CARRAY)){
-            fprintf(stderr, "codegen error: Multi-dimensional arrays are not implemented\n");
-            fprintf(f, "codegen error: Multi-dimensional arrays are not implemented\n");
+            fprintf(stderr, "codegen error: Multi-dimensional arrays are not supported\n");
+            fprintf(f, "codegen error: Multi-dimensional arrays are not supported\n");
             exit(EXIT_FAILURE);
         }
 
@@ -534,10 +556,21 @@ void decl_codegen(Decl *d, FILE *f){
             exit(EXIT_FAILURE);
         }
 
+        if (d->type->kind == TYPE_DOUBLE){
+            fprintf(stderr, "codegen error: Double type not supported\n");
+            fprintf(f, "codegen error: Double type not supported\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && 
+            d->type->subtype->kind == TYPE_DOUBLE){
+            fprintf(stderr, "codegen error: Double type not supported for arrays \n");
+            fprintf(f, "codegen error: Double type not supported for arrays\n");
+            exit(EXIT_FAILURE);
+        }
+
         symbol_t sym_type = d->symbol->kind;
-        //char es[BUFSIZ] = {0};
         Expr *dummy_e = NULL;
-        type_t subtype = 0;
         if (sym_type == SYMBOL_GLOBAL && !b_ctx.data_flag){
             b_ctx.data_flag = true;
             b_ctx.text_flag = false;
@@ -548,75 +581,65 @@ void decl_codegen(Decl *d, FILE *f){
             case TYPE_BOOLEAN:
             case TYPE_INTEGER:
             case TYPE_CHARACTER:
+                // case 1: decl is global variable 
                 if (sym_type == SYMBOL_GLOBAL){
                     fprintf(f, "%s:\n\t.quad %d\n", d->name, d->value ? d->value->literal_value : 0);
+                // case 2: decl is local variable 
                 } else {
+                    // case 2a: local var has assignment -> codegen expr then assign to ident;
                     if (d->value){
                         expr_codegen(d->value, f);
                         fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
                         scratch_free(d->value->reg);
+                    // case 2b: local var has no assignment -> assign 0
                     } else {
                         fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
                     }
                 }
 				break;
             case TYPE_DOUBLE:
-                if (sym_type == SYMBOL_GLOBAL){
-                    fprintf(f, "%s:\n\t.double %lf\n", d->name, d->value ? d->value->double_literal_value : 0.0);
-                } else {
-                    if (d->value){
-                        expr_codegen(d->value, f);
-                        fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
-                        scratch_free(d->value->reg);
-                    } else {
-                        fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
-                    }
-                }
+                fprintf(stderr, "codegen error: Double type not supported\n");
+                fprintf(f, "codegen error: Double type not supported\n");
+                exit(EXIT_FAILURE);
 				break;
             case TYPE_STRING:
-                // if (sym_type == SYMBOL_GLOBAL){
-			    //     string_encode(d->value ? d->value->string_literal : "\0", es);
-                //     fprintf(f, "%s:\n\t.string %s\n", d->name, es);
-                // } else {
-                //     if (d->value){
-                //         expr_codegen(d->value, f);
-                //         fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
-                //         scratch_free(d->value->reg);
-                //     } else {
-                //         fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
-                //     }
-                // }
+                // case 1: decl is global variable 
                 if (sym_type == SYMBOL_GLOBAL){
+                    // case 1a: string decl has expression 
                     if (d->value){
+                        // case 1a-1: expression is identifier, assign str_lit to decl
                         if (d->value->kind == EXPR_IDENT){
                             d->symbol->str_lit = d->value->symbol->str_lit;
+                        // case 1a-2: expression is literal -> create string label -> allocated str_lit to decl
                         } else {
                             int label = string_label_create();
                             d->symbol->str_lit = string_alloc(d->symbol,  d->value->string_literal, string_label_name(label));
                         }
+                    // case 1b: string decl has no expression -> create string label for empty string -> alloc str_lit to decl
                     } else {
                         int label = string_label_create();
                         d->symbol->str_lit = string_alloc(d->symbol, "", string_label_name(label));
                     }
+                // case 2: decl is local variable 
                 } else {
+                    // case 2a: string decl has expression
                     if (d->value){
-                        if (!d->symbol->str_lit){
-                            if (d->value->kind == EXPR_IDENT){
-                                d->symbol->str_lit = d->value->symbol->str_lit;
-                            } else {
-                                int label = string_label_create();
-                                d->symbol->str_lit = string_alloc(d->symbol,  d->value->string_literal, string_label_name(label));
-                            }
+                        // case 2a-1: right side is identifier -> pass str_lit of right side to decl 
+                        if (d->value->kind == EXPR_IDENT){
+                            d->symbol->str_lit = d->value->symbol->str_lit;
+                        // case 2a-2: right side is string literal -> create label + str_lit 
+                        } else {
+                            int label = string_label_create();
+                            d->symbol->str_lit = string_alloc(d->symbol,  d->value->string_literal, string_label_name(label));
                         }
                         d->value->symbol = d->symbol;
                         expr_codegen(d->value, f);
                         fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
                         scratch_free(d->value->reg);
+                    // case 2b: string decl has no expression -> create label + str_lit 
                     } else {
-                        if (!d->symbol->str_lit){
-                            int label = string_label_create();
-                            d->symbol->str_lit = string_alloc(d->symbol, "", string_label_name(label));
-                        }
+                        int label = string_label_create();
+                        d->symbol->str_lit = string_alloc(d->symbol, "", string_label_name(label));
                         fprintf(f, "\tMOVQ $%s, %s\n", d->symbol->str_lit->label, symbol_codegen(d->symbol));
                     }
                 }
@@ -625,20 +648,29 @@ void decl_codegen(Decl *d, FILE *f){
             case TYPE_CARRAY:
                 // TODO: add array of strings
                 if (sym_type == SYMBOL_GLOBAL){
-                    subtype = d->type->subtype->kind;
-                    fprintf(f, "%s:\n\t.%s", d->name, subtype == TYPE_DOUBLE ? "double" : "quad");
+                    type_t subtype = d->type->subtype->kind;
+                    fprintf(f, "%s:\n\t.%s", d->name, "quad");
+                    fprintf(f, " %d,",d->type->arr_len->literal_value);
                     // case 2c-1: array is initialized, walk the ast for values 
                     if (d->value){
+                        int label;
                         dummy_e = d->value->right; 
-                        if (d->type->subtype->kind == TYPE_DOUBLE){
-                            fprintf(f, " %lf", dummy_e->left->double_literal_value);
+                        if (subtype == TYPE_STRING){
+                            label = string_label_create();
+                            dummy_e->left->label = string_label_name(label);
+                            string_alloc(NULL, dummy_e->left->string_literal, dummy_e->left->label);
+                            fprintf(f, " %s", dummy_e->left->label);
                         } else {
                             fprintf(f, " %d", dummy_e->left->literal_value);
                         }
+
                         dummy_e = dummy_e->right;
                         while (dummy_e){
-                            if (d->type->subtype->kind == TYPE_DOUBLE){
-                                fprintf(f, ", %lf", dummy_e->left->double_literal_value);
+                            if (d->type->subtype->kind == TYPE_STRING){
+                                label = string_label_create();
+                                dummy_e->left->label = string_label_name(label);
+                                string_alloc(NULL, dummy_e->left->string_literal, dummy_e->left->label);
+                                fprintf(f, ", %s", dummy_e->left->label);
                             } else {
                                 fprintf(f, ", %d", dummy_e->left->literal_value);
                             }
@@ -647,9 +679,20 @@ void decl_codegen(Decl *d, FILE *f){
                         fprintf(f, "\n");
                     // case 2c-2: array is not initialized, set all values to 0;
                     } else {
-                        fprintf(f, " %s", subtype == TYPE_DOUBLE ? "0.0": "0");
+                        int label = 0 ;
+                        if (d->type->subtype->kind == TYPE_STRING){
+                            label = string_label_create();
+                            string_alloc(NULL, "", string_label_name(label));
+                            fprintf(f, " %s", string_label_name(label));
+                        } else {
+                            fprintf(f, " %s", "0");
+                        }
                         for (int i = 1; i < d->type->arr_len->literal_value; i++){
-                            fprintf(f, ", %s", subtype == TYPE_DOUBLE ? "0.0": "0");
+                            if (d->type->subtype->kind == TYPE_STRING){
+                                fprintf(f, ", %s", string_label_name(label));
+                            } else {
+                                fprintf(f, ", %s", "0");
+                            }
                         }
                         fprintf(f, "\n");
                     }

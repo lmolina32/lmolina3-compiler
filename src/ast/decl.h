@@ -12,10 +12,14 @@ typedef struct Expr Expr;
 typedef struct Stmt Stmt;
 typedef struct Symbol Symbol;
 
+/* Macros */
+#define MAX_INT_ARGS 6 
+#define MAX_DOUBLE_ARGS 8
+
 /* Structure */
 
-extern const char *int_args[6]; 
-extern const char *double_args[8]; 
+extern const char *int_args[MAX_INT_ARGS]; 
+extern const char *double_args[MAX_DOUBLE_ARGS]; 
 
 typedef struct Decl Decl;
 
