@@ -9,6 +9,21 @@ main: function void () = {
     print s, b, "\n";
     b = "hell";
     print b, "\n";
+    {
+        s: string = "hello";
+        print s;
+        {
+            {
+                {
+                    {
+                        a: integer = 10;
+                        b: integer = 20;
+                        print a + b;
+                    }
+                }
+            }
+        }
+    }
 
     b = "ehll";
     print b, "\n";
