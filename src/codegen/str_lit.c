@@ -48,6 +48,7 @@ void string_lit_destroy(){
 
     while (node){
         free(node->label);
+        free(node->literal);
         dummy = node;
         node = node->next;
         free(dummy);
