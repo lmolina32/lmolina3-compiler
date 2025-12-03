@@ -407,16 +407,16 @@ void stmt_codegen(Stmt *s, FILE *f){
 					case TYPE_ARRAY:
 						switch (dummy_e->left->symbol->type->subtype->kind){
 							case TYPE_BOOLEAN:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_bool"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_bool"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
 								break;
 							case TYPE_INTEGER:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_int"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_int"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
 								break;
 							case TYPE_CHARACTER:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_char"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_char"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
 								break;
 							case TYPE_STRING:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_str"), expr_create(EXPR_ARGS, dummy_e->left, expr_create(EXPR_ARGS, expr_create_integer_literal(dummy_e->left->symbol->type->arr_len->literal_value), NULL)));
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_str"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
 								break;
 							default:
 								break;
