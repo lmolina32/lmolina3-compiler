@@ -572,7 +572,6 @@ void decl_codegen(Decl *d, FILE *f){
         }
 
         symbol_t sym_type = d->symbol->kind;
-        Expr *dummy_e = NULL;
         if (sym_type == SYMBOL_GLOBAL && !b_ctx.data_flag){
             b_ctx.data_flag = true;
             b_ctx.text_flag = false;
@@ -648,56 +647,96 @@ void decl_codegen(Decl *d, FILE *f){
             case TYPE_ARRAY:
             case TYPE_CARRAY:
                 if (sym_type == SYMBOL_GLOBAL){
+                    Expr *curr= d->value ? d->value->right : NULL;
                     type_t subtype = d->type->subtype->kind;
+                    int total_len = d->type->arr_len->literal_value;
+                    int count = 0;
+
                     fprintf(f, "%s:\n\t.%s", d->name, "quad");
                     if (d->type->kind == TYPE_ARRAY){
-                        fprintf(f, " %d,",d->type->arr_len->literal_value);
+                        fprintf(f, " %d,", total_len);
                     }
-                    // case 2c-1: array is initialized, walk the ast for values 
-                    if (d->value){
-                        int label;
-                        dummy_e = d->value->right; 
+
+                    while (curr){
+                        if (count > 0) { fprintf(f, ", "); }
+                        else { fprintf(f, " "); }
+
                         if (subtype == TYPE_STRING){
-                            label = string_label_create();
-                            dummy_e->left->label = string_label_name(label);
-                            string_alloc(dummy_e->left->string_literal, dummy_e->left->label);
-                            fprintf(f, " %s", dummy_e->left->label);
+                            int label = string_label_create();
+                            const char *label_name = string_label_name(label);
+                            string_alloc(curr->left->string_literal, label_name);
+                            fprintf(f, "%s", label_name);
                         } else {
-                            fprintf(f, " %d", dummy_e->left->literal_value);
+                            fprintf(f, "%d", curr->left->literal_value);
+                        }
+                        curr = curr->right;
+                        count++;
+                    }
+
+                    int label = 0;
+                    while (count < total_len){
+                        if (count > 0) { fprintf(f, ", "); } 
+                        else {
+                            fprintf(f, " ");
+                            if (subtype == TYPE_STRING){ 
+                                label = string_label_create(); 
+                                string_alloc("", string_label_name(label));
+                            }
                         }
 
-                        dummy_e = dummy_e->right;
-                        while (dummy_e){
-                            if (d->type->subtype->kind == TYPE_STRING){
-                                label = string_label_create();
-                                dummy_e->left->label = string_label_name(label);
-                                string_alloc(dummy_e->left->string_literal, dummy_e->left->label);
-                                fprintf(f, ", %s", dummy_e->left->label);
-                            } else {
-                                fprintf(f, ", %d", dummy_e->left->literal_value);
-                            }
-                            dummy_e = dummy_e->right;
-                        }
-                        fprintf(f, "\n");
-                    // case 2c-2: array is not initialized, set all values to 0;
-                    } else {
-                        int label = 0 ;
-                        if (d->type->subtype->kind == TYPE_STRING){
-                            label = string_label_create();
-                            string_alloc("", string_label_name(label));
-                            fprintf(f, " %s", string_label_name(label));
+                        if (subtype == TYPE_STRING){
+                            fprintf(f, "%s", string_label_name(label));
                         } else {
-                            fprintf(f, " %s", "0");
+                            fprintf(f, "0");
                         }
-                        for (int i = 1; i < d->type->arr_len->literal_value; i++){
-                            if (d->type->subtype->kind == TYPE_STRING){
-                                fprintf(f, ", %s", string_label_name(label));
-                            } else {
-                                fprintf(f, ", %s", "0");
-                            }
-                        }
-                        fprintf(f, "\n");
+                        count++;
                     }
+                    fprintf(f, "\n");
+                    // // case 2c-1: array is initialized, walk the ast for values 
+                    // if (d->value){
+                    //     int label;
+                    //     dummy_e = d->value->right; 
+                    //     if (subtype == TYPE_STRING){
+                    //         label = string_label_create();
+                    //         dummy_e->left->label = string_label_name(label);
+                    //         string_alloc(dummy_e->left->string_literal, dummy_e->left->label);
+                    //         fprintf(f, " %s", dummy_e->left->label);
+                    //     } else {
+                    //         fprintf(f, " %d", dummy_e->left->literal_value);
+                    //     }
+
+                    //     dummy_e = dummy_e->right;
+                    //     while (dummy_e){
+                    //         if (d->type->subtype->kind == TYPE_STRING){
+                    //             label = string_label_create();
+                    //             dummy_e->left->label = string_label_name(label);
+                    //             string_alloc(dummy_e->left->string_literal, dummy_e->left->label);
+                    //             fprintf(f, ", %s", dummy_e->left->label);
+                    //         } else {
+                    //             fprintf(f, ", %d", dummy_e->left->literal_value);
+                    //         }
+                    //         dummy_e = dummy_e->right;
+                    //     }
+                    //     fprintf(f, "\n");
+                    // // case 2c-2: array is not initialized, set all values to 0;
+                    // } else {
+                    //     int label = 0 ;
+                    //     if (d->type->subtype->kind == TYPE_STRING){
+                    //         label = string_label_create();
+                    //         string_alloc("", string_label_name(label));
+                    //         fprintf(f, " %s", string_label_name(label));
+                    //     } else {
+                    //         fprintf(f, " %s", "0");
+                    //     }
+                    //     for (int i = 1; i < d->type->arr_len->literal_value; i++){
+                    //         if (d->type->subtype->kind == TYPE_STRING){
+                    //             fprintf(f, ", %s", string_label_name(label));
+                    //         } else {
+                    //             fprintf(f, ", %s", "0");
+                    //         }
+                    //     }
+                    //     fprintf(f, "\n");
+                    // }
                 }
 				break;
             default:
