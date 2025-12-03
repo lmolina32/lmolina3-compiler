@@ -1278,6 +1278,10 @@ void expr_codegen(Expr *e, FILE *f){
 				e->left->symbol->str_lit = string_alloc(e->right->string_literal, string_label_name(label));
 				e->right->symbol = e->left->symbol;
 			} 
+			if (e->left->kind == EXPR_INDEX){
+				expr_codegen(e->left, f);
+				scratch_free(e->left->reg);
+			}
 			expr_codegen(e->right, f);
 			// case 1b: left side is array index -> index into array 
 			if (e->left->kind == EXPR_INDEX){
@@ -1467,17 +1471,23 @@ void expr_codegen(Expr *e, FILE *f){
 			break;
 		case EXPR_INCREMENT:			//  increment ++ 
 			expr_codegen(e->left, f);
+			e->reg = scratch_alloc();
+			fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->reg));
 			fprintf(f, "\tINCQ %s\n", scratch_name(e->left->reg));
 			if (e->left->kind == EXPR_IDENT){
 				fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), symbol_codegen(e->left->symbol));
 			}
+			scratch_free(e->left->reg);
 			break;
 		case EXPR_DECREMENT:			//  decrement -- 
 			expr_codegen(e->left, f);
+			e->reg = scratch_alloc();
+			fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->reg));
 			fprintf(f, "\tDECQ %s\n", scratch_name(e->left->reg));
 			if (e->left->kind == EXPR_IDENT){
 				fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), symbol_codegen(e->left->symbol));
 			}
+			scratch_free(e->left->reg);
 			break;
 		case EXPR_GROUPS:				//  grouping ()
 			expr_codegen(e->left, f);
@@ -1532,6 +1542,12 @@ void expr_codegen(Expr *e, FILE *f){
 			scratch_free(e->right->reg);
 			break;
 		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
+			dummy_e = expr_create(EXPR_FUNC, expr_create_name("check_bounds"), expr_create(EXPR_ARGS, e->left, expr_create(EXPR_ARGS, e->right, NULL)));
+			expr_codegen(dummy_e, f);
+			scratch_free(dummy_e->reg);
+			dummy_e->right->left = NULL;
+			dummy_e->right->right->left = NULL;
+			expr_destroy(dummy_e);
 			expr_codegen(e->right, f);
 			e->reg = scratch_alloc();
 
