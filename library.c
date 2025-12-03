@@ -25,6 +25,7 @@ x = integer_power(a,b);
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 
 void print_integer(long x){
@@ -47,36 +48,43 @@ void print_carray(long arr[]){
 	printf("%p", arr);
 }
 
-void print_array_str(long arr[], long size){
+void print_array_str(long arr[]){
 	printf("array: {\"%s\"", arr[1]);
-	for (long i = 2; i < size + 1; i++){
+	for (long i = 2; i < arr[0] + 1; i++){
 		printf(", \"%s\"", arr[i]);
 	}
 	printf("} ");
 }
 
-void print_array_int(long arr[], long size){
+void print_array_int(long arr[]){
 	printf("array: {%d", arr[1]);
-	for (long i = 2; i < size + 1; i++){
+	for (long i = 2; i < arr[0] + 1; i++){
 		printf(", %d", arr[i]);
 	}
 	printf("} ");
 }
 
-void print_array_bool(long arr[], long size){
+void print_array_bool(long arr[]){
 	printf("array: {%s", arr[1] ? "true" : "false");
-	for (long i = 2; i < size + 1; i++){
+	for (long i = 2; i < arr[0] + 1; i++){
 		printf(", %s", arr[i] ? "true" : "false");
 	}
 	printf("} ");
 }
 
-void print_array_char(long arr[], long size){
+void print_array_char(long arr[]){
 	printf("array: {'%c'", arr[1]);
-	for (long i = 2; i < size + 1; i++){
+	for (long i = 2; i < arr[0] + 1; i++){
 		printf(", '%c'", arr[i]);
 	}
 	printf("} ");
+}
+
+void check_bounds(long arr[], long index){
+	if (arr[0] <= index){
+		fprintf(stderr,"Index out of bounds\n");
+		exit(EXIT_FAILURE);
+	}
 }
 
 long integer_power(long x, long y){
