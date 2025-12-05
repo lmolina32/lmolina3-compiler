@@ -1327,36 +1327,55 @@ void expr_codegen(Expr *e, FILE *f){
 			scratch_free(e->right->reg);
 			break;
 		case EXPR_EQ:					//  comparison equal  ==
-			label = label_create();
 			dummy_t = expr_typecheck(e->left);
-			expr_codegen(e->left, f);
-			expr_codegen(e->right, f);
-			fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
-			fprintf(f, "\tJE %s\n", label_name(label));
-			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
-			label = label_create();
-			fprintf(f, "\tJMP %s\n", label_name(label));
-			fprintf(f, "%s:\n", label_name(label-1));
-			fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
-			fprintf(f, "%s:\n", label_name(label));
-			e->reg = e->left->reg;
-			scratch_free(e->right->reg);
+			if (dummy_t->kind == TYPE_STRING){
+				Expr *res_e = expr_create(EXPR_FUNC, expr_create_name("str_equal"), expr_create(EXPR_ARGS, e->left, expr_create(EXPR_ARGS, e->right, 0)));
+				expr_codegen(res_e, f);
+				e->reg = res_e->reg;
+				res_e->right->left = NULL;
+				res_e->right->right = NULL;
+				expr_destroy(res_e);
+			} else {
+				label = label_create();
+				expr_codegen(e->left, f);
+				expr_codegen(e->right, f);
+				fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
+				fprintf(f, "\tJE %s\n", label_name(label));
+				fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+				label = label_create();
+				fprintf(f, "\tJMP %s\n", label_name(label));
+				fprintf(f, "%s:\n", label_name(label-1));
+				fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+				fprintf(f, "%s:\n", label_name(label));
+				e->reg = e->left->reg;
+				scratch_free(e->right->reg);
+			}
 			type_destroy(dummy_t);
 			break;
 		case EXPR_NOT_EQ:				//  comparison not equal  !=
-			label = label_create();
-			expr_codegen(e->left, f);
-			expr_codegen(e->right, f);
-			fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
-			fprintf(f, "\tJE %s\n", label_name(label));
-			fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
-			label = label_create();
-			fprintf(f, "\tJMP %s\n", label_name(label));
-			fprintf(f, "%s:\n", label_name(label-1));
-			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
-			fprintf(f, "%s:\n", label_name(label));
-			e->reg = e->left->reg;
-			scratch_free(e->right->reg);
+			dummy_t = expr_typecheck(e->left);
+			if (dummy_t->kind == TYPE_STRING){
+				Expr *res_e = expr_create(EXPR_FUNC, expr_create_name("str_not_equal"), expr_create(EXPR_ARGS, e->left, expr_create(EXPR_ARGS, e->right, 0)));
+				expr_codegen(res_e, f);
+				e->reg = res_e->reg;
+				res_e->right->left = NULL;
+				res_e->right->right = NULL;
+				expr_destroy(res_e);
+			} else {
+				label = label_create();
+				expr_codegen(e->left, f);
+				expr_codegen(e->right, f);
+				fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
+				fprintf(f, "\tJE %s\n", label_name(label));
+				fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+				label = label_create();
+				fprintf(f, "\tJMP %s\n", label_name(label));
+				fprintf(f, "%s:\n", label_name(label-1));
+				fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+				fprintf(f, "%s:\n", label_name(label));
+				e->reg = e->left->reg;
+				scratch_free(e->right->reg);
+			}
 			break;
 		case EXPR_LT:					//  comparison less than  <
 			label = label_create();
@@ -1495,9 +1514,13 @@ void expr_codegen(Expr *e, FILE *f){
 			break;
 		case EXPR_FUNC:					//  function call f()
 			dummy_e = e->right;	
+			for (int i = 0; i < MAX_INT_ARGS; i++){
+				fprintf(f, "\tPUSHQ %s\n", int_args[i]);
+			}
 			while (dummy_e){
 				if (double_count + int_count > 6){
 					fprintf(stderr, "codegen error: Does not Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", e->left->name);
+					exit(EXIT_FAILURE);
 				}
 				expr_codegen(dummy_e->left, f);
 				dummy_t = expr_typecheck(dummy_e->left);
@@ -1531,6 +1554,9 @@ void expr_codegen(Expr *e, FILE *f){
 					   "\tCALL %s\n", e->left->name);
 			fprintf(f, "\tPOPQ %%r11\n"
 					   "\tPOPQ %%r10\n");
+			for (int i = MAX_INT_ARGS -1; i >= 0; i--){
+				fprintf(f, "\tPOPQ %s\n", int_args[i]);
+			}
 			e->reg = scratch_alloc();
 			fprintf(f, "\tMOVQ %%rax, %s\n", scratch_name(e->reg));
 			fprintf(f, "\tMOVQ $0, %%rax\n");
