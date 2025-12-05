@@ -428,6 +428,326 @@ void decl_typecheck(Decl *d){
     decl_typecheck(d->next);
 }
 
+/**
+ * Preprocessing stage for decl codegen, this walks decl AST and determines if
+ * function declarations follow the simplified requirements. 
+ *      Simplified requirements:
+ *          - No multi-dimensional arrays 
+ *          - No double support 
+ *          - No function calls with more than 6 arguments 
+ * If requirements are not met the function fails 
+ * @param   d       function declaration to preprocess 
+ * @param   f       file ptr to write errors to 
+ */
+static void decl_codegen_preprocess_funcs(Decl *d, FILE *f){
+    Param_list *params = d->type->params;
+    int count = 0;
+    while (params){
+        type_t type_param = params->type->kind;
+        // Case 1a: function has argument double -> not supported
+        if (type_param == TYPE_DOUBLE){
+            fprintf(stderr, "codegen error: Double type not supported\n");
+            fprintf(f, "codegen error: Double type not supported\n");
+            exit(EXIT_FAILURE);
+        // Case 1b: Function has argument array 
+        } else if (type_param == TYPE_ARRAY || type_param == TYPE_CARRAY){
+            type_param = params->type->subtype->kind;
+            // Case 1b-1: Function has argument of an array with subtype double -> not supported 
+            if (type_param == TYPE_DOUBLE){
+                fprintf(stderr, "codegen error: Double type not supported for arrays \n");
+                fprintf(f, "codegen error: Double type not supported for arrays\n");
+                exit(EXIT_FAILURE);
+            // Case 1b-2: Function has argument of multi-dim arrays -> not supported 
+            } else if (type_param == TYPE_ARRAY || type_param == TYPE_CARRAY){
+                fprintf(stderr, "codegen error: Multi-dimensional arrays are not supported\n");
+                fprintf(f, "codegen error: Multi-dimensional arrays are not supported\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+        params = params->next;
+        count++;
+    }
+    // case 2a: function with too many arguments (more than 6) -> failure not implemented 
+    if (count > 6){
+        fprintf(stderr, "codegen error: Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", d->name);
+        fprintf(f, "codegen error: Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", d->name);
+        exit(EXIT_FAILURE);
+    }
+
+    // case 2b: function return type never resolved -> failure cannot implement
+    if (d->type->subtype->kind == TYPE_AUTO){
+        fprintf(stderr, "codegen error: Auto type never resolved\n");
+        fprintf(f, "codegen error: Auto type never resolved\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // case 2c: function return type is double -> not supported
+    if (d->type->subtype->kind == TYPE_DOUBLE){
+        fprintf(stderr, "codegen error: Double type not supported\n");
+        fprintf(f, "codegen error: Double type not supported\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/**
+ * Generate x86 code for function declarations 
+ * @param   d       Function decl to generate x86 code for 
+ * @param   f       File ptr to generate code to 
+ */
+static void decl_codegen_funcs(Decl *d, FILE *f){
+    if (!b_ctx.text_flag) {
+        b_ctx.data_flag = false;
+        b_ctx.text_flag = true;
+        fprintf(f, ".text\n");
+    }
+    fprintf(f, ".global %s\n"
+                "%s:\n", d->name, d->name);
+    // save stack ptr 
+    fprintf(f, "\tPUSHQ %%rbp\n"
+                "\tMOVQ  %%rsp, %%rbp\n\n");
+
+    // save arguments 
+    int int_count = 0;
+    Param_list *params = d->type->params;
+
+    while (params){
+        fprintf(f, "\tPUSHQ %s\n", int_args[int_count++]);
+        params = params->next;
+    }
+    
+    // create space for locals 
+    fprintf(f, "\n\tSUBQ  $%d, %%rsp\n\n", d->local*8);
+    // save callee-saved registers
+    fprintf(f, "\tPUSHQ %%rbx\n"
+                "\tPUSHQ %%r12\n"
+                "\tPUSHQ %%r13\n"
+                "\tPUSHQ %%r14\n"
+                "\tPUSHQ %%r15\n\n");
+
+    // generate function code
+    stmt_codegen(d->code, f);
+
+    // restore stack 
+    fprintf(f, ".%s_epilogue:\n", d->name);
+    fprintf(f, "\tPOPQ %%r15\n"
+                "\tPOPQ %%r14\n"
+                "\tPOPQ %%r13\n"
+                "\tPOPQ %%r12\n"
+                "\tPOPQ %%rbx\n\n");
+
+    // restore stack pointer, recover base pointer, and return call
+    fprintf(f, "\tMOVQ %%rbp, %%rsp\n"
+                "\tPOPQ %%rbp\n"
+                "\tRET\n");
+}
+
+/**
+ * Preprocessing stage for decl codegen, this walks decl AST and determines if
+ * non-function declarations follow the simplified requirements. 
+ *      Simplified requirements:
+ *          - No multi-dimensional arrays, no arrays in local scope 
+ *          - No double support 
+ * If requirements are not met non-function decls it fails code generation  
+ * @param   d       Non-function declaration to preprocess 
+ * @param   f       file ptr to write errors to 
+ */
+static void decl_codegen_preprocess_non_funcs(Decl *d, FILE *f){
+    // case 2a: declaration is a multi-dimensional array -> failure not implemented 
+    if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && 
+        (d->type->subtype->kind == TYPE_ARRAY || d->type->subtype->kind == TYPE_CARRAY)){
+        fprintf(stderr, "codegen error: Multi-dimensional arrays are not supported\n");
+        fprintf(f, "codegen error: Multi-dimensional arrays are not supported\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // case 2b: local declaration is an array -> failure not implemented 
+    if (d->symbol->kind == SYMBOL_LOCAL && (d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
+        fprintf(stderr, "codegen error: Arrays at local scope are not implemented\n");
+        fprintf(f, "codegen error: Arrays at local scope are not implemented\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // case 2c: auto never resolved -> failure cannot implement 
+    if (d->type->kind == TYPE_AUTO || ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && (d->type->subtype->kind == TYPE_AUTO))){
+        fprintf(stderr, "codegen error: Auto type never resolved\n");
+        fprintf(f, "codegen error: Auto type never resolved\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // case 2d: double type not supported -> failure 
+    if (d->type->kind == TYPE_DOUBLE){
+        fprintf(stderr, "codegen error: Double type not supported\n");
+        fprintf(f, "codegen error: Double type not supported\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // case 2e: array of double type not supported -> failure
+    if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && 
+        d->type->subtype->kind == TYPE_DOUBLE){
+        fprintf(stderr, "codegen error: Double type not supported for arrays \n");
+        fprintf(f, "codegen error: Double type not supported for arrays\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/**
+ * Generates x86 code for string declarations 
+ * @param   d       string decl to generate x86 code for 
+ * @param   f       File ptr to generate code to 
+ */
+static void decl_codegen_string(Decl *d, FILE *f){
+    symbol_t sym_type = d->symbol->kind;
+    // case 1: decl is global variable 
+    if (sym_type == SYMBOL_GLOBAL){
+        // case 1a: string decl has expression 
+        if (d->value){
+            // case 1a-1: expression is identifier, assign str_lit to decl
+            if (d->value->kind == EXPR_IDENT){
+                d->symbol->str_lit = d->value->symbol->str_lit;
+            // case 1a-2: expression is literal -> create string label -> allocated str_lit to decl
+            } else {
+                int label = string_label_create();
+                d->symbol->str_lit = string_alloc(d->value->string_literal, string_label_name(label));
+            }
+        // case 1b: string decl has no expression -> create string label for empty string -> alloc str_lit to decl
+        } else {
+            int label = string_label_create();
+            d->symbol->str_lit = string_alloc("", string_label_name(label));
+        }
+    // case 2: decl is local variable 
+    } else {
+        // case 2a: string decl has expression
+        if (d->value){
+            // case 2a-1: right side is identifier -> pass str_lit of right side to decl 
+            if (d->value->kind == EXPR_IDENT){
+                d->symbol->str_lit = d->value->symbol->str_lit;
+            // case 2a-2: right side is string literal -> create label + str_lit 
+            } else {
+                int label = string_label_create();
+                d->symbol->str_lit = string_alloc(d->value->string_literal, string_label_name(label));
+            }
+            d->value->symbol = d->symbol;
+            expr_codegen(d->value, f);
+            fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
+            scratch_free(d->value->reg);
+        // case 2b: string decl has no expression -> create label + str_lit 
+        } else {
+            int label = string_label_create();
+            d->symbol->str_lit = string_alloc("", string_label_name(label));
+            fprintf(f, "\tMOVQ $%s, %s\n", d->symbol->str_lit->label, symbol_codegen(d->symbol));
+        }
+    }
+}
+
+/**
+ * Generate x86 code for array declarations 
+ * @param   d       Array decl to generate x86 code for
+ * @param   f       File ptr to generate code to 
+ */
+static void decl_codegen_array(Decl *d, FILE *f){
+    symbol_t sym_type = d->symbol->kind;
+    if (sym_type == SYMBOL_GLOBAL){
+        Expr *curr= d->value ? d->value->right : NULL;
+        type_t subtype = d->type->subtype->kind;
+        int total_len = d->type->arr_len->literal_value;
+        int count = 0;
+
+        // create label for array and init the size for type ARRAYS
+        fprintf(f, "%s:\n\t.%s", d->name, "quad");
+        if (d->type->kind == TYPE_ARRAY){
+            fprintf(f, " %d,", total_len);
+        }
+
+        // iterate through entries and fill in array 
+        while (curr){
+            if (count > 0) { fprintf(f, ", "); }
+            else { fprintf(f, " "); }
+
+            if (subtype == TYPE_STRING){
+                int label = string_label_create();
+                const char *label_name = string_label_name(label);
+                string_alloc(curr->left->string_literal, label_name);
+                fprintf(f, "%s", label_name);
+            } else {
+                fprintf(f, "%d", curr->left->literal_value);
+            }
+            curr = curr->right;
+            count++;
+        }
+
+        // if array init it empty -> init with NULL
+        int label = 0;
+        while (count < total_len){
+            if (count > 0) { fprintf(f, ", "); } 
+            else {
+                fprintf(f, " ");
+                if (subtype == TYPE_STRING){ 
+                    label = string_label_create(); 
+                    string_alloc("", string_label_name(label));
+                }
+            }
+
+            if (subtype == TYPE_STRING){
+                fprintf(f, "%s", string_label_name(label));
+            } else {
+                fprintf(f, "0");
+            }
+            count++;
+        }
+        fprintf(f, "\n");
+    }
+}
+
+/**
+ * Generate x86 code for non-function declarations 
+ * @param   d       Non-Function decl to generate x86 code for 
+ * @param   f       File ptr to generate code to 
+ */
+static void decl_codegen_non_funcs(Decl *d, FILE *f){
+    symbol_t sym_type = d->symbol->kind;
+    if (sym_type == SYMBOL_GLOBAL && !b_ctx.data_flag){
+        b_ctx.data_flag = true;
+        b_ctx.text_flag = false;
+        fprintf(f, ".data\n");
+    }
+    switch (d->type->kind){
+        case TYPE_BOOLEAN:
+        case TYPE_INTEGER:
+        case TYPE_CHARACTER:
+            // case 1: decl is global variable 
+            if (sym_type == SYMBOL_GLOBAL){
+                fprintf(f, "%s:\n\t.quad %d\n", d->name, d->value ? d->value->literal_value : 0);
+            // case 2: decl is local variable 
+            } else {
+                // case 2a: local var has assignment -> codegen expr then assign to ident;
+                if (d->value){
+                    expr_codegen(d->value, f);
+                    fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
+                    scratch_free(d->value->reg);
+                // case 2b: local var has no assignment -> assign 0
+                } else {
+                    fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
+                }
+            }
+            break;
+        case TYPE_DOUBLE:
+            fprintf(stderr, "codegen error: Double type not supported\n");
+            fprintf(f, "codegen error: Double type not supported\n");
+            exit(EXIT_FAILURE);
+            break;
+        case TYPE_STRING:
+            decl_codegen_string(d, f);
+            break;
+        case TYPE_ARRAY:
+        case TYPE_CARRAY:
+            decl_codegen_array(d, f);
+            break;
+        default:
+            fprintf(stderr, "codegen error: Invalid type in variable declaration\n");
+            exit(EXIT_FAILURE);
+            break;
+    }
+}
 
 /**
  * Perform code generation on the decl structure and output to file 
@@ -436,314 +756,18 @@ void decl_typecheck(Decl *d){
  */
 void decl_codegen(Decl *d, FILE *f){
     if (!d || !f) return;
+
     // case 1: code generation on function 
     if (d->type->kind == TYPE_FUNCTION){
-        Param_list *params = d->type->params;
-        int count = 0;
-        while (params){
-            type_t type_param = params->type->kind;
-            // Case 1a: function has argument double -> not supported
-            if (type_param == TYPE_DOUBLE){
-                fprintf(stderr, "codegen error: Double type not supported\n");
-                fprintf(f, "codegen error: Double type not supported\n");
-                exit(EXIT_FAILURE);
-            // Case 1b: Function has argument array 
-            } else if (type_param == TYPE_ARRAY || type_param == TYPE_CARRAY){
-                type_param = params->type->subtype->kind;
-                // Case 1b-1: Function has argument of an array with subtype double -> not supported 
-                if (type_param == TYPE_DOUBLE){
-                    fprintf(stderr, "codegen error: Double type not supported for arrays \n");
-                    fprintf(f, "codegen error: Double type not supported for arrays\n");
-                    exit(EXIT_FAILURE);
-                // Case 1b-2: Function has argument of multi-dim arrays -> not supported 
-                } else if (type_param == TYPE_ARRAY || type_param == TYPE_CARRAY){
-                    fprintf(stderr, "codegen error: Multi-dimensional arrays are not supported\n");
-                    fprintf(f, "codegen error: Multi-dimensional arrays are not supported\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            params = params->next;
-            count++;
-        }
-        // case 2a: function with too many arguments (more than 6) -> failure not implemented 
-        if (count > 6){
-            fprintf(stderr, "codegen error: Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", d->name);
-            fprintf(f, "codegen error: Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", d->name);
-            exit(EXIT_FAILURE);
-        }
-
-        // case 2b: function return type never resolved -> failure cannot implement
-        if (d->type->subtype->kind == TYPE_AUTO){
-            fprintf(stderr, "codegen error: Auto type never resolved\n");
-            fprintf(f, "codegen error: Auto type never resolved\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // case 2c: function return type is double -> not supported
-        if (d->type->subtype->kind == TYPE_DOUBLE){
-            fprintf(stderr, "codegen error: Double type not supported\n");
-            fprintf(f, "codegen error: Double type not supported\n");
-            exit(EXIT_FAILURE);
-        }
+        decl_codegen_preprocess_funcs(d, f);
         if (d->code){
-            if (!b_ctx.text_flag) {
-                b_ctx.data_flag = false;
-                b_ctx.text_flag = true;
-                fprintf(f, ".text\n");
-            }
-            fprintf(f, ".global %s\n"
-                        "%s:\n", d->name, d->name);
-            // save stack ptr 
-            fprintf(f, "\tPUSHQ %%rbp\n"
-                       "\tMOVQ  %%rsp, %%rbp\n\n");
-
-            // save arguments 
-            int int_count = 0;
-            params = d->type->params;
-            while (params){
-                fprintf(f, "\tPUSHQ %s\n", int_args[int_count++]);
-                params = params->next;
-            }
-            
-            // create space for locals 
-            fprintf(f, "\n\tSUBQ  $%d, %%rsp\n\n", d->local*8);
-            // save callee-saved registers
-            fprintf(f, "\tPUSHQ %%rbx\n"
-                       "\tPUSHQ %%r12\n"
-                       "\tPUSHQ %%r13\n"
-                       "\tPUSHQ %%r14\n"
-                       "\tPUSHQ %%r15\n\n");
-
-            // generate function code
-            stmt_codegen(d->code, f);
-
-            // restore stack 
-            fprintf(f, ".%s_epilogue:\n", d->name);
-            fprintf(f, "\tPOPQ %%r15\n"
-                       "\tPOPQ %%r14\n"
-                       "\tPOPQ %%r13\n"
-                       "\tPOPQ %%r12\n"
-                       "\tPOPQ %%rbx\n\n");
-
-            // restore stack pointer, recover base pointer, and return call
-            fprintf(f, "\tMOVQ %%rbp, %%rsp\n"
-                       "\tPOPQ %%rbp\n"
-                       "\tRET\n");
+            decl_codegen_funcs(d, f);
         }
-
-
     // case 2: code generation on variable declarations
     } else {
-        // case 2a: declaration is a multi-dimensional array -> failure not implemented 
-        if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && 
-            (d->type->subtype->kind == TYPE_ARRAY || d->type->subtype->kind == TYPE_CARRAY)){
-            fprintf(stderr, "codegen error: Multi-dimensional arrays are not supported\n");
-            fprintf(f, "codegen error: Multi-dimensional arrays are not supported\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // case 2b: local declaration is an array -> failure not implemented 
-        if (d->symbol->kind == SYMBOL_LOCAL && (d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY)){
-            fprintf(stderr, "codegen error: Arrays at local scope are not implemented\n");
-            fprintf(f, "codegen error: Arrays at local scope are not implemented\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // case 2c: auto never resolved -> failure cannot implement 
-        if (d->type->kind == TYPE_AUTO || ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && (d->type->subtype->kind == TYPE_AUTO))){
-            fprintf(stderr, "codegen error: Auto type never resolved\n");
-            fprintf(f, "codegen error: Auto type never resolved\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // case 2d: double type not supported -> failure 
-        if (d->type->kind == TYPE_DOUBLE){
-            fprintf(stderr, "codegen error: Double type not supported\n");
-            fprintf(f, "codegen error: Double type not supported\n");
-            exit(EXIT_FAILURE);
-        }
-
-        // case 2e: array of double type not supported -> failure
-        if ((d->type->kind == TYPE_ARRAY || d->type->kind == TYPE_CARRAY) && 
-            d->type->subtype->kind == TYPE_DOUBLE){
-            fprintf(stderr, "codegen error: Double type not supported for arrays \n");
-            fprintf(f, "codegen error: Double type not supported for arrays\n");
-            exit(EXIT_FAILURE);
-        }
-
-        symbol_t sym_type = d->symbol->kind;
-        if (sym_type == SYMBOL_GLOBAL && !b_ctx.data_flag){
-            b_ctx.data_flag = true;
-            b_ctx.text_flag = false;
-            fprintf(f, ".data\n");
-        }
-        switch (d->type->kind){
-            case TYPE_BOOLEAN:
-            case TYPE_INTEGER:
-            case TYPE_CHARACTER:
-                // case 1: decl is global variable 
-                if (sym_type == SYMBOL_GLOBAL){
-                    fprintf(f, "%s:\n\t.quad %d\n", d->name, d->value ? d->value->literal_value : 0);
-                // case 2: decl is local variable 
-                } else {
-                    // case 2a: local var has assignment -> codegen expr then assign to ident;
-                    if (d->value){
-                        expr_codegen(d->value, f);
-                        fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
-                        scratch_free(d->value->reg);
-                    // case 2b: local var has no assignment -> assign 0
-                    } else {
-                        fprintf(f, "\tMOVQ $0, %s\n", symbol_codegen(d->symbol));
-                    }
-                }
-				break;
-            case TYPE_DOUBLE:
-                fprintf(stderr, "codegen error: Double type not supported\n");
-                fprintf(f, "codegen error: Double type not supported\n");
-                exit(EXIT_FAILURE);
-				break;
-            case TYPE_STRING:
-                // case 1: decl is global variable 
-                if (sym_type == SYMBOL_GLOBAL){
-                    // case 1a: string decl has expression 
-                    if (d->value){
-                        // case 1a-1: expression is identifier, assign str_lit to decl
-                        if (d->value->kind == EXPR_IDENT){
-                            d->symbol->str_lit = d->value->symbol->str_lit;
-                        // case 1a-2: expression is literal -> create string label -> allocated str_lit to decl
-                        } else {
-                            int label = string_label_create();
-                            d->symbol->str_lit = string_alloc(d->value->string_literal, string_label_name(label));
-                        }
-                    // case 1b: string decl has no expression -> create string label for empty string -> alloc str_lit to decl
-                    } else {
-                        int label = string_label_create();
-                        d->symbol->str_lit = string_alloc("", string_label_name(label));
-                    }
-                // case 2: decl is local variable 
-                } else {
-                    // case 2a: string decl has expression
-                    if (d->value){
-                        // case 2a-1: right side is identifier -> pass str_lit of right side to decl 
-                        if (d->value->kind == EXPR_IDENT){
-                            d->symbol->str_lit = d->value->symbol->str_lit;
-                        // case 2a-2: right side is string literal -> create label + str_lit 
-                        } else {
-                            int label = string_label_create();
-                            d->symbol->str_lit = string_alloc(d->value->string_literal, string_label_name(label));
-                        }
-                        d->value->symbol = d->symbol;
-                        expr_codegen(d->value, f);
-                        fprintf(f, "\tMOVQ %s, %s\n", scratch_name(d->value->reg), symbol_codegen(d->symbol));
-                        scratch_free(d->value->reg);
-                    // case 2b: string decl has no expression -> create label + str_lit 
-                    } else {
-                        int label = string_label_create();
-                        d->symbol->str_lit = string_alloc("", string_label_name(label));
-                        fprintf(f, "\tMOVQ $%s, %s\n", d->symbol->str_lit->label, symbol_codegen(d->symbol));
-                    }
-                }
-				break;
-            case TYPE_ARRAY:
-            case TYPE_CARRAY:
-                if (sym_type == SYMBOL_GLOBAL){
-                    Expr *curr= d->value ? d->value->right : NULL;
-                    type_t subtype = d->type->subtype->kind;
-                    int total_len = d->type->arr_len->literal_value;
-                    int count = 0;
-
-                    fprintf(f, "%s:\n\t.%s", d->name, "quad");
-                    if (d->type->kind == TYPE_ARRAY){
-                        fprintf(f, " %d,", total_len);
-                    }
-
-                    while (curr){
-                        if (count > 0) { fprintf(f, ", "); }
-                        else { fprintf(f, " "); }
-
-                        if (subtype == TYPE_STRING){
-                            int label = string_label_create();
-                            const char *label_name = string_label_name(label);
-                            string_alloc(curr->left->string_literal, label_name);
-                            fprintf(f, "%s", label_name);
-                        } else {
-                            fprintf(f, "%d", curr->left->literal_value);
-                        }
-                        curr = curr->right;
-                        count++;
-                    }
-
-                    int label = 0;
-                    while (count < total_len){
-                        if (count > 0) { fprintf(f, ", "); } 
-                        else {
-                            fprintf(f, " ");
-                            if (subtype == TYPE_STRING){ 
-                                label = string_label_create(); 
-                                string_alloc("", string_label_name(label));
-                            }
-                        }
-
-                        if (subtype == TYPE_STRING){
-                            fprintf(f, "%s", string_label_name(label));
-                        } else {
-                            fprintf(f, "0");
-                        }
-                        count++;
-                    }
-                    fprintf(f, "\n");
-                    // // case 2c-1: array is initialized, walk the ast for values 
-                    // if (d->value){
-                    //     int label;
-                    //     dummy_e = d->value->right; 
-                    //     if (subtype == TYPE_STRING){
-                    //         label = string_label_create();
-                    //         dummy_e->left->label = string_label_name(label);
-                    //         string_alloc(dummy_e->left->string_literal, dummy_e->left->label);
-                    //         fprintf(f, " %s", dummy_e->left->label);
-                    //     } else {
-                    //         fprintf(f, " %d", dummy_e->left->literal_value);
-                    //     }
-
-                    //     dummy_e = dummy_e->right;
-                    //     while (dummy_e){
-                    //         if (d->type->subtype->kind == TYPE_STRING){
-                    //             label = string_label_create();
-                    //             dummy_e->left->label = string_label_name(label);
-                    //             string_alloc(dummy_e->left->string_literal, dummy_e->left->label);
-                    //             fprintf(f, ", %s", dummy_e->left->label);
-                    //         } else {
-                    //             fprintf(f, ", %d", dummy_e->left->literal_value);
-                    //         }
-                    //         dummy_e = dummy_e->right;
-                    //     }
-                    //     fprintf(f, "\n");
-                    // // case 2c-2: array is not initialized, set all values to 0;
-                    // } else {
-                    //     int label = 0 ;
-                    //     if (d->type->subtype->kind == TYPE_STRING){
-                    //         label = string_label_create();
-                    //         string_alloc("", string_label_name(label));
-                    //         fprintf(f, " %s", string_label_name(label));
-                    //     } else {
-                    //         fprintf(f, " %s", "0");
-                    //     }
-                    //     for (int i = 1; i < d->type->arr_len->literal_value; i++){
-                    //         if (d->type->subtype->kind == TYPE_STRING){
-                    //             fprintf(f, ", %s", string_label_name(label));
-                    //         } else {
-                    //             fprintf(f, ", %s", "0");
-                    //         }
-                    //     }
-                    //     fprintf(f, "\n");
-                    // }
-                }
-				break;
-            default:
-                fprintf(stderr, "codegen error: Invalid type in variable declaration\n");
-                exit(EXIT_FAILURE);
-                break;
-        }
+        decl_codegen_preprocess_non_funcs(d, f);
+        decl_codegen_non_funcs(d, f);
     }
+
     decl_codegen(d->next, f);
 }
