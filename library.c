@@ -27,6 +27,7 @@ x = integer_power(a,b);
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 void print_integer(long x){
 	printf("%ld", x);
@@ -85,6 +86,14 @@ void check_bounds(long arr[], long index){
 		fprintf(stderr,"Index out of bounds\n");
 		exit(EXIT_FAILURE);
 	}
+}
+
+long str_equal(char *s1, char *s2){
+	return strcmp(s1, s2) == 0;
+}
+
+long str_not_equal(char *s1, char *s2){
+	return strcmp(s1, s2) != 0;
 }
 
 long integer_power(long x, long y){
