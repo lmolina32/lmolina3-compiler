@@ -351,6 +351,11 @@ static void decl_typecheck_non_functions(Decl *d) {
         }
         t = t->subtype;
     }
+    // case 1: decl resolve in expr_codegen never updated -> update
+    if (!type_equals(d->type, d->symbol->type)){
+        type_destroy(d->type);
+        d->type = type_copy(d->symbol->type);
+    }
 }
 
 /**
