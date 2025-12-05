@@ -1,6 +1,12 @@
 main: function integer () = {
     a: integer = 10;
     b: integer;
+    aa: auto = 10;
+    print aa;
     a = b = 10;
     return a - b + 10 - 5 + 20 - 10 - 5 + 40;
+}
+
+aa: function auto () ={
+    return 10;
 }
