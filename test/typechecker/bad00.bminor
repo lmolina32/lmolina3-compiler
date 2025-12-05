@@ -1,4 +1,4 @@
 main: function void () = {
     x: auto;
-    (x + 10) = 10;
+    10 = 10;
 }
