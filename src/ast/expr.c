@@ -1333,7 +1333,7 @@ void expr_codegen(Expr *e, FILE *f){
 				expr_codegen(res_e, f);
 				e->reg = res_e->reg;
 				res_e->right->left = NULL;
-				res_e->right->right = NULL;
+				res_e->right->right->left = NULL;
 				expr_destroy(res_e);
 			} else {
 				label = label_create();
@@ -1359,7 +1359,7 @@ void expr_codegen(Expr *e, FILE *f){
 				expr_codegen(res_e, f);
 				e->reg = res_e->reg;
 				res_e->right->left = NULL;
-				res_e->right->right = NULL;
+				res_e->right->right->left = NULL;
 				expr_destroy(res_e);
 			} else {
 				label = label_create();
@@ -1376,6 +1376,7 @@ void expr_codegen(Expr *e, FILE *f){
 				e->reg = e->left->reg;
 				scratch_free(e->right->reg);
 			}
+			type_destroy(dummy_t);
 			break;
 		case EXPR_LT:					//  comparison less than  <
 			label = label_create();
