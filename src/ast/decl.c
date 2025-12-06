@@ -521,7 +521,7 @@ static void decl_codegen_funcs(Decl *d, FILE *f){
     }
     
     // create space for locals 
-    fprintf(f, "\n\tSUBQ  $%d, %%rsp\n\n", d->local*8);
+    fprintf(f, "\n\tSUBQ  $%d, %%rsp\n\n", (int_count + d->local) % 2 == 0 ? (d->local+ 1)*8 : d->local*8);
     // save callee-saved registers
     fprintf(f, "\tPUSHQ %%rbx\n"
                 "\tPUSHQ %%r12\n"
