@@ -1,0 +1,21 @@
+arr: array[5] integer = {1, 2, 3, 4, 5};
+map: array[5] integer;
+
+two_sum: function void (a: integer) = {
+    i: integer;
+    j: integer;
+    for (i = 0; i < #arr; i++){
+        diff: integer = a - arr[i];
+        for (j = 0; j < #map; j++){
+            if (map[j] == diff){
+                print "two sum found ", i, ' ', j, "\n";
+            }
+        }
+        map[i] = arr[i];
+    }
+}
+
+main: function void () = {
+    two_sum(6);
+    return;
+}

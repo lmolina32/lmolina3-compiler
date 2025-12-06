@@ -12,6 +12,7 @@
 #include "symbol.h"
 #include "type.h"
 #include "scope.h"
+#include "str_lit.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -74,7 +75,8 @@ static void cleanup_compiler(bool destroy_ast) {
  **/
 void usage(const char *program) {
     // Standard usage format: program [stage] [input file]
-    fprintf(stderr, "Usage: %s [options] <Bminor source file>\n\n", program); 
+    fprintf(stderr, "Usage: %s [options] <Bminor source file>\n", program); 
+    fprintf(stderr, "       %s --codegen <Bminor source file> <assembly output file>\n\n", program); 
     fprintf(stderr, "Options (Choose one stage):\n");
     fprintf(stderr, "   --encode       Reads a file containing a string literal, decodes and re-encodes it.\n");
     fprintf(stderr, "   --scan         Scans the source file and prints a list of tokens.\n");
@@ -82,6 +84,7 @@ void usage(const char *program) {
     fprintf(stderr, "   --print         Parses the file and pretty-prints the resulting AST.\n");
     fprintf(stderr, "   --resolve       Performs name resolution (semantic check).\n");
     fprintf(stderr, "   --typecheck     Performs type checking (semantic check).\n");
+    fprintf(stderr, "   --codegen       Performs code generation on bminor source file\n");
     fprintf(stderr, "\nGeneral Options:\n");
     fprintf(stderr, "   -h or --help    Print this help message.\n");
 }
@@ -224,9 +227,10 @@ bool resolve(const char *file_name, bool cleanup){
 /**
  * Resolves program and computes typechecking for each expression ensuring compatibility 
  * @param   file_name       Bminor source file to typecheck
+ * @param   cleanup         cleanup after calling typechecking  
  * @return  true if valid types for each expression, otherwise false
  */
-bool typecheck(const char *file_name){
+bool typecheck(const char *file_name, bool cleanup){
     bool exit_code = true;
     if (resolve(file_name, false)){
         decl_typecheck(root);
@@ -236,7 +240,33 @@ bool typecheck(const char *file_name){
         exit_code = false;
     }
 
-    cleanup_compiler(true);
+    cleanup_compiler(cleanup);
     return exit_code;
 }
 
+
+/**
+ * Ensures program passed is valid Bminor, if so code generation takes place 
+ * @param   file_name       Bminor source file to typecheck
+ * @param   file_output     File to write code generation to 
+ * @return  true if code generation is successful, otherwise false 
+ */
+bool codegen(const char *file_name, const char *file_output){
+    bool exit_code = true;
+
+    if (typecheck(file_name, false)){
+        FILE *output = safe_fopen(file_output, "w");
+        if (!output) return false; 
+        decl_codegen(root, output);
+        string_print(output);
+
+        exit_code = b_ctx.codegen_errors != 0 ? false : true;
+        fclose(output);
+    } else {
+        fprintf(stderr, "Typechecker Error\n");
+        exit_code = false;
+    }
+
+    cleanup_compiler(true);
+    return exit_code;
+}

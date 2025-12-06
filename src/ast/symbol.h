@@ -9,6 +9,7 @@
 /* Forward Declaration */
 
 typedef struct Type Type;
+typedef struct String_lit String_lit;
 
 /* Structure */
 
@@ -28,6 +29,7 @@ struct Symbol {
 	int which;					// The positional location when the Decl was defined
 	int func_decl;				// Prototype flag: 1-> Prototype, 0-> Not Prototype 
 	Symbol *prototype_def;		// Prototype definition symbol struct 
+	String_lit *str_lit;		// String node associated with symbol	
 };
 
 
@@ -38,5 +40,6 @@ extern const char *sym_to_str[SYMBOL_LEN];
 Symbol 	   *symbol_create(symbol_t kind, Type *type, const char *name);
 void		symbol_destroy(Symbol *s);
 Symbol     *symbol_copy(Symbol *s);
+const char *symbol_codegen(Symbol *s);
 
 #endif

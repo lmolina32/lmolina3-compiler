@@ -36,6 +36,9 @@ The compiler supports multiple modes of operation:
 
 # Typecheck resolved source file (type checking)
 ./bin/bminor --typecheck <filename.bminor>
+
+# Generate code for source file (code generation)
+./bin/bminor --codegen <filename.bminor> <output_file.s>
 ```
 
 ### Exit Codes
@@ -55,12 +58,13 @@ make test-parser      # Test syntax analysis
 make test-printer     # Test pretty printing
 make test-resolver    # Test name resolution
 make test-typechecker # Test type checking
+make test-codegen     # Test code generation
 make test-book        # Run book test cases
 ```
 
 Test cases are organized in `test/` by compiler phase, with both valid (`good*.bminor`) and invalid (`bad*.bminor`) test programs.
 
-- Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`, `test/printer`, `test/resolver`
+- Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`, `test/printer`, `test/resolver`, `test/typechecker`, `test/codegen`
 - Book test cases: `test/book_test_cases/parser`, `test/book_test_cases/printer`, `test/book_test_cases/typecheck`
 
 ## Project Structure
@@ -72,6 +76,7 @@ bminor/
 │   ├── scanner/        # Lexical analysis (Flex)
 │   ├── parser/         # Syntax analysis (Bison)
 │   ├── ast/            # Abstract Syntax Tree definitions
+│   ├── codegen/        # Scratch register and label functions
 │   ├── encoder/        # String literal encoding
 │   ├── library/        # Runtime library
 │   ├── symbol_table/   # Symbol table and scope functions

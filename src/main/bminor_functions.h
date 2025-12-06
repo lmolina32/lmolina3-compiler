@@ -14,6 +14,7 @@ bool     scan(const char *file_name);
 bool     parse(const char *file_name);
 bool     pretty_print(const char *file_name);
 bool     resolve(const char *file_name, bool cleanup);
-bool     typecheck(const char *file_name);
+bool     typecheck(const char *file_name, bool cleanup);
+bool     codegen(const char *file_name, const char *file_output);
 
 #endif 

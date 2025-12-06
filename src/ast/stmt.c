@@ -8,6 +8,8 @@
 #include "symbol.h"
 #include "type.h"
 #include "scope.h"
+#include "label.h"
+#include "scratch.h"
 #include "utils.h"
 
 #include <stdio.h>
@@ -323,4 +325,132 @@ bool stmt_typecheck(Stmt *s){
 			break;
 	}
 	return stmt_typecheck(s->next) || res;
+}
+
+/**
+ * Perform code generation on stmt structure 
+ * @param 	s 		Stmt structure to perform code generation 
+ * @param	f		File to write code generation to 
+ */
+void stmt_codegen(Stmt *s, FILE *f){
+	if (!s || !f) return;
+	Expr *dummy_e = NULL;
+	Expr *res_e = NULL;
+	Type *dummy_t = NULL;
+	int reg = 0;
+	int else_label = 0;
+	int done_label = 0;
+	switch (s->kind){
+		case STMT_DECL:
+			decl_codegen(s->decl, f);
+			break;
+		case STMT_EXPR:
+			expr_codegen(s->expr, f);
+			scratch_free(s->expr->reg);
+			break;
+		case STMT_IF_ELSE:
+			else_label = label_create();
+			done_label = label_create();
+			expr_codegen(s->expr, f);
+			fprintf(f, "\tCMP $0, %s\n",scratch_name(s->expr->reg));
+			scratch_free(s->expr->reg);
+			fprintf(f, "\tJE %s\n",label_name(else_label));
+			stmt_codegen(s->body, f);
+			fprintf(f, "\tJMP %s\n",label_name(done_label));
+			fprintf(f, "%s:\n",label_name(else_label));
+			stmt_codegen(s->else_body, f);
+			fprintf(f, "%s:\n",label_name(done_label));
+			break;
+		case STMT_FOR:
+			else_label = label_create(); // top label 
+			done_label = label_create();
+			expr_codegen(s->init_expr, f);
+			if (s->init_expr) scratch_free(s->init_expr->reg);
+			fprintf(f, "%s:\n", label_name(else_label));
+			if (s->expr){
+				expr_codegen(s->expr, f);
+				reg = s->expr->reg;
+			} else {
+				reg = scratch_alloc();
+				fprintf(f, "\tMOVQ $1, %s\n", scratch_name(reg));
+			}
+			fprintf(f, "\tCMPQ $0, %s\n", scratch_name(reg));
+			scratch_free(reg);
+			fprintf(f, "\tJE %s\n", label_name(done_label));
+			stmt_codegen(s->body, f);
+			expr_codegen(s->next_expr, f);
+			if (s->next_expr) scratch_free(s->next_expr->reg);
+			fprintf(f, "\tJMP %s\n", label_name(else_label));
+			fprintf(f, "%s:\n", label_name(done_label));
+			break;
+		case STMT_PRINT:
+			dummy_e = s->expr;
+			while (dummy_e){
+				dummy_t = expr_typecheck(dummy_e->left);
+				switch (dummy_t->kind){
+					case TYPE_BOOLEAN:
+						res_e = expr_create(EXPR_FUNC, expr_create_name("print_boolean"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+						break;
+					case TYPE_CHARACTER:
+						res_e = expr_create(EXPR_FUNC, expr_create_name("print_character"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+						break; 
+					case TYPE_INTEGER:
+						res_e = expr_create(EXPR_FUNC, expr_create_name("print_integer"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+						break;
+					case TYPE_DOUBLE:
+						fprintf(stderr, "codegen error: Printing type double that is not supported\n");
+						exit(EXIT_FAILURE);
+						break;
+					case TYPE_STRING:
+						res_e = expr_create(EXPR_FUNC, expr_create_name("print_string"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+						break;
+					case TYPE_ARRAY:
+						switch (dummy_e->left->symbol->type->subtype->kind){
+							case TYPE_BOOLEAN:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_bool"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+								break;
+							case TYPE_INTEGER:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_int"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+								break;
+							case TYPE_CHARACTER:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_char"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+								break;
+							case TYPE_STRING:
+								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_str"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+								break;
+							default:
+								break;
+						}
+						break;
+					case TYPE_CARRAY:
+						res_e = expr_create(EXPR_FUNC, expr_create_name("print_carray"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
+						break;
+					case TYPE_VOID:
+					case TYPE_AUTO:
+					case TYPE_FUNCTION:
+					default:
+						fprintf(stderr, "codegen error: Printing type that is not allowed\n");
+						exit(EXIT_FAILURE);
+				}
+				expr_codegen(res_e, f);
+				scratch_free(res_e->reg);
+				dummy_e = dummy_e->right;
+				type_destroy(dummy_t);
+				res_e->right->left = NULL;
+				expr_destroy(res_e);
+			}
+			break;
+		case STMT_RETURN:
+			if (s->expr){
+				expr_codegen(s->expr, f);
+				fprintf(f, "\tMOV %s, %%rax\n", scratch_name(s->expr->reg));
+				scratch_free(s->expr->reg);
+			}
+			fprintf(f, "\tJMP .%s_epilogue\n", s->func_sym->name);
+			break;
+		case STMT_BLOCK:
+			stmt_codegen(s->body, f);
+			break;
+	}
+	stmt_codegen(s->next, f);
 }

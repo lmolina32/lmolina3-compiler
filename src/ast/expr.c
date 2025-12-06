@@ -10,6 +10,9 @@
 #include "encoder.h"
 #include "scope.h"
 #include "utils.h"
+#include "scratch.h"
+#include "label.h"
+#include "str_lit.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -151,6 +154,7 @@ Expr* expr_create_char_literal(char *c){
 	Expr* expr_char_lit = safe_calloc(sizeof(Expr), 1);
 	expr_char_lit->kind = EXPR_CHAR_LIT;
 	expr_char_lit->string_literal = safe_strdup(c);
+	expr_char_lit->literal_value = (int)*c;
 	return expr_char_lit;
 }
 
@@ -247,17 +251,17 @@ void expr_print_with_context(Expr *parent, Expr *child, int is_left, FILE *strea
 		Expr *expr_unwrapped = expr_unwrap_groups(child);
 
 		if (parent && expr_need_parens(parent, expr_unwrapped, is_left)){
-			fprintf(stderr,"(");
+			fprintf(stream,"(");
 			expr_print(expr_unwrapped, stream);
-			fprintf(stderr,")");
+			fprintf(stream,")");
 		} else {
 			expr_print(expr_unwrapped, stream);
 		}
 	} else {
 		if (parent && expr_need_parens(parent, child, is_left)){
-			fprintf(stderr,"(");
+			fprintf(stream,"(");
 			expr_print(child, stream);
-			fprintf(stderr,")");
+			fprintf(stream,")");
 		} else {
 			expr_print(child, stream);
 		}
@@ -1217,4 +1221,414 @@ bool expr_is_literal(expr_t type) {
            type == EXPR_STR_LIT ||
            type == EXPR_BOOL_LIT ||
            type == EXPR_BRACES;
+}
+
+/**
+ * Perform code generation on expr structure
+ * @param 	e		expr structure to perform code generation 
+ * @param 	f		file pointer to output code generation 
+ */
+void expr_codegen(Expr *e, FILE *f){
+	if (!e || !f) return;
+
+	Expr *dummy_e = NULL;
+	Type *dummy_t = NULL;
+	int int_count = 0;
+	int double_count = 0;
+	int label = 0;
+
+	switch (e->kind){
+		case EXPR_ADD:					//	addition +
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tADDQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
+			e->reg = e->right->reg;
+			scratch_free(e->left->reg);
+			break;
+		case EXPR_SUB:					//	subtraction -
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tSUBQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_MUL:					//	multiplication *
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tMOVQ %s, %%rax\n", scratch_name(e->right->reg));
+			fprintf(f, "\tIMUL %s\n", scratch_name(e->left->reg));
+			fprintf(f, "\tMOVQ %%rax, %s\n", scratch_name(e->right->reg));
+			e->reg = e->right->reg;
+			scratch_free(e->left->reg);
+			break;
+		case EXPR_DIV:					//  division  /
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tMOVQ %s, %%rax\n", scratch_name(e->left->reg));
+			fprintf(f, "\tCQO\n");
+			fprintf(f, "\tIDIVQ %s\n", scratch_name(e->right->reg));
+			fprintf(f, "\tMOVQ %%rax, %s\n", scratch_name(e->right->reg));
+			e->reg = e->right->reg;
+			scratch_free(e->left->reg);
+			break;
+		case EXPR_ASSIGN:				// 	assignment =  
+			// case 1a: left side is string -> allocated new str_literal for string assignment 
+			if (e->left->symbol && e->left->symbol->type->kind == TYPE_STRING){
+				int label = string_label_create();
+				e->left->symbol->str_lit = string_alloc(e->right->string_literal, string_label_name(label));
+				e->right->symbol = e->left->symbol;
+			} 
+			if (e->left->kind == EXPR_INDEX){
+				expr_codegen(e->left, f);
+				scratch_free(e->left->reg);
+			}
+			expr_codegen(e->right, f);
+			// case 1b: left side is array index -> index into array 
+			if (e->left->kind == EXPR_INDEX){
+				dummy_e = e->left;
+				expr_codegen(dummy_e->right, f);
+				dummy_e->reg = scratch_alloc();
+
+				if (dummy_e->left->symbol->kind == SYMBOL_GLOBAL){
+					fprintf(f, "\tMOVQ $%s, %s\n", symbol_codegen(dummy_e->left->symbol), scratch_name(dummy_e->reg));
+				} else {
+					fprintf(f, "\tMOVQ %s, %s\n", symbol_codegen(dummy_e->left->symbol), scratch_name(dummy_e->reg));
+				}
+				fprintf(f, "\tINCQ %s\n", scratch_name(dummy_e->right->reg));
+				fprintf(f, "\tMOVQ %s, (%s, %s, 8)\n", scratch_name(e->right->reg), scratch_name(dummy_e->reg), scratch_name(dummy_e->right->reg));
+				scratch_free(dummy_e->right->reg);
+				scratch_free(dummy_e->reg);
+			// case 1c: left side is regular type -> alloc value to type
+			} else {
+				fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->right->reg), symbol_codegen(e->left->symbol));
+			}
+			e->reg = e->right->reg;
+			break;
+		case EXPR_OR:					//  logical or ||
+			label = label_create();
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tCMPQ $1, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "\tJE %s\n", label_name(label));
+			fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+			fprintf(f, "%s:\n", label_name(label));
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_AND:					//  logical and  &&
+			label = label_create();
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tCMPQ $1, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "\tJNE %s\n", label_name(label));
+			fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+			fprintf(f, "%s:\n", label_name(label));
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_EQ:					//  comparison equal  ==
+			dummy_t = expr_typecheck(e->left);
+			if (dummy_t->kind == TYPE_STRING){
+				Expr *res_e = expr_create(EXPR_FUNC, expr_create_name("str_equal"), expr_create(EXPR_ARGS, e->left, expr_create(EXPR_ARGS, e->right, 0)));
+				expr_codegen(res_e, f);
+				e->reg = res_e->reg;
+				res_e->right->left = NULL;
+				res_e->right->right->left = NULL;
+				expr_destroy(res_e);
+			} else {
+				label = label_create();
+				expr_codegen(e->left, f);
+				expr_codegen(e->right, f);
+				fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
+				fprintf(f, "\tJE %s\n", label_name(label));
+				fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+				label = label_create();
+				fprintf(f, "\tJMP %s\n", label_name(label));
+				fprintf(f, "%s:\n", label_name(label-1));
+				fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+				fprintf(f, "%s:\n", label_name(label));
+				e->reg = e->left->reg;
+				scratch_free(e->right->reg);
+			}
+			type_destroy(dummy_t);
+			break;
+		case EXPR_NOT_EQ:				//  comparison not equal  !=
+			dummy_t = expr_typecheck(e->left);
+			if (dummy_t->kind == TYPE_STRING){
+				Expr *res_e = expr_create(EXPR_FUNC, expr_create_name("str_not_equal"), expr_create(EXPR_ARGS, e->left, expr_create(EXPR_ARGS, e->right, 0)));
+				expr_codegen(res_e, f);
+				e->reg = res_e->reg;
+				res_e->right->left = NULL;
+				res_e->right->right->left = NULL;
+				expr_destroy(res_e);
+			} else {
+				label = label_create();
+				expr_codegen(e->left, f);
+				expr_codegen(e->right, f);
+				fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->right->reg));
+				fprintf(f, "\tJE %s\n", label_name(label));
+				fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+				label = label_create();
+				fprintf(f, "\tJMP %s\n", label_name(label));
+				fprintf(f, "%s:\n", label_name(label-1));
+				fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+				fprintf(f, "%s:\n", label_name(label));
+				e->reg = e->left->reg;
+				scratch_free(e->right->reg);
+			}
+			type_destroy(dummy_t);
+			break;
+		case EXPR_LT:					//  comparison less than  <
+			label = label_create();
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+			fprintf(f, "\tJL %s\n", label_name(label));
+			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+			label = label_create();
+			fprintf(f, "\tJMP %s\n", label_name(label));
+			fprintf(f, "%s:\n", label_name(label-1));
+			fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "%s:\n", label_name(label));
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_LTE:					//  comparison less than or equal  <=
+			label = label_create();
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+			fprintf(f, "\tJLE %s\n", label_name(label));
+			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+			label = label_create();
+			fprintf(f, "\tJMP %s\n", label_name(label));
+			fprintf(f, "%s:\n", label_name(label-1));
+			fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "%s:\n", label_name(label));
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_GT:					//  comparison greater than > 
+			label = label_create();
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+			fprintf(f, "\tJG %s\n", label_name(label));
+			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+			label = label_create();
+			fprintf(f, "\tJMP %s\n", label_name(label));
+			fprintf(f, "%s:\n", label_name(label-1));
+			fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "%s:\n", label_name(label));
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_GTE:					//  comparison greater than or equal >=
+			label = label_create();
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tCMPQ %s, %s\n", scratch_name(e->right->reg), scratch_name(e->left->reg));
+			fprintf(f, "\tJGE %s\n", label_name(label));
+			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+			label = label_create();
+			fprintf(f, "\tJMP %s\n", label_name(label));
+			fprintf(f, "%s:\n", label_name(label-1));
+			fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "%s:\n", label_name(label));
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_REM:					//  remainder %
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			fprintf(f, "\tMOVQ %s, %%rax\n", scratch_name(e->left->reg));
+			fprintf(f, "\tCQO\n");
+			fprintf(f, "\tIDIVQ %s\n", scratch_name(e->right->reg));
+			fprintf(f, "\tMOVQ %%rdx, %s\n", scratch_name(e->right->reg));
+			e->reg = e->right->reg;
+			scratch_free(e->left->reg);
+			break;
+		case EXPR_EXPO:					//  exponentiation ^  
+			dummy_e = expr_create(EXPR_FUNC, expr_create_name("integer_power"), \
+								  expr_create(EXPR_ARGS, e->left, \
+								  expr_create(EXPR_ARGS, e->right, NULL)));
+			expr_codegen(dummy_e, f);
+			e->reg = dummy_e->reg;
+			expr_destroy(dummy_e);
+			break;
+		case EXPR_NOT:					//  logical not !
+			label = label_create();
+			expr_codegen(e->left, f);
+			fprintf(f, "\tCMPQ $0, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "\tJE %s\n", label_name(label));
+			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(e->left->reg));
+			label = label_create();
+			fprintf(f, "\tJMP %s\n", label_name(label));
+			fprintf(f, "%s:\n", label_name(label-1));
+			fprintf(f, "\tMOVQ $1, %s\n", scratch_name(e->left->reg));
+			fprintf(f, "%s:\n", label_name(label));
+			e->reg = e->left->reg;
+			break;
+		case EXPR_NEGATION:			    //  negation  -
+			expr_codegen(e->left, f);
+			fprintf(f, "\tNEGQ %s\n", scratch_name(e->left->reg));
+			e->reg = e->left->reg;
+			break;
+		case EXPR_ARR_LEN:			    //  array len #
+			dummy_e = expr_create(EXPR_ARGS, 0, 0);
+			dummy_e->reg = scratch_alloc();
+			fprintf(f, "\tMOVQ $0, %s\n", scratch_name(dummy_e->reg));
+			e->reg = scratch_alloc();
+
+			if (e->left->symbol->kind == SYMBOL_GLOBAL){
+				fprintf(f, "\tMOVQ $%s, %s\n", symbol_codegen(e->left->symbol), scratch_name(e->reg));
+			} else {
+				fprintf(f, "\tMOVQ %s, %s\n", symbol_codegen(e->left->symbol), scratch_name(e->reg));
+			}
+			fprintf(f, "\tMOVQ (%s, %s, 8), %s\n", scratch_name(e->reg), scratch_name(dummy_e->reg), scratch_name(e->reg));
+			scratch_free(dummy_e->reg);
+			expr_destroy(dummy_e);
+			break;
+		case EXPR_INCREMENT:			//  increment ++ 
+			expr_codegen(e->left, f);
+			e->reg = scratch_alloc();
+			fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->reg));
+			fprintf(f, "\tINCQ %s\n", scratch_name(e->left->reg));
+			if (e->left->kind == EXPR_IDENT){
+				fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), symbol_codegen(e->left->symbol));
+			}
+			scratch_free(e->left->reg);
+			break;
+		case EXPR_DECREMENT:			//  decrement -- 
+			expr_codegen(e->left, f);
+			e->reg = scratch_alloc();
+			fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), scratch_name(e->reg));
+			fprintf(f, "\tDECQ %s\n", scratch_name(e->left->reg));
+			if (e->left->kind == EXPR_IDENT){
+				fprintf(f, "\tMOVQ %s, %s\n", scratch_name(e->left->reg), symbol_codegen(e->left->symbol));
+			}
+			scratch_free(e->left->reg);
+			break;
+		case EXPR_GROUPS:				//  grouping ()
+			expr_codegen(e->left, f);
+			e->reg = e->left->reg;
+			break;
+		case EXPR_FUNC:					//  function call f()
+			dummy_e = e->right;	
+			for (int i = 0; i < MAX_INT_ARGS; i++){
+				fprintf(f, "\tPUSHQ %s\n", int_args[i]);
+			}
+			while (dummy_e){
+				if (double_count + int_count > 6){
+					fprintf(stderr, "codegen error: Does not Function '%s' has more than 6 arguments, functions with more than 6 arguments are not implemented\n", e->left->name);
+					exit(EXIT_FAILURE);
+				}
+				expr_codegen(dummy_e->left, f);
+				dummy_t = expr_typecheck(dummy_e->left);
+				switch (dummy_t->kind){
+					case TYPE_DOUBLE:
+						fprintf(stderr, "codegen error: double type not supported\n");
+						exit(EXIT_FAILURE);
+						break;
+					case TYPE_BOOLEAN:
+					case TYPE_CHARACTER:
+					case TYPE_INTEGER:
+					case TYPE_STRING:
+					case TYPE_ARRAY:
+					case TYPE_CARRAY:
+						fprintf(f, "\tMOVQ %s, %s\n", scratch_name(dummy_e->left->reg), int_args[int_count++]);
+						break;
+					case TYPE_VOID:
+					case TYPE_AUTO:
+					case TYPE_FUNCTION:
+					default:
+						fprintf(stderr, "codegen error: Invalid function parameter\n");
+						exit(EXIT_FAILURE);
+				}
+				scratch_free(dummy_e->left->reg);
+				dummy_e = dummy_e->right;
+				type_destroy(dummy_t);
+			}
+
+			fprintf(f, "\tPUSHQ %%r10\n"
+					   "\tPUSHQ %%r11\n"
+					   "\tCALL %s\n", e->left->name);
+			fprintf(f, "\tPOPQ %%r11\n"
+					   "\tPOPQ %%r10\n");
+			for (int i = MAX_INT_ARGS -1; i >= 0; i--){
+				fprintf(f, "\tPOPQ %s\n", int_args[i]);
+			}
+			e->reg = scratch_alloc();
+			fprintf(f, "\tMOVQ %%rax, %s\n", scratch_name(e->reg));
+			fprintf(f, "\tMOVQ $0, %%rax\n");
+			break;
+		case EXPR_ARGS:					//  function arguments a, b, c, d 
+			expr_codegen(e->left, f);
+			expr_codegen(e->right, f);
+			e->reg = e->left->reg;
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_INDEX:				//  subscripts, indexes a[0] or a[b]
+			dummy_e = expr_create(EXPR_FUNC, expr_create_name("check_bounds"), expr_create(EXPR_ARGS, e->left, expr_create(EXPR_ARGS, e->right, NULL)));
+			expr_codegen(dummy_e, f);
+			scratch_free(dummy_e->reg);
+			dummy_e->right->left = NULL;
+			dummy_e->right->right->left = NULL;
+			expr_destroy(dummy_e);
+			expr_codegen(e->right, f);
+			e->reg = scratch_alloc();
+
+			if (e->left->symbol->kind == SYMBOL_GLOBAL){
+				fprintf(f, "\tMOVQ $%s, %s\n", symbol_codegen(e->left->symbol), scratch_name(e->reg));
+			} else {
+				fprintf(f, "\tMOVQ %s, %s\n", symbol_codegen(e->left->symbol), scratch_name(e->reg));
+			}
+			if (e->left->symbol->type->kind == TYPE_ARRAY){
+				fprintf(f, "\tINCQ %s\n", scratch_name(e->right->reg));
+			}
+			fprintf(f, "\tMOVQ (%s, %s, 8), %s\n", scratch_name(e->reg), scratch_name(e->right->reg), scratch_name(e->reg));
+			scratch_free(e->right->reg);
+			break;
+		case EXPR_BRACES:				//  braces {}
+			expr_codegen(e->right, f);
+			e->reg = e->right->reg;
+			break;
+		case EXPR_DOUBLE_LIT:			//  double literal 123131 
+		case EXPR_DOUBLE_SCIENTIFIC_LIT://  double scientific literal 6e10 
+			fprintf(stderr, "codegen error: Double type not supported\n");
+			exit(EXIT_FAILURE);
+			break;
+		case EXPR_STR_LIT:				//  string literal "hello"
+			e->reg = scratch_alloc();
+			if (e->symbol){
+				fprintf(f, "\tMOVQ $%s, %s\n", e->symbol->str_lit->label, scratch_name(e->reg));
+			} else {
+				label = string_label_create();
+				e->label = string_label_name(label);
+				string_alloc(e->string_literal, e->label);
+				fprintf(f, "\tMOVQ $%s, %s\n", e->label, scratch_name(e->reg));
+			}
+			break;
+		case EXPR_INT_LIT:				//  integer literal 21321 
+		case EXPR_HEX_LIT:				//  hexadecimal literal 0x2123
+		case EXPR_BIN_LIT:				//  binary literal 0b1010
+		case EXPR_CHAR_LIT: 			//  char literal 'a'
+		case EXPR_BOOL_LIT:				//  boolean literal 'true' 'false'
+			e->reg = scratch_alloc();
+			fprintf(f, "\tMOVQ $%d, %s\n", e->literal_value, scratch_name(e->reg));
+			break;
+		case EXPR_IDENT:				//  identifier    my_function 
+			e->reg = scratch_alloc();
+			if (e->symbol->type->kind == TYPE_STRING && e->symbol->str_lit){
+				fprintf(f, "\tMOVQ $%s, %s\n", e->symbol->str_lit->label, scratch_name(e->reg));
+			} else if (e->symbol->kind == SYMBOL_GLOBAL && (e->symbol->type->kind == TYPE_ARRAY || e->symbol->type->kind == TYPE_CARRAY)){
+				fprintf(f, "\tMOVQ $%s, %s\n", symbol_codegen(e->symbol), scratch_name(e->reg));
+			} else {
+				fprintf(f, "\tMOVQ %s, %s\n", symbol_codegen(e->symbol), scratch_name(e->reg));
+			}
+			break;
+		default:
+			fprintf(stderr, "codegen error: Unknown expression type\n");
+			exit(EXIT_FAILURE);
+	}
 }

@@ -1,0 +1,24 @@
+b: boolean = true;
+c: boolean = false;
+ch: char = 'a';
+cc: char = 'b';
+a: char ='c';
+aa: char = 'd';
+int: integer = 10;
+int2: integer = 20;
+int3: integer = 10;
+s: string = "hello\n\n\n";
+arr: array [5] integer = {1, 2, 3, 4, 5};
+carr: array [5] char = {'c', 'c', 'a', 'b', 'e'};
+bcarr: array [3] boolean = {true, false, true};
+x: array [100] integer;
+adadfa: carray [5] integer = {1, 2, 3, 4, 5};
+carr1: carray [5] char = {'a', 'a', 'a', 'a', 'a'};
+carr2: carray[2] boolean = {true, true};
+carr3: carray[6] integer; 
+b1: integer;
+b2: char;
+b3: string;
+b4: boolean;
+
+main: function void () = {}

@@ -62,6 +62,8 @@ struct Expr {
 	double double_literal_value;	// double lit val (double & double scientific)
 	char *string_literal;			// string literal 
 	Symbol *symbol;					// include const, vars, and funcs 
+	int reg;						// scratch register associated with expr
+	const char *label;						// label associated with expression 
 };
 
 /* Functions */
@@ -82,6 +84,7 @@ Expr   *expr_copy(Expr *e);
 void    expr_resolve(Expr *e);
 Type   *expr_typecheck(Expr *e);
 bool	expr_is_literal(expr_t type);
+void	expr_codegen(Expr *e, FILE *f);
 
 
 #endif

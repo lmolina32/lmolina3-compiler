@@ -1,0 +1,7 @@
+a: array [5] auto = {1, 2, 3, 4, 5};
+main: function integer () = {
+    print a, '\n';
+    a: integer = 5;
+    b: integer = 5;
+    return 5 * 10 + 5 - 20;
+}

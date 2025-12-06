@@ -1,0 +1,7 @@
+main: function boolean () = {
+    a: boolean = 10 == 100;
+    b: boolean = 'c' == 'a';
+    c: boolean = true == false;
+    d: boolean = 10 == 10;
+    return a || b || c || d;
+}

@@ -65,10 +65,10 @@ void param_list_print(Param_list *a, FILE *stream){
 	type_print(a->type, stream);
 
 	if (a->next) {
-		fprintf(stderr, ",");
+		fprintf(stream, ",");
 		param_list_print(a->next, stream);
 	} else {
-		fprintf(stderr, " ");
+		fprintf(stream, " ");
 	}
 }
 
@@ -130,6 +130,13 @@ bool param_list_valid_type(Param_list *a){
 		b_ctx.typechecker_errors++;
 	}
 	if (a->type->kind == TYPE_VOID || a->type->kind == TYPE_AUTO || a->type->kind == TYPE_FUNCTION) return false;
+	if (a->type->kind == TYPE_CARRAY || a->type->kind == TYPE_ARRAY){
+		Type *dummy_t = a->type->subtype;
+		while (dummy_t->kind == TYPE_ARRAY || dummy_t->kind == TYPE_CARRAY){
+			dummy_t = dummy_t->subtype;
+		}
+		if (dummy_t->kind == TYPE_VOID || dummy_t->kind == TYPE_AUTO || dummy_t->kind == TYPE_FUNCTION) return false;
+	}
 	if (!param_list_valid_type(a->next)) return false;
 	return true;
 }

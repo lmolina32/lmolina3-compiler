@@ -10,6 +10,8 @@
 
 /* Macros */
 
+#define MAX_NAME 1<<8
+
 #define MALLOC_CHECK(ptr) \
     do { \
         if (ptr == NULL){ \

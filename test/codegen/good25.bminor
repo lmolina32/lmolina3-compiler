@@ -1,0 +1,8 @@
+main: function integer (argc: integer, argv: carray [] string) = {
+    i: integer = 0;
+    for (i = 0; i < argc; i++){
+        print argv[i], '\n';
+    }
+    print argc, ' ', argv, '\n';
+    return 0;
+}

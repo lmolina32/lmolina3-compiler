@@ -65,3 +65,25 @@ Symbol* symbol_copy(Symbol *s){
     new_s->func_decl = s->func_decl; 
     return new_s;
 }
+
+/**
+ * Takes in symbol and returns the register name corresponding to the symbol 
+ * @param   s       Symbol to create register name
+ * @return  static string corresponding to the register name 
+ */
+const char *symbol_codegen(Symbol *s){
+    static char name[MAX_NAME] = {0};
+    switch (s->kind){
+		case SYMBOL_GLOBAL:
+            sprintf(name, s->name);
+            return name;
+		case SYMBOL_PARAM:
+		case SYMBOL_LOCAL:
+            sprintf(name, "-%d(%%rbp)", 8 * (1 + s->which));
+            return name;
+        default:
+            fprintf(stderr, "symbol_codegen: Unknown symbol type\n");
+            exit(EXIT_FAILURE);
+            return NULL;
+    }
+}

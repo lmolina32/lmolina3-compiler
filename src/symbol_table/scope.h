@@ -36,8 +36,9 @@ extern Symbol_stack stack;
 void    scope_enter();
 void    scope_exit();
 int     scope_level();
-void    scope_bind( const char *name, Symbol *sym );
-Symbol *scope_lookup( const char *name );
-Symbol *scope_lookup_current( const char *name );
+void    scope_bind(const char *name, Symbol *sym);
+Symbol *scope_lookup(const char *name);
+Symbol *scope_lookup_current(const char *name);
+int     scope_lookup_which();
 
 #endif

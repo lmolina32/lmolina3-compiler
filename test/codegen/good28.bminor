@@ -1,0 +1,51 @@
+a: array [5] boolean;
+b: array [5] integer;
+c: array [5] char;
+d: array [5] string;
+e: array [5] boolean;
+f: array [5] integer;
+
+allocated: function void (a: array [] boolean, b: array [] integer, c: array [] char, d: array [] string, e: array [] boolean, f: array [] integer) = {
+    i: integer = 0;
+    for (i = 0; i < #a; i++){
+        if (i % 2 == 0){
+            a[i] = true;
+        } else {
+            a[i] = false;
+        }
+    }
+    for (i = 0; i < #b; i++){
+        b[i] = i;
+    }
+    for (i = 0; i < #c; i++){
+        if (i == 4){
+            c[i] = 'a';
+        } else {
+            c[i] = 'b';
+        }
+    }
+    for (i = 0; i < #d; i++){
+        d[i] = "hello";
+    }
+    for (i = 0; i < #e; i++){
+        if (i % 2 == 0){
+            e[i] = true;
+        } else {
+            e[i] = false;
+        }
+    }
+    for (i = 0; i < #f; i++){
+        f[i] = i;
+    }
+    print a, '\n';
+    print b, '\n';
+    print c, '\n';
+    print d, '\n';
+    print e, '\n';
+    print f, '\n';
+}
+
+main: function void () = {
+    allocated(a, b, c, d, e, f);
+    return;
+}

@@ -1,0 +1,14 @@
+a: array [3] string = {"one", "two", "three"};
+
+print_stmt: function void (arr: array [] string, s: string)= {
+    i: integer = 0;
+    for (i = 0; i < #arr; i++){
+        print a[i], '\n';
+    }
+
+    print s;
+}
+
+main: function void () = {
+    print_stmt(a, "hello world i am leo \n");
+}

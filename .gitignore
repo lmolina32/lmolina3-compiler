@@ -1,5 +1,6 @@
 *.o
 *.out
+*.s
 bin/*
 build/*
 bminor

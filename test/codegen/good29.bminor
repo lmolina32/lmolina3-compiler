@@ -1,0 +1,8 @@
+add: function integer (a: integer, b: integer) = {
+    return a + b;
+}
+
+main: function void () = {
+    print add(add(add(1,1), add(add(add(add(add(add(1,1),add(1,1)),add(1,1)),1),add(1,1)),add(1,1))), add(add(1,1), add(1,1)));
+    return;
+}
