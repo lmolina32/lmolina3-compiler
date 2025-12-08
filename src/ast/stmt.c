@@ -15,6 +15,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* Forward Declaration of static prototypes */
+
+static bool 	  stmt_typecheck_if_else(Stmt *s);
+static bool 	  stmt_typecheck_for(Stmt *s);
+static void 	  stmt_typecheck_print(Stmt *s);
+static bool 	  stmt_typecheck_return(Stmt *s);
+static void 	  stmt_codegen_if_else(Stmt *s, FILE *f);
+static void 	  stmt_codegen_for(Stmt *s, FILE *f);
+static const char *stmt_codegen_get_func_name(Type *t);
+static void  	  stmt_codegen_print(Stmt *s, FILE *f);
+static void 	  stmt_codegen_return(Stmt *s, FILE *f);
+
 /* Functions */
 
 /**
@@ -232,6 +244,97 @@ void stmt_resolve(Stmt *s){
 }
 
 /**
+ * Handle if else stmt typechecking 
+ * @param	s		stmt if else node to type check
+ */
+static bool stmt_typecheck_if_else(Stmt *s){
+	Type *t = expr_typecheck(s->expr);
+	if (!t || t->kind != TYPE_BOOLEAN) {
+		fprintf(stderr, "typechecker error: Condition in 'if' statement must be of type boolean, but got");
+		type_print(t, stderr);
+		fprintf(stderr, ".\n");
+		b_ctx.typechecker_errors++;
+	}
+	type_destroy(t);
+	return stmt_typecheck(s->body) && stmt_typecheck(s->else_body);
+}
+
+/**
+ * Handle typechecking on for loops 
+ * @param	s		stmt for loop node to type check
+ */
+static bool stmt_typecheck_for(Stmt *s){
+	Type *t = expr_typecheck(s->init_expr);
+	type_destroy(t);
+	t = expr_typecheck(s->next_expr);
+	type_destroy(t);
+	t = expr_typecheck(s->expr);
+	if (t && t->kind != TYPE_BOOLEAN) {
+		fprintf(stderr, "typechecker error: Condition in 'for' loop must be of type boolean, but got");
+		type_print(t, stderr);
+		fprintf(stderr, ".\n");
+		b_ctx.typechecker_errors++;
+	}
+	type_destroy(t);
+	return stmt_typecheck(s->body);
+}
+
+/**
+ * Handle typechecking for print stmts
+ * @param	s		stmt print node to type check
+ */
+static void stmt_typecheck_print(Stmt *s){
+	Expr *e = s->expr;
+	while (e){
+		Type *t = expr_typecheck(e->left);
+		if (t && (t->kind == TYPE_VOID || t->kind == TYPE_FUNCTION || t->kind == TYPE_AUTO)){
+			fprintf(stderr, "Typechecker error: Cannot print type (");
+			type_print(t, stderr);
+			fprintf(stderr, ")\n");
+			b_ctx.typechecker_errors++;
+		}
+		type_destroy(t);
+		e = e->right;
+	}
+}
+
+/**
+ * Handle typechecking for function returns 
+ * @param	s		stmt node to perform typechecking on for returns
+ */
+static bool stmt_typecheck_return(Stmt *s){
+	Type *t = expr_typecheck(s->expr);
+	if (!t) t = type_create(TYPE_VOID, 0, 0, 0);
+	Type *func_return_type = s->func_sym->type->subtype;
+	// Case 1: return type not set
+	if (func_return_type->kind == TYPE_AUTO){
+		// Case 1b: retuning non valid return type 
+		if (!type_valid_return(t) || t->kind == TYPE_AUTO){
+			fprintf(stderr, "typechecker error: Invalid return type got (");
+			type_print(t, stderr);
+			fprintf(stderr, " ) but expected either (integer, double, string, char, boolean, or nothing)\n");
+			b_ctx.typechecker_errors++;
+		// Case 1c: return type valid set return type
+		} else {
+			func_return_type->kind = t->kind;	
+			fprintf(stdout, "typechecker resolved: return type for function '%s' set to (", s->func_sym->name);
+			type_print(t, stdout);
+			fprintf(stdout, " )\n");
+		}
+	// Case 2: return type set, check if equals
+	} else if (t->kind != func_return_type->kind){
+		fprintf(stderr, "typechecker error: Return type mismatch. Expected (");
+		type_print(s->func_sym->type->subtype, stderr);
+		fprintf(stderr, " ), but got (");
+		type_print(t, stderr);
+		fprintf(stderr, " ).\n");
+		b_ctx.typechecker_errors++;
+	}
+	type_destroy(t);
+	return true;
+}
+
+/**
  * Perform typechecking on the stmt struct ensuring compatibility for all stmts
  * @param 	s 		ptr to stmt struct to typecheck  
  * @return 	true if valid return from function at each control flow, otherwise false 
@@ -240,7 +343,6 @@ bool stmt_typecheck(Stmt *s){
 	if (!s) return false;
 	Type *t;
 	bool res = false;
-	Expr *e = NULL;
 	switch(s->kind){
 		case STMT_DECL:
 			decl_typecheck(s->decl);
@@ -250,75 +352,16 @@ bool stmt_typecheck(Stmt *s){
 			type_destroy(t);
 			break;
 		case STMT_IF_ELSE:
-			t = expr_typecheck(s->expr);
-			if (!t || t->kind != TYPE_BOOLEAN) {
-				fprintf(stderr, "typechecker error: Condition in 'if' statement must be of type boolean, but got");
-				type_print(t, stderr);
-				fprintf(stderr, ".\n");
-				b_ctx.typechecker_errors++;
-			}
-			type_destroy(t);
-			res = stmt_typecheck(s->body) && stmt_typecheck(s->else_body);
+			res = stmt_typecheck_if_else(s);
 			break;
 		case STMT_FOR:
-			t = expr_typecheck(s->init_expr);
-			type_destroy(t);
-			t = expr_typecheck(s->next_expr);
-			type_destroy(t);
-			t = expr_typecheck(s->expr);
-			if (t && t->kind != TYPE_BOOLEAN) {
-				fprintf(stderr, "typechecker error: Condition in 'for' loop must be of type boolean, but got");
-				type_print(t, stderr);
-				fprintf(stderr, ".\n");
-				b_ctx.typechecker_errors++;
-			}
-			type_destroy(t);
-			res = stmt_typecheck(s->body);
+			res = stmt_typecheck_for(s);	
 			break;
 		case STMT_PRINT:
-			e = s->expr;
-			while (e){
-				t = expr_typecheck(e->left);
-				if (t && (t->kind == TYPE_VOID || t->kind == TYPE_FUNCTION || t->kind == TYPE_AUTO)){
-					fprintf(stderr, "Typechecker error: Cannot print type (");
-					type_print(t, stderr);
-					fprintf(stderr, ")\n");
-					b_ctx.typechecker_errors++;
-				}
-				type_destroy(t);
-				e = e->right;
-			}
+			stmt_typecheck_print(s);	
 			break;
 		case STMT_RETURN:
-			t = expr_typecheck(s->expr);
-			if (!t) t = type_create(TYPE_VOID, 0, 0, 0);
-			Type *func_return_type = s->func_sym->type->subtype;
-			// Case 1: return type not set
-			if (func_return_type->kind == TYPE_AUTO){
-				// Case 1b: retuning non valid return type 
-				if (!type_valid_return(t) || t->kind == TYPE_AUTO){
-					fprintf(stderr, "typechecker error: Invalid return type got (");
-					type_print(t, stderr);
-					fprintf(stderr, " ) but expected either (integer, double, string, char, boolean, or nothing)\n");
-					b_ctx.typechecker_errors++;
-				// Case 1c: return type valid set return type
-				} else {
-					func_return_type->kind = t->kind;	
-					fprintf(stdout, "typechecker resolved: return type for function '%s' set to (", s->func_sym->name);
-					type_print(t, stdout);
-					fprintf(stdout, " )\n");
-				}
-			// Case 2: return type set, check if equals
-			} else if (t->kind != func_return_type->kind){
-				fprintf(stderr, "typechecker error: Return type mismatch. Expected (");
-				type_print(s->func_sym->type->subtype, stderr);
-				fprintf(stderr, " ), but got (");
-				type_print(t, stderr);
-				fprintf(stderr, " ).\n");
-				b_ctx.typechecker_errors++;
-			}
-			type_destroy(t);
-			res = true;
+			res = stmt_typecheck_return(s);	
 			break;
 		case STMT_BLOCK:
 			res = stmt_typecheck(s->body);
@@ -328,18 +371,128 @@ bool stmt_typecheck(Stmt *s){
 }
 
 /**
+ * Handles if else code generation in x86
+ * @param	s		stmt node holding if else block 
+ * @param	f		file ptr to generate x86 code to 
+ */
+static void stmt_codegen_if_else(Stmt *s, FILE *f){
+	int else_label = label_create();
+	int done_label = label_create();
+	expr_codegen(s->expr, f);
+	fprintf(f, "\tCMP $0, %s\n",scratch_name(s->expr->reg));
+	scratch_free(s->expr->reg);
+	fprintf(f, "\tJE %s\n",label_name(else_label));
+	stmt_codegen(s->body, f);
+	fprintf(f, "\tJMP %s\n",label_name(done_label));
+	fprintf(f, "%s:\n",label_name(else_label));
+	stmt_codegen(s->else_body, f);
+	fprintf(f, "%s:\n",label_name(done_label));
+}
+
+/**
+ * Handles for loop code generation in x86
+ * @param	s		stmt node containing the for loop structure 
+ * @param	f		file ptr to generate x86 code to 
+ */
+static void stmt_codegen_for(Stmt *s, FILE *f){
+	int for_label = label_create(); // top label 
+	int done_label = label_create();
+	int reg = 0;
+
+	expr_codegen(s->init_expr, f);
+	if (s->init_expr) scratch_free(s->init_expr->reg);
+	fprintf(f, "%s:\n", label_name(for_label));
+	if (s->expr){
+		expr_codegen(s->expr, f);
+		reg = s->expr->reg;
+	} else {
+		reg = scratch_alloc();
+		fprintf(f, "\tMOVQ $1, %s\n", scratch_name(reg));
+	}
+	fprintf(f, "\tCMPQ $0, %s\n", scratch_name(reg));
+	scratch_free(reg);
+	fprintf(f, "\tJE %s\n", label_name(done_label));
+	stmt_codegen(s->body, f);
+	expr_codegen(s->next_expr, f);
+	if (s->next_expr) scratch_free(s->next_expr->reg);
+	fprintf(f, "\tJMP %s\n", label_name(for_label));
+	fprintf(f, "%s:\n", label_name(done_label));
+}
+
+/**
+ * Helper function to get function name for print codegen 
+ * @param 	t		type of print stmt
+ */
+static const char *stmt_codegen_get_func_name(Type *t){
+	switch (t->kind){
+		case TYPE_BOOLEAN: return "print_boolean";
+		case TYPE_CHARACTER: return "print_character";
+		case TYPE_INTEGER: return "print_integer";
+		case TYPE_STRING: return "print_string";
+		case TYPE_ARRAY:
+			switch (t->subtype->kind){
+				case TYPE_BOOLEAN: return "print_array_bool";
+				case TYPE_INTEGER: return "print_array_int";
+				case TYPE_CHARACTER: return "print_array_char";
+				case TYPE_STRING: return "print_array_str";
+				default:
+					break;
+			}
+			break;
+		case TYPE_CARRAY: return "print_carray";
+		default:
+			fprintf(stderr, "codegen error: Printing type that is not allowed\n");
+			exit(EXIT_FAILURE);
+	}
+	return "";
+}
+
+/**
+ * Handle stmt print code generation in x86
+ * @param	s		stmt node holding print structure 
+ * @param	f		FILE ptr to generate x86 code to
+ */
+static void stmt_codegen_print(Stmt *s, FILE *f){
+	Expr *e = s->expr;
+	while (e){
+		Type *t = expr_typecheck(e->left);
+		const char *func_name = stmt_codegen_get_func_name(t);
+		Expr *res_e = expr_create(EXPR_FUNC, expr_create_name(func_name), expr_create(EXPR_ARGS, e->left, NULL));
+
+		expr_codegen(res_e, f);
+		scratch_free(res_e->reg);
+
+		type_destroy(t);
+		res_e->right->left = NULL;
+		expr_destroy(res_e);
+
+		e = e->right;
+	}
+}
+
+/**
+ * Handle stmt returns code generation in x86 
+ * @param 	s		stmt node holding return stmt 
+ * @param	f		FILE ptr to generate x86 code to 
+ */
+static void stmt_codegen_return(Stmt *s, FILE *f){
+	if (s->expr){
+		expr_codegen(s->expr, f);
+		fprintf(f, "\tMOVQ %s, %%rax\n", scratch_name(s->expr->reg));
+		scratch_free(s->expr->reg);
+	} else {
+		fprintf(f, "\tMOVQ $0, %%rax\n");
+	}
+	fprintf(f, "\tJMP .%s_epilogue\n", s->func_sym->name);
+}
+
+/**
  * Perform code generation on stmt structure 
  * @param 	s 		Stmt structure to perform code generation 
  * @param	f		File to write code generation to 
  */
 void stmt_codegen(Stmt *s, FILE *f){
 	if (!s || !f) return;
-	Expr *dummy_e = NULL;
-	Expr *res_e = NULL;
-	Type *dummy_t = NULL;
-	int reg = 0;
-	int else_label = 0;
-	int done_label = 0;
 	switch (s->kind){
 		case STMT_DECL:
 			decl_codegen(s->decl, f);
@@ -349,104 +502,16 @@ void stmt_codegen(Stmt *s, FILE *f){
 			scratch_free(s->expr->reg);
 			break;
 		case STMT_IF_ELSE:
-			else_label = label_create();
-			done_label = label_create();
-			expr_codegen(s->expr, f);
-			fprintf(f, "\tCMP $0, %s\n",scratch_name(s->expr->reg));
-			scratch_free(s->expr->reg);
-			fprintf(f, "\tJE %s\n",label_name(else_label));
-			stmt_codegen(s->body, f);
-			fprintf(f, "\tJMP %s\n",label_name(done_label));
-			fprintf(f, "%s:\n",label_name(else_label));
-			stmt_codegen(s->else_body, f);
-			fprintf(f, "%s:\n",label_name(done_label));
+			stmt_codegen_if_else(s, f);
 			break;
 		case STMT_FOR:
-			else_label = label_create(); // top label 
-			done_label = label_create();
-			expr_codegen(s->init_expr, f);
-			if (s->init_expr) scratch_free(s->init_expr->reg);
-			fprintf(f, "%s:\n", label_name(else_label));
-			if (s->expr){
-				expr_codegen(s->expr, f);
-				reg = s->expr->reg;
-			} else {
-				reg = scratch_alloc();
-				fprintf(f, "\tMOVQ $1, %s\n", scratch_name(reg));
-			}
-			fprintf(f, "\tCMPQ $0, %s\n", scratch_name(reg));
-			scratch_free(reg);
-			fprintf(f, "\tJE %s\n", label_name(done_label));
-			stmt_codegen(s->body, f);
-			expr_codegen(s->next_expr, f);
-			if (s->next_expr) scratch_free(s->next_expr->reg);
-			fprintf(f, "\tJMP %s\n", label_name(else_label));
-			fprintf(f, "%s:\n", label_name(done_label));
+			stmt_codegen_for(s, f);	
 			break;
 		case STMT_PRINT:
-			dummy_e = s->expr;
-			while (dummy_e){
-				dummy_t = expr_typecheck(dummy_e->left);
-				switch (dummy_t->kind){
-					case TYPE_BOOLEAN:
-						res_e = expr_create(EXPR_FUNC, expr_create_name("print_boolean"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-						break;
-					case TYPE_CHARACTER:
-						res_e = expr_create(EXPR_FUNC, expr_create_name("print_character"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-						break; 
-					case TYPE_INTEGER:
-						res_e = expr_create(EXPR_FUNC, expr_create_name("print_integer"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-						break;
-					case TYPE_DOUBLE:
-						fprintf(stderr, "codegen error: Printing type double that is not supported\n");
-						exit(EXIT_FAILURE);
-						break;
-					case TYPE_STRING:
-						res_e = expr_create(EXPR_FUNC, expr_create_name("print_string"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-						break;
-					case TYPE_ARRAY:
-						switch (dummy_e->left->symbol->type->subtype->kind){
-							case TYPE_BOOLEAN:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_bool"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-								break;
-							case TYPE_INTEGER:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_int"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-								break;
-							case TYPE_CHARACTER:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_char"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-								break;
-							case TYPE_STRING:
-								res_e = expr_create(EXPR_FUNC, expr_create_name("print_array_str"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-								break;
-							default:
-								break;
-						}
-						break;
-					case TYPE_CARRAY:
-						res_e = expr_create(EXPR_FUNC, expr_create_name("print_carray"), expr_create(EXPR_ARGS, dummy_e->left, NULL));
-						break;
-					case TYPE_VOID:
-					case TYPE_AUTO:
-					case TYPE_FUNCTION:
-					default:
-						fprintf(stderr, "codegen error: Printing type that is not allowed\n");
-						exit(EXIT_FAILURE);
-				}
-				expr_codegen(res_e, f);
-				scratch_free(res_e->reg);
-				dummy_e = dummy_e->right;
-				type_destroy(dummy_t);
-				res_e->right->left = NULL;
-				expr_destroy(res_e);
-			}
+			stmt_codegen_print(s, f);
 			break;
 		case STMT_RETURN:
-			if (s->expr){
-				expr_codegen(s->expr, f);
-				fprintf(f, "\tMOV %s, %%rax\n", scratch_name(s->expr->reg));
-				scratch_free(s->expr->reg);
-			}
-			fprintf(f, "\tJMP .%s_epilogue\n", s->func_sym->name);
+			stmt_codegen_return(s, f);
 			break;
 		case STMT_BLOCK:
 			stmt_codegen(s->body, f);

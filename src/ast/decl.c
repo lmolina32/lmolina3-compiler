@@ -19,8 +19,24 @@
 #include <stdbool.h>
 
 /* Globals */
+
 const char *int_args[MAX_INT_ARGS] = { "%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 const char *double_args[MAX_DOUBLE_ARGS] = {"%xmm0", "%xmm1", "%xmm2", "%xmm3", "%xmm4", "%xmm5", "%xmm6", "%xmm7"};
+
+/* Forward declaration of prototypes */
+
+static void decl_resolve_typecheck_functions(Decl *d);
+static void decl_resolve_non_functions(Decl *d, Symbol *sym);
+static void decl_resolve_functions(Decl *d, Symbol *sym);
+static void decl_typecheck_non_functions(Decl *d) ;
+static void decl_typecheck_functions(Decl *d);
+static void decl_codegen_preprocess_funcs(Decl *d, FILE *f);
+static void decl_codegen_funcs(Decl *d, FILE *f);
+static void decl_codegen_preprocess_non_funcs(Decl *d, FILE *f);
+static void decl_codegen_string(Decl *d, FILE *f);
+static void decl_codegen_array(Decl *d, FILE *f);
+static void decl_codegen_non_funcs(Decl *d, FILE *f);
+
 
 /* Functions */
 
@@ -522,6 +538,7 @@ static void decl_codegen_funcs(Decl *d, FILE *f){
     
     // create space for locals 
     fprintf(f, "\n\tSUBQ  $%d, %%rsp\n\n", (int_count + d->local) % 2 == 0 ? (d->local+ 1)*8 : d->local*8);
+
     // save callee-saved registers
     fprintf(f, "\tPUSHQ %%rbx\n"
                 "\tPUSHQ %%r12\n"
