@@ -3,5 +3,6 @@ main: function boolean () = {
     b: boolean = 'c' != 'c';
     c: boolean = true == true;
     d: boolean = 10 != 100;
+    print a, b, c, d;
     return a || b || c || d;
 }

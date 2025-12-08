@@ -1,3 +1,5 @@
 main: function integer () = {
+    print !true;
+    print !false;
     return 2 ^ -2;
 }

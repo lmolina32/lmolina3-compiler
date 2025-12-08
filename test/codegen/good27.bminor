@@ -9,6 +9,7 @@ two_sum: function void (a: integer) = {
         for (j = 0; j < #map; j++){
             if (map[j] == diff){
                 print "two sum found ", i, ' ', j, "\n";
+                print "two sum found ", arr[i], ' ', arr[j], "\n";
             }
         }
         map[i] = arr[i];

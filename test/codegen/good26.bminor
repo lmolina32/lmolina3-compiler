@@ -6,5 +6,7 @@ main: function void () = {
     print arr, '\n';
     print carr, '\n';
     print as, '\n';
+    print 2 ^ 10;
+    print -5 + 10;
     return;
 }

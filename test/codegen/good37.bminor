@@ -1,0 +1,35 @@
+/* Boolean Logic Corner Cases & Short Circuiting */
+
+fail: function boolean () = {
+    print "FAIL: This function should not have been called!\n";
+    return true;
+}
+
+success: function boolean () = {
+    print "SUCCESS: Short circuit worked.\n";
+    return true;
+}
+
+main: function integer () = {
+    
+    print "Testing OR Short-Circuit (true || fail())...\n";
+    // Since left is true, right (fail) should NOT run.
+    if (true || fail()) {
+        success();
+    }
+
+    print "Testing AND Short-Circuit (false && fail())...\n";
+    // Since left is false, right (fail) should NOT run.
+    if (false && fail()) {
+        print "Error: Entered if block.\n";
+    } else {
+        success();
+    }
+
+    print "Testing Nested Logic ((1<2) && (5>0) || fail())...\n";
+    if ( (1<2) && (5>0) || fail() ) {
+        print "Complex logic passed.\n";
+    }
+
+    return 0;
+}

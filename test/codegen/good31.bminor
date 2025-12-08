@@ -1,0 +1,42 @@
+/* Test Auto Type Inference */
+
+// Global Auto Inference
+global_x: auto = 10;            // Should be integer
+global_b: auto = true;          // Should be boolean
+global_s: auto = "Global Auto"; // Should be string
+
+// Function Return Inference
+square: function auto ( x: integer ) = {
+    return x * x; // Should infer return type as integer
+}
+
+// Function inferring boolean
+is_pos: function auto ( x: integer ) = {
+    return x > 0;
+}
+
+main: function integer () = {
+    // Local Auto Inference
+    local_x: auto = 20;
+    local_s: auto = "Local Auto";
+    
+    // Inference from Expression
+    // x (integer) < local_x (integer) -> boolean result
+    local_b: auto = global_x < local_x; 
+
+    print "Global X (10): ", global_x, "\n";
+    print "Global S (Global Auto): ", global_s, "\n";
+    print "Square(5) (25): ", square(5), "\n";
+    
+    if (local_b) {
+        print "Inference correct: 10 < 20 is true.\n";
+    } else {
+        print "Inference failed.\n";
+    }
+
+    if (is_pos(10)) {
+        print "Function auto return (boolean) works.\n";
+    }
+
+    return 0;
+}

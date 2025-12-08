@@ -1,0 +1,22 @@
+/* Scope Shadowing and Nested Blocks */
+
+x: integer = 100; // Global
+
+main: function integer () = {
+    print "Global x (100): ", x, "\n";
+
+    x: integer = 50; // Shadow Global
+    print "Local x (50): ", x, "\n";
+
+    {
+        x: integer = 10; // Shadow Local
+        print "Block x (10): ", x, "\n";
+        
+        y: integer = x + 5; // Should use Block x (10) -> 15
+        print "Block y (15): ", y, "\n";
+    }
+
+    print "Local x again (50): ", x, "\n";
+    
+    return 0;
+}

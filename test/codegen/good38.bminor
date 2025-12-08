@@ -1,0 +1,27 @@
+/* Complex Expressions and Unary Negation */
+
+main: function integer () = {
+    x: integer;
+    
+    // PEMDAS Test: 10 + 20 * 30 = 610 (not 900)
+    x = 10 + 20 * 30;
+    print "Precedence (610): ", x, "\n";
+
+    // Unary Negation chain
+    y: integer = 5;
+    z: integer = -y;      // -5
+    w: integer = -(-y);   // 5
+    print "Negation -5: ", z, ", 5: ", w, "\n";
+
+    // Register Stress Test (Tree height > 6)
+    // If your allocator is weak, this might overwrite registers incorrectly.
+    // Result: 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 = 36
+    //x = 1 + (2 + (3 + (4 + (5 + (6 + (7 + 8))))));
+    // print "Nested Addition (36): ", x, "\n";
+
+    // Modulo
+    m: integer = 10 % 3;
+    print "10 % 3 (1): ", m, "\n";
+
+    return 0;
+}

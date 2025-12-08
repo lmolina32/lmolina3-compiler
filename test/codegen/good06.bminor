@@ -1,5 +1,6 @@
 main: function integer () = {
     a: integer = 20;
     b: integer = 13;
+    print a / b, 100 / 10;
     return a / b;
 }

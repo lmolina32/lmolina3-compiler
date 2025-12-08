@@ -1,0 +1,26 @@
+/* Function calls and recursion */
+
+add: function integer (a: integer, b: integer) = {
+    return a + b;
+}
+
+// Tests pushing/popping many args
+print_6: function void (a: integer, b: integer, c: integer, d: integer, e: integer, f: integer) = {
+    print a, " ", b, " ", c, " ", d, " ", e, " ", f, "\n";
+}
+
+fib: function integer (n: integer) = {
+    if (n <= 1) return n;
+    return fib(n-1) + fib(n-2);
+}
+
+main: function integer () = {
+    sum: integer = add(50, 25);
+    print "Sum 50+25: ", sum, "\n";
+
+    print "6 Args: ";
+    print_6(1, 2, 3, 4, 5, 6);
+
+    print "Fibonacci(6) (Should be 8): ", fib(6), "\n"; 
+    return 0;
+}

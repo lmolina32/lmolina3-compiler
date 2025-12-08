@@ -1,0 +1,25 @@
+/* Strings, Chars, and Escapes */
+
+s1: string = "Hello\nWorld";   // Newline
+s2: string = "Quote: \" ";     // Escaped Quote
+c1: char = 'A';
+c2: char = '\n';               // Escaped char
+
+main: function integer () = {
+    print "--- String Test ---\n";
+    print s1, "\n";
+    print s2, "\n";
+    
+    print "--- Char Test ---\n";
+    print c1, c2, c1, "\n"; // Should print A, newline, A
+
+    // String Assignment (Pointer Copy vs Literal Alloc)
+    // Your code allocates new labels for string assignment
+    s3: string = "Initial";
+    print "s3 before: ", s3, "\n";
+    
+    s3 = "Modified"; 
+    print "s3 after: ", s3, "\n";
+
+    return 0;
+}

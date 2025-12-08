@@ -1,0 +1,4 @@
+a: array [5] integer = {1,2,3,4,5};
+main: function integer () = {
+    print a[10]; // Should cause runtime error exit
+}

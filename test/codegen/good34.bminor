@@ -1,0 +1,22 @@
+/* Global Arrays - fully and partially initialized */
+a: array [5] integer = {10, 20, 30, 40, 50};
+b: array [5] integer; // Should be all 0
+s: array [2] string = {"hello", "world"};
+
+main: function integer () = {
+    i: integer;
+    
+    print "Array A: ";
+    for(i=0; i<5; i++) { print a[i], " "; }
+    print "\n";
+
+    print "Array B (Zeros): ";
+    for(i=0; i<5; i++) { print b[i], " "; }
+    print "\n";
+    
+    a[0] = 999; // Test Write
+    print "Modified a[0] (Should be 999): ", a[0], "\n";
+    print "String Array: ", s[0], " ", s[1], "\n";
+
+    return 0;
+}

@@ -1,5 +1,6 @@
 main: function boolean () = {
     a: boolean = 5 > 2;
+    print 5 > 2, 5 >= 5, 5 < 2, 5 < 10, 5 <= 5, 5 <= 2;
     a = a && (5 >= 4);
     a = a && (5 < 10);
     a = a && (5 <= 5);
