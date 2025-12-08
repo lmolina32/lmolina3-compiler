@@ -10,6 +10,7 @@ A compiler for the BMinor programming language, built as part of a multi-phase c
 ```bash
 make           # Build the compiler
 make clean     # Remove build artifacts
+make help      # Help on make commands
 ```
 
 The executable will be created at `bin/bminor`.
@@ -65,7 +66,7 @@ make test-book        # Run book test cases
 Test cases are organized in `test/` by compiler phase, with both valid (`good*.bminor`) and invalid (`bad*.bminor`) test programs.
 
 - Current Personal test cases: `test/encoder`, `test/scanner`, `test/parser`, `test/printer`, `test/resolver`, `test/typechecker`, `test/codegen`
-- Book test cases: `test/book_test_cases/parser`, `test/book_test_cases/printer`, `test/book_test_cases/typecheck`
+- Book test cases: `test/book_test_cases/parser`, `test/book_test_cases/printer`, `test/book_test_cases/typecheck`, `test/book_test_cases/codegen`
 
 ## Project Structure
 
@@ -73,12 +74,12 @@ Test cases are organized in `test/` by compiler phase, with both valid (`good*.b
 bminor/
 ├── src/
 │   ├── main/           # Driver code and main entry point
-│   ├── scanner/        # Lexical analysis (Flex)
-│   ├── parser/         # Syntax analysis (Bison)
 │   ├── ast/            # Abstract Syntax Tree definitions
 │   ├── codegen/        # Scratch register and label functions
 │   ├── encoder/        # String literal encoding
 │   ├── library/        # Runtime library
+│   ├── parser/         # Syntax analysis (Bison)
+│   ├── scanner/        # Lexical analysis (Flex)
 │   ├── symbol_table/   # Symbol table and scope functions
 │   └── utils/          # Utility functions used by compiler
 ├── test/               # Test cases organized by phase
