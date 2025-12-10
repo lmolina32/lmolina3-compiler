@@ -124,7 +124,8 @@ build/%.o: src/codegen/%.c $(HEADERS)
 
 # Testing 
 
-test:	test-all
+test: all
+	@$(MAKE) -s test-all	
 
 test-all: $(BMINOR) 
 	@chmod +x ./test/scripts/*.sh
@@ -210,6 +211,5 @@ help:
 	@echo "  test-book         - Run book tests"
 	@echo "  clean             - Remove build artifacts"
 	
-
 # phony 
 .PHONY: clean dirs all test test-all test-encode test-scanner test-parser test-printer test-resolver test-typechecker test-book help
