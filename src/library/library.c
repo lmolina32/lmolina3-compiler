@@ -46,21 +46,21 @@ void print_character(char c){
 }
 
 void print_carray(long arr[]){
-	printf("%p", arr);
+	printf("%p", (void *)arr);
 }
 
 void print_array_str(long arr[]){
-	printf("array: {\"%s\"", arr[1]);
+	printf("array: {\"%s\"", (char *)arr[1]);
 	for (long i = 2; i < arr[0] + 1; i++){
-		printf(", \"%s\"", arr[i]);
+		printf(", \"%s\"", (char *)arr[i]);
 	}
 	printf("} ");
 }
 
 void print_array_int(long arr[]){
-	printf("array: {%d", arr[1]);
+	printf("array: {%ld", arr[1]);
 	for (long i = 2; i < arr[0] + 1; i++){
-		printf(", %d", arr[i]);
+		printf(", %ld", arr[i]);
 	}
 	printf("} ");
 }
@@ -74,15 +74,15 @@ void print_array_bool(long arr[]){
 }
 
 void print_array_char(long arr[]){
-	printf("array: {'%c'", arr[1]);
+	printf("array: {'%c'", (char)arr[1]);
 	for (long i = 2; i < arr[0] + 1; i++){
-		printf(", '%c'", arr[i]);
+		printf(", '%c'", (char)arr[i]);
 	}
 	printf("} ");
 }
 
 void check_bounds(long arr[], long index){
-	if (arr[0] <= index){
+	if (index < 0 || arr[0] <= index){
 		fprintf(stderr,"Index out of bounds\n");
 		exit(EXIT_FAILURE);
 	}
