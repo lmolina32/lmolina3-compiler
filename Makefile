@@ -52,21 +52,15 @@ OBJECTS=		build/bminor.o \
 				build/hash_table.o 
 
 BMINOR=			bin/bminor 
-OLD_BMINOR=		bminor
 
 # Rules 
 
-all: dirs $(BMINOR) $(OLD_BMINOR)
+all: dirs $(BMINOR)
 
 dirs:
 	@echo "making bin and build directories"
 	@mkdir -p bin
 	@mkdir -p build
-
-# Compile bminor 
-$(OLD_BMINOR): $(OBJECTS)
-	@echo "Linking $@"
-	@$(LD) $(LDFLAGS) $(INCLUDES) -o $@ $^
 
 # Compile bminor 
 $(BMINOR): $(OBJECTS)
@@ -197,7 +191,7 @@ clean:
 	@rm -f ./*.s
 
 	@echo "Removing bminor"
-	@rm -f $(BMINOR) $(OLD_BMINOR)
+	@rm -f $(BMINOR)
 
 help:
 	@echo "Available targets:"
