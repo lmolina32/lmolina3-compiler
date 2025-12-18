@@ -1,8 +1,11 @@
+# =================
+# BUILD ARTIFACTS
+# =================
+
+# Compiled binaries and object files
+
 *.o
 *.out
 *.s
 bin/*
 build/*
-bminor
-# example flex files 
-examples
