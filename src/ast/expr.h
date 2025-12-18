@@ -56,7 +56,6 @@ struct Expr {
 	expr_t kind;  					// expr kind from above (e.g +)
 	Expr *left;						// left child of expr kind (e.g 5+4, left child is 5)
 	Expr *right;					// right child of expr kind (e.g 5+4, right child is 4)
-
 	char *name;						// identifier (e.g a[b], a is name)
 	int literal_value;				// literal value (char, int, hex, bin, bool)
 	double double_literal_value;	// double lit val (double & double scientific)

@@ -313,7 +313,7 @@ static void decl_typecheck_non_functions(Decl *d) {
 
         // Case 1c: Global variable is not a constant value (e.g not Literal)
         if (d->symbol->kind == SYMBOL_GLOBAL){
-            if (!expr_is_literal(d->value->kind)){
+            if (!expr_is_literal(d->value->kind) && !(d->value->kind == EXPR_NEGATION && expr_is_literal(d->value->left->kind))){
                 fprintf(stderr, "typechecker error: Global variable '%s' must be initialized with a constant value, (",d->name);
                 expr_print(d->value, stderr);
                 fprintf(stderr, ") is not constant.\n");
